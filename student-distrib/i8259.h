@@ -12,8 +12,8 @@
  *		Reading from port gives you status
  *		Writing to port sets command
  */
-#define MASTER_8259_PORT 0x20
-#define SLAVE_8259_PORT  0xA0
+#define MASTER_8259_PORT 0x20 // master PIC base address
+#define SLAVE_8259_PORT  0xA0 // slave PIC base address
 
 /* JC Ports for the mask and data register */
 #define MASTER_MD 		 0x21
@@ -33,6 +33,18 @@
  * the interrupt number and sent out to the PIC
  * to declare the interrupt finished */
 #define EOI           0x60
+
+/* JC
+ * Found from: http://wiki.osdev.org/8259_PIC#End_of_Interrupt
+ *
+ *
+ */
+#define PIC_EOI		 	MASTER_8259_PORT // end of interrupt command code
+#define MASTER_COMMAND	MASTER_8259_PORT
+#define MASTER_DATA		(MASTER_8259_PORT+1) 
+#define SLAVE_COMMAND	SLAVE_8259_PORT
+#define SLAVE_DATA		(SLAVE_8259_PORT+1)
+
 
 /* Externally-visible functions */
 

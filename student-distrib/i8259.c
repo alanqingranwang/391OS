@@ -68,6 +68,7 @@ i8259_init(void)
 /* Enable (unmask) the specified IRQ */
 /* JC
  * enable_irq
+ *		http://wiki.osdev.org/8259_PIC#Masking
  * 	DESCRIPTION: 
  * 	INPUT: irq_num - the interrupt on the PIC that we will be enabling
  *		OUTPUT: none
@@ -84,6 +85,7 @@ enable_irq(uint32_t irq_num)
 /* Disable (mask) the specified IRQ */
 /* JC
  * disable_irq
+ *		http://wiki.osdev.org/8259_PIC#Masking
  * 	DESCRIPTION:
  * 	INPUT: irq_num - the interrupt on the PIC that we will be disabling
  *		OUTPUT: none
@@ -94,6 +96,7 @@ enable_irq(uint32_t irq_num)
 void
 disable_irq(uint32_t irq_num)
 {
+	
 }
 
 /*
@@ -106,6 +109,7 @@ processing by an interrupt handler, or the operation of a PIC may be set to auto
 /* Send end-of-interrupt signal for the specified IRQ */
 /* JC
  * send_eoi
+ *		http://wiki.osdev.org/8259_PIC#End_of_Interrupt
  * 	DESCRIPTION:
  *			Sends a signal to the PIC to indicate the completion of interrupt processing for a given interrupt.
  *			Used to cause a PIC to clear the corresponding bit in the In-Service Register, which allows more interrupt requests
@@ -120,5 +124,9 @@ processing by an interrupt handler, or the operation of a PIC may be set to auto
 void
 send_eoi(uint32_t irq_num)
 {
+	if(irq >= 8) // slave interrupts
+		outb(SLAVE_COMMAND, PIC_EOI); // send end of interrupt to slave
+
+	outb(MASTER_COMMAND, PIC_EOI); // send end of interrupt to master
 }
 
