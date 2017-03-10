@@ -87,11 +87,12 @@ gdt_bottom:
 
 	.align 16
 
+   # AW - Positioning matters
 gdt_desc_ptr:
 	.word gdt_bottom - gdt - 1
 	.long gdt
 
-	.align  16
+	.align  16 # should be a multiple of 16
 	
 ldt:
 	.rept 4
@@ -99,7 +100,7 @@ ldt:
 	.endr
 ldt_bottom:
 
-.align 4
+	.align 4
 	.word 0 # Padding
 idt_desc_ptr:
 	.word idt_bottom - idt - 1

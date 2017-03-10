@@ -8,14 +8,21 @@
 
 #include "types.h"
 
-/* Ports that each PIC sits on */
+/* Ports that each PIC sits on
+ *		Reading from port gives you status
+ *		Writing to port sets command
+ */
 #define MASTER_8259_PORT 0x20
 #define SLAVE_8259_PORT  0xA0
+
+/* JC Ports for the mask and data register */
+#define MASTER_MD 		 0x21
+#define SLAVE_MD  		 0xA1
 
 /* Initialization control words to init each PIC.
  * See the Intel manuals for details on the meaning
  * of each word */
-#define ICW1    0x11
+#define ICW1    		 0x11
 #define ICW2_MASTER   0x20
 #define ICW2_SLAVE    0x28
 #define ICW3_MASTER   0x04
@@ -25,9 +32,10 @@
 /* End-of-interrupt byte.  This gets OR'd with
  * the interrupt number and sent out to the PIC
  * to declare the interrupt finished */
-#define EOI             0x60
+#define EOI           0x60
 
 /* Externally-visible functions */
+
 
 /* Initialize both PICs */
 void i8259_init(void);
