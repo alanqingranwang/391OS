@@ -24,7 +24,7 @@
  * of each word */
 #define ICW1    		 0x11
 #define ICW2_MASTER   0x20
-#define ICW2_SLAVE    0x28
+#define ICW2_SLAVE    0x28 // ICW2_MASTER + 8
 #define ICW3_MASTER   0x04
 #define ICW3_SLAVE    0x02
 #define ICW4          0x01
