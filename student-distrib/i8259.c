@@ -5,14 +5,14 @@
 #include "i8259.h"
 #include "lib.h"
 
-#include <linux/spinlock.h> // JC
+//#include <linux/spinlock.h> // JC
 
 /* Interrupt masks to determine which interrupts
  * are enabled and disabled */
 uint8_t master_mask; /* IRQs 0-7 */
 uint8_t slave_mask; /* IRQs 8-15 */
 
-static spinlock_t i8259_lock = SPIN_LOCK_UNLOCKED; // initialize to unlock
+//static spin_lock_t i8259_lock = SPIN_LOCK_UNLOCKED; // initialize to unlock
 
 /* JC
  * i8259_init
@@ -31,8 +31,7 @@ void
 i8259_init(void)
 {
 	uint32_t flags; // uint32_t suppose to be unsigned long 
-
-	spin_lock_irqsave(&i8259_lock, flags);
+	cli_and_save(flags); // save original flag state and clear interrupts
 
 	// double check this
 	// save the mask/data from the PICs
@@ -43,26 +42,26 @@ i8259_init(void)
 	outb(0xff, MASTER_MD);
 	outb(0xff, MASTER_MD);
 
-	// outb_p - this has to work on a wide range of PC hardware
+	// outb_p - this has to work on a wide range of PC hardware, I need to pause when using the words
 	// master init
-	outb_p(ICW1, MASTER_8259_PORT);		// ICW1: select 8259A-1 init
-	outb_p(ICW2_MASTER, MASTER_MD);	 	// ICW2: 8259A-1 IR0-7 mapped to 0x20 - 0x27
-	outb_p(ICW3_MASTER, MASTER_MD);	 	// 8259A-1 (the master) has a slave on IR2
+	outb(ICW1, MASTER_8259_PORT);		// ICW1: select 8259A-1 init
+	outb(ICW2_MASTER, MASTER_MD);	 	// ICW2: 8259A-1 IR0-7 mapped to 0x20 - 0x27
+	outb(ICW3_MASTER, MASTER_MD);	 	// 8259A-1 (the master) has a slave on IR2
 
 	// slave init
-	outb_p(ICW1, SLAVE_8259_PORT);		// ICW1: select 8259A-2 init
-	outb_p(ICW2_SLAVE, SLAVE_MD);			// ICW2: 8259-2 IR0-7 mapped to 0x28 - 0x2F
-	outb_p(ICW3_SLAVE, SLAVE_MD);			// 8259A-2 is a slave on master's IR2
-	outb_p(ICW4, SLAVE_MD);					// (slave's support for AEOI in flat mode is to be investigated)
+	outb(ICW1, SLAVE_8259_PORT);		// ICW1: select 8259A-2 init
+	outb(ICW2_SLAVE, SLAVE_MD);			// ICW2: 8259-2 IR0-7 mapped to 0x28 - 0x2F
+	outb(ICW3_SLAVE, SLAVE_MD);			// 8259A-2 is a slave on master's IR2
+	outb(ICW4, SLAVE_MD);					// (slave's support for AEOI in flat mode is to be investigated)
 
-	udelay(100);								// wait for 8259A to initialize
+	//udelay(100);								// wait for 8259A to initialize
 
 	// double check this
 	// restore the master and slave IRQ mask/data
 	outb(master_mask, MASTER_MD);
 	outb(slave_mask, SLAVE_MD);
 
-	spin_unlock_irqrestore(&i8259_lock, flags);
+	restore_flags(flags); // restore the flags originally set
 }
 
 /* JC
@@ -93,10 +92,10 @@ enable_irq(uint32_t irq_num)
 	uint8_t value; 
 
 	if(irq_num < 8)
-		port = MASTER_DATA; // master's interrupt
+		port = MASTER_MD; // master's interrupt
 	else
 	{
-		port = SLAVE_DATA; // slave's interrupt
+		port = SLAVE_MD; // slave's interrupt
 		irq_num -= 8; // reduce the irq_num to be in range
 	}
 
@@ -124,10 +123,10 @@ disable_irq(uint32_t irq_num)
 	uint8_t value;
 
 	if(irq_num < 8)
-		port = MASTER_DATA; // master's interrupt
+		port = MASTER_MD; // master's interrupt
 	else
 	{
-		port = SLAVE_DATA; // slave's interrupt
+		port = SLAVE_MD; // slave's interrupt
 		irq_num -= 8; // reduce the irq_num to be in range
 	}
 
@@ -160,9 +159,9 @@ processing by an interrupt handler, or the operation of a PIC may be set to auto
 void
 send_eoi(uint32_t irq_num)
 {
-	if(irq >= 8) // slave interrupts
-		outb(SLAVE_COMMAND, PIC_EOI); // send end of interrupt to slave
+	if(irq_num >= 8) // slave interrupts
+		outb(PIC_EOI, SLAVE_8259_PORT); // send end of interrupt to slave
 
-	outb(MASTER_COMMAND, PIC_EOI); // send end of interrupt to master
+	outb(PIC_EOI, MASTER_8259_PORT); // send end of interrupt to master
 }
 
