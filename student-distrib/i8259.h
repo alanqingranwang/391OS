@@ -35,17 +35,11 @@
 #define EOI           0x60
 
 /* JC
- * Found from: http://wiki.osdev.org/8259_PIC#End_of_Interrupt
- *
- *
  */
-#define PIC_EOI		 	MASTER_8259_PORT // end of interrupt command code
-#define DELAY_TIME		100
-#define HIGH_MASK 		0xFF
-
+#define BYTE_MASK 		0xFF
+#define SLAVE_IRQ			2						
 
 /* Externally-visible functions */
-
 
 /* Initialize both PICs */
 void i8259_init(void);

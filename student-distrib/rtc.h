@@ -21,7 +21,7 @@
 #define _RTC_H
 
 #include "types.h"
-//#include "i8259.h" // do I need to include this?
+#include "i8259.h"
 
 /* port 0x70 is used to specify an index or "register number"
  *		and to disable non-maskable-interrupt (NMI).
@@ -36,22 +36,47 @@
  */
 #define SELECT_REG		0x70	// output to this port to select register
 #define CMOS_RTC_PORT	0x71	// r/w from/to the CMOS configuration space
+#define RTC_IRQ			8		// slave IRQ 0
 
 /* Write these to port 0x70 to select and/or disable NMI.
+ *	Register A - used to select an interrupt rate.
+ *		(freq = 32768 >> (rate-1)) calculates interrupt rate
+ *	Register B - contains flags, bit 6 (Periodic Interrupt Enable)
+ *		Used in time also, tells what format the time will come in
+ *	Register C - holds bit mask that tells what kind of interrupt occurred
+ *		must read from this otherwise IRQ 8 will not generate again.
  */
 #define REG_A				0x0A	// register A
 #define REG_B				0x0B	// register B
 #define REG_C				0x0C	// register C
 #define DIS_NMI			0x80	// disable NMI bit
-#define BIT_6				0x40 	// 0010 0000
 
+/* time format bits of register B */
+#define PERIODIC			0x40 	// enables periodic interrupt
+#define HOUR_BIT			0x02	// enables 24 hour format if set
+#define BINARY_MODE_BIT 0x04 	// enables binary mode if set
+
+/* Keeping track of time */
+#define CURRENT_YEAR		2017
+/* Registers for each time info */
+#define SEC_REG 			0x00
+#define MIN_REG			0x02
+#define HOUR_REG			0x04
+#define DAY_REG			0x07
+#define MONTH_REG 		0x08
+#define YEAR_REG 			0x09
+
+#define NIBBLE_MASK 		0x0F
 
 /* Externally-visible functions */
 
 /* Initialize the RTC */
 void rtc_init(void);
-
-
+int32_t get_update_flag(void);
+uint8_t get_RTC_reg(int32_t reg);
+void update_time(void);
+void read_time(void);
+void print_time(void);
 
 #endif /* _RTC_H */
 
