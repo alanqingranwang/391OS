@@ -16,8 +16,8 @@
 #define SLAVE_8259_PORT  0xA0 // slave PIC base address
 
 /* JC Ports for the mask and data register */
-#define MASTER_MD 		 0x21
-#define SLAVE_MD  		 0xA1
+#define MASTER_MD 		 (MASTER_8259_PORT+1) // 0x21
+#define SLAVE_MD  		 (SLAVE_8259_PORT+1) // 0xA1
 
 /* Initialization control words to init each PIC.
  * See the Intel manuals for details on the meaning
@@ -40,10 +40,6 @@
  *
  */
 #define PIC_EOI		 	MASTER_8259_PORT // end of interrupt command code
-#define MASTER_COMMAND	MASTER_8259_PORT
-#define MASTER_DATA		(MASTER_8259_PORT+1) 
-#define SLAVE_COMMAND	SLAVE_8259_PORT
-#define SLAVE_DATA		(SLAVE_8259_PORT+1)
 
 
 /* Externally-visible functions */
