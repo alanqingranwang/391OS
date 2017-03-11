@@ -32,11 +32,11 @@ void rtc_init(void)
 
 	// Enable Periodic Interrupt, default 1024 Hz rate
 	cli_and_save(flags);
-	enable_irq(RTC_IRQ);	// enable PIC to accept interrupts
+	enable_irq(RTC_IRQ);							// enable PIC to accept interrupts
 	outb((DIS_NMI | REG_B), SELECT_REG); 	// select B and disable NMI
 	prev_data = inb(CMOS_RTC_PORT);			// get current values of B
 	outb((DIS_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
-	outb((prev_data | PERIODIC), 0x71);			// turn on bit 6 of reg B
+	outb((prev_data | PERIODIC), CMOS_RTC_PORT);		// turn on bit 6 of reg B
 	restore_flags(flags);
 
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
@@ -140,7 +140,11 @@ void read_time(void)
 		update_time(); // update time variables
 	}
 
-	registerB = get_RTC_reg(0x0B); // read data
+	registerB = get_RTC_reg(REG_B); // read data
+
+	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
+	outb(REG_C, SELECT_REG);
+	inb(CMOS_RTC_PORT);			// throw away data
 
 	if(!(registerB & BINARY_MODE_BIT))
 	{	// convert to proper time
@@ -181,5 +185,6 @@ void print_time(void)
 	printf("day: %d ", day);
 	printf("month: %d ", month);
 	printf("year: %d\n", year);
+	send_eoi(8);
 }
 

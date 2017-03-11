@@ -149,8 +149,12 @@ entry (unsigned long magic, unsigned long addr)
 	idt_init();
 	/* Init the PIC */
 	i8259_init();
-	//rtc_init();
-	test_interrupts();
+	rtc_init();
+	clear();
+	// while(1)
+	// {
+	// 	print_time();
+	// }
 	//int k = 1 / 0; 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */

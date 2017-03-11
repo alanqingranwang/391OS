@@ -1,4 +1,5 @@
 #include "idt.h"
+#include "rtc.h"
 
 void idt_init() {
     asm ("lidt idt_desc_ptr");
@@ -61,4 +62,8 @@ void idt_init() {
         idt[i].reserved4 = 0;
 		idt[i].seg_selector = KERNEL_CS;
     }
+
+    // the RTC interrupt
+    SET_IDT_ENTRY(idt[40], print_time);
+    idt[40].present = 1;
 }

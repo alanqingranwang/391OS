@@ -165,8 +165,11 @@ void
 send_eoi(uint32_t irq_num)
 {
 	if(irq_num >= 8) // slave interrupts
-		outb(EOI, SLAVE_8259_PORT); // send end of interrupt to slave
-
-	outb(EOI, MASTER_8259_PORT); // send end of interrupt to master
+	{
+		outb((EOI | (irq_num-8)), SLAVE_8259_PORT); 	// send end of interrupt to slave
+		outb((EOI | SLAVE_IRQ), MASTER_8259_PORT);	// tell master that slave is done too
+	}
+	else
+		outb((EOI | irq_num), MASTER_8259_PORT); 		// send end of interrupt to master
 }
 
