@@ -6,6 +6,7 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "i8259.h"
+#include "idt.h"
 #include "debug.h"
 
 /* Macros. */
@@ -144,9 +145,11 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 
+	idt_init();
 	/* Init the PIC */
 	i8259_init();
 
+	int k = 1 / 0; 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
@@ -162,4 +165,3 @@ entry (unsigned long magic, unsigned long addr)
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");
 }
-
