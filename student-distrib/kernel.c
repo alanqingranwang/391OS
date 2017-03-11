@@ -6,6 +6,7 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "i8259.h"
+#include "rtc.h"	// JC
 #include "idt.h"
 #include "debug.h"
 
@@ -148,8 +149,9 @@ entry (unsigned long magic, unsigned long addr)
 	idt_init();
 	/* Init the PIC */
 	i8259_init();
-
-	int k = 1 / 0; 
+	//rtc_init();
+	test_interrupts();
+	//int k = 1 / 0; 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 

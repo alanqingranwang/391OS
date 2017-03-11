@@ -40,6 +40,8 @@
  *
  */
 #define PIC_EOI		 	MASTER_8259_PORT // end of interrupt command code
+#define DELAY_TIME		100
+#define HIGH_MASK 		0xFF
 
 
 /* Externally-visible functions */

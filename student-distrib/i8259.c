@@ -5,14 +5,10 @@
 #include "i8259.h"
 #include "lib.h"
 
-//#include <linux/spinlock.h> // JC
-
 /* Interrupt masks to determine which interrupts
  * are enabled and disabled */
 uint8_t master_mask; /* IRQs 0-7 */
 uint8_t slave_mask; /* IRQs 8-15 */
-
-//static spin_lock_t i8259_lock = SPIN_LOCK_UNLOCKED; // initialize to unlock
 
 /* JC
  * i8259_init
@@ -30,6 +26,7 @@ uint8_t slave_mask; /* IRQs 8-15 */
 void
 i8259_init(void)
 {
+	uint32_t wait = 0; // initialize wait to 0
 	uint32_t flags; // uint32_t suppose to be unsigned long 
 	cli_and_save(flags); // save original flag state and clear interrupts
 
@@ -39,8 +36,8 @@ i8259_init(void)
 	slave_mask = inb(SLAVE_MD);
 
 	// mask the 0x21 and 0xA1 mask/data registers
-	outb(0xff, MASTER_MD);
-	outb(0xff, MASTER_MD);
+	outb(HIGH_MASK, MASTER_MD);
+	outb(HIGH_MASK, MASTER_MD);
 
 	// outb_p - this has to work on a wide range of PC hardware, I need to pause when using the words
 	// master init
@@ -54,7 +51,8 @@ i8259_init(void)
 	outb(ICW3_SLAVE, SLAVE_MD);			// 8259A-2 is a slave on master's IR2
 	outb(ICW4, SLAVE_MD);					// (slave's support for AEOI in flat mode is to be investigated)
 
-	//udelay(100);								// wait for 8259A to initialize
+	//udelay(100);								
+	while(wait < DELAY_TIME) { wait++; } // wait for 8259A to initialize
 
 	// double check this
 	// restore the master and slave IRQ mask/data
@@ -65,7 +63,7 @@ i8259_init(void)
 }
 
 /* JC
- * enabling/disabling irq
+ * enabling/disabling irq details:
  *		PIC has a mask register (IMR), 8 bits wide. It contains a bitmap
  *			of the request lines going into the PIC. When a bit is set, the PIC ignores the
  *			request and continues normal operation.
