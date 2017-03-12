@@ -65,6 +65,6 @@ void idt_init() {
     }
 
     // the RTC interrupt
-    SET_IDT_ENTRY(idt[40], test_interrupts);
+    SET_IDT_ENTRY(idt[40], print_time);
     idt[40].present = 1;
 }

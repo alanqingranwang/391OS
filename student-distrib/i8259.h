@@ -51,3 +51,4 @@ void disable_irq(uint32_t irq_num);
 void send_eoi(uint32_t irq_num);
 
 #endif /* _I8259_H */
+

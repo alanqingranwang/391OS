@@ -31,19 +31,20 @@ i8259_init(void)
 	uint32_t flags; // uint32_t suppose to be unsigned long 
 	cli_and_save(flags); // save original flag state and clear interrupts
 
-	// initalize all IRQ to off, PIC is active low
-	master_mask = BYTE_MASK;
-	slave_mask = BYTE_MASK;
-
 	// mask the 0x21 and 0xA1 mask/data registers
 	outb(BYTE_MASK, MASTER_MD);
 	outb(BYTE_MASK, SLAVE_MD);
+
+	// initalize all IRQ to off, PIC is active low
+	master_mask = BYTE_MASK;
+	slave_mask = BYTE_MASK;
 
 	// assume that all port writes are immediate
 	// master init
 	outb(ICW1, MASTER_8259_PORT);		// ICW1: select 8259A-1 init
 	outb(ICW2_MASTER, MASTER_MD);	 	// ICW2: 8259A-1 IR0-7 mapped to 0x20 - 0x27
 	outb(ICW3_MASTER, MASTER_MD);	 	// 8259A-1 (the master) has a slave on IR2
+	outb(ICW4, MASTER_MD);				
 
 	// slave init
 	outb(ICW1, SLAVE_8259_PORT);		// ICW1: select 8259A-2 init
@@ -82,26 +83,19 @@ i8259_init(void)
 void
 enable_irq(uint32_t irq_num)
 {
-	uint16_t port; // data register port
-	uint8_t value; 
-
 	if(irq_num < 8)
 	{
-		port = MASTER_MD; // master's interrupt
-		// takes the data from port, and turns off the given irq_num
-		value = inb(port) & ~(1 << irq_num);
-		master_mask = value;
+		// takes the data from the port, and turns on the given irq_num
+		master_mask = inb(MASTER_MD) & ~(1 << irq_num);
+		outb(master_mask, MASTER_MD);
 	}
 	else
 	{
-		port = SLAVE_MD; // slave's interrupt
 		irq_num -= 8; // reduce the irq_num to be in range
-		// takes the data from port, and turns off the given irq_num
-		value = inb(port) & ~(1 << irq_num);
-		slave_mask = value;
+		// takes the data from the port, and turns on the given irq_num
+		slave_mask = inb(SLAVE_MD) & ~(1 << irq_num);
+		outb(slave_mask, SLAVE_MD);
 	}
-
-	outb(value, port);
 }
 
 /* JC
@@ -119,26 +113,19 @@ enable_irq(uint32_t irq_num)
 void
 disable_irq(uint32_t irq_num)
 {
-	uint16_t port; // data register port
-	uint8_t value;
-
 	if(irq_num < 8)
 	{
-		port = MASTER_MD; // master's interrupt
 		// takes the data from the port, and turns on the given irq_num
-		value = inb(port) | (1 << irq_num);
-		master_mask = value;
+		master_mask = inb(MASTER_MD) | (1 << irq_num);
+		outb(master_mask, MASTER_MD);
 	}
 	else
 	{
-		port = SLAVE_MD; // slave's interrupt
 		irq_num -= 8; // reduce the irq_num to be in range
 		// takes the data from the port, and turns on the given irq_num
-		value = inb(port) | (1 << irq_num);
-		slave_mask = value;
+		slave_mask = inb(SLAVE_MD) | (1 << irq_num);
+		outb(slave_mask, SLAVE_MD);
 	}
-
-	outb(value, port);
 }
 
 /*

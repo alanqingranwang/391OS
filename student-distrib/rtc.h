@@ -49,7 +49,7 @@
 #define REG_A				0x0A	// register A
 #define REG_B				0x0B	// register B
 #define REG_C				0x0C	// register C
-#define DIS_NMI			0x80	// disable NMI bit
+#define DISABLE_NMI		0x80	// disable NMI bit
 
 /* time format bits of register B */
 #define PERIODIC			0x40 	// enables periodic interrupt

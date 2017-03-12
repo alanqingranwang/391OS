@@ -32,10 +32,10 @@ void rtc_init(void)
 
 	// Enable Periodic Interrupt, default 1024 Hz rate
 	cli_and_save(flags);
-	enable_irq(RTC_IRQ);							// enable PIC to accept interrupts
-	outb((DIS_NMI | REG_B), SELECT_REG); 	// select B and disable NMI
-	prev_data = inb(CMOS_RTC_PORT);			// get current values of B
-	outb((DIS_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
+	enable_irq(RTC_IRQ);								// enable PIC to accept interrupts
+	outb((DISABLE_NMI | REG_B), SELECT_REG); 	// select B and disable NMI
+	prev_data = inb(CMOS_RTC_PORT);				// get current values of B
+	outb((DISABLE_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
 	outb((prev_data | PERIODIC), CMOS_RTC_PORT);		// turn on bit 6 of reg B
 	restore_flags(flags);
 
@@ -58,7 +58,7 @@ void rtc_init(void)
 int32_t get_update_flag(void)
 {
 	outb(REG_A, SELECT_REG);
-	return inb(CMOS_RTC_PORT) & DIS_NMI; // check if NMI disabled
+	return inb(CMOS_RTC_PORT) & DISABLE_NMI; // check if NMI disabled
 }
 
 /* JC
@@ -142,15 +142,11 @@ void read_time(void)
 
 	registerB = get_RTC_reg(REG_B); // read data
 
-	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
-	outb(REG_C, SELECT_REG);
-	inb(CMOS_RTC_PORT);			// throw away data
-
 	if(!(registerB & BINARY_MODE_BIT))
 	{	// convert to proper time
 		second = (second & NIBBLE_MASK) + ((second/16) * 10);
 		minute = (minute & NIBBLE_MASK) + ((minute/16) * 10);
-		hour = ((hour & NIBBLE_MASK) + (((hour & 0x70)/16) * 10)) | (hour & 0x80);
+		hour = (((hour & NIBBLE_MASK) + (((hour & 0x70)/16) * 10)) | (hour & 0x80)) - 6;
 		day = (day & NIBBLE_MASK) + ((day/16) * 10);
 		month = (month & NIBBLE_MASK) + ((month/16) * 10);
 		year = (year & NIBBLE_MASK) + ((year/16) * 10);
@@ -185,6 +181,11 @@ void print_time(void)
 	printf("day: %d ", day);
 	printf("month: %d ", month);
 	printf("year: %d\n", year);
-	send_eoi(8);
+
+	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
+	outb(REG_C, SELECT_REG);
+	inb(CMOS_RTC_PORT);			// throw away data
+
+	send_eoi(RTC_IRQ);
 }
 
