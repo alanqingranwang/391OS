@@ -194,10 +194,7 @@ void print_time(void)
 	printf("year: %d\n", year);
 
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
-	outb(REG_C, SELECT_REG);
-	inb(CMOS_RTC_PORT);			// throw away data
 
-	send_eoi(RTC_IRQ);
 }
 
 static uint32_t thing = 0;
@@ -216,41 +213,47 @@ void rtc_handler(void)
 {
 	// save registers
 	//save_registers();
-	asm volatile("		\n\
-			pushl %%eax			\n\
-			pushl %%ebx			\n\
-			pushl %%ecx			\n\
-			pushl %%edx			\n\
-			pushl %%esi			\n\
-			pushl %%edi			\n\
-			pushl %%ebp		\n\
-			"
-			:
-			:
-			: "memory", "cc"
-			);
+	// asm volatile("		\n\
+	// 		pushl %%eax			\n\
+	// 		pushl %%ebx			\n\
+	// 		pushl %%ecx			\n\
+	// 		pushl %%edx			\n\
+	// 		pushl %%esi			\n\
+	// 		pushl %%edi			\n\
+	// 		"
+	// 		:
+	// 		:
+	// 		: "memory", "cc"
+	// 		);
+	asm volatile("pusha\n"
+					 "pushl %ebp \n");
 	cli();
 	send_eoi(RTC_IRQ);
-	printf("%d", thing);
-	thing++;
+	// printf("%d", thing);
+	// thing++;
+	print_time();
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);
 	inb(CMOS_RTC_PORT);			// throw away data
 
 	sti();
-		asm volatile("		\n\
-			popl %%ebp			\n\
-			popl %%edi			\n\
-			popl %%esi			\n\
-			popl %%edx			\n\
-			popl %%ecx			\n\
-			popl %%ebx		\n\
-			popl %%eax			\n\
-			iret					\n\
-			"
-			:
-			:
-			// : "memory", "cc"
-				);	// consumes the stack, doesn't tear down stack
+	asm volatile("popl %ebp \n"
+					"popa\n");
+		// asm volatile("		\n\
+		// 	popl %%edi			\n\
+		// 	popl %%esi			\n\
+		// 	popl %%edx			\n\
+		// 	popl %%ecx			\n\
+		// 	popl %%ebx		\n\
+		// 	popl %%eax			\n\
+		// 	leave 				\n\
+		// 	iret					\n\
+		// 	"
+		// 	:
+		// 	:
+		// 	// : "memory", "cc"
+		// 		);	// consumes the stack, doesn't tear down stack
+	asm volatile("leave \n"
+					 "iret  \n");
 	//restore_registers();
 }
