@@ -38,26 +38,30 @@ void test_interrupts(void);
  *	save_regsters
  *		This is a macro that can be used to save all the registers before an interrupt.
  *		This is used with assembly wrapping. Should be used with interrupt handlers.
- *		pushal - pushes all the general purpose registers.
+ *		pusha - pushes all the general purpose registers.
  *		Don't create a stack using ebp and esp stuff.
  */
-#define save_registers()		\
-do {									\
-		asm volatile("push %%e");	\
+#define save_registers()				\
+do {											\
+	asm volatile("pusha\n"				\
+				 	"pushl %ebp \n");		\
 } while(0)
 
 /* JC
  * restore_reigsters
  *		This is a macro that can be used to restore all the registers after an interrupt
  *		This is used with assembly wrapping. Should be used with interrupt handlers.
- *		popal - pops all the general purpose registers.
+ *		popa - pops all the general purpose registers.
+ *		leave - the function pointer still sets up the stack
  *		iret - returns from the interrupt, this isn't like a regular ret.
  *			it does all sorts of stuff and eats the contents of the stack.
  */
-#define restore_registers()	\
-do {									\
-		asm volatile("popal \n	\
-			iret");					\
+#define restore_registers()		\
+do {										\
+	asm volatile("popl %ebp \n"	\
+					"popa\n"				\
+					"leave \n"			\
+					"iret  \n");		\
 } while(0)
 
 

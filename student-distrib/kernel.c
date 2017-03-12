@@ -148,7 +148,6 @@ entry (unsigned long magic, unsigned long addr)
 
 	idt_init();
 	/* Init the PIC */
-	clear();
 	i8259_init();
 	rtc_init();
 
