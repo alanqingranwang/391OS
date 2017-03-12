@@ -152,7 +152,8 @@ entry (unsigned long magic, unsigned long addr)
 
 	paging_init();
 
-	/* int k = 1/0; */
+	int *k = NULL;
+	int j = *k;
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 

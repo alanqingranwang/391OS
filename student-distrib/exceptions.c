@@ -35,7 +35,104 @@ void exception_31() { exception_handler(31);}
 
 void exception_handler(int i) {
     clear();
-    printf("Error %d\n", i);
+    switch(i) {
+        case 0:
+            printf("Divide Error Exception\n");
+            break;
+        case 1:
+            printf("Debug Exception\n");
+            break;
+        case 2:
+            printf("NMI Interrupt\n");
+            break;
+        case 3:
+            printf("Breakpoint Exception\n");
+            break;
+        case 4:
+            printf("Overflow Exception\n");
+            break;
+        case 5:
+            printf("BOUND Range Exceeded Exception\n");
+            break;
+        case 6:
+            printf("Invalid Opcode Exception\n");
+            break;
+        case 7:
+            printf("Device Not Available Exception\n");
+            break;
+        case 8:
+            printf("Double Fault Exception\n");
+            break;
+        case 9:
+            printf("Coprocessor Segment Overrun\n");
+            break;
+        case 10:
+            printf("Invalid TSS Exception\n");
+            break;
+        case 11:
+            printf("Segment Not Present\n");
+            break;
+        case 12:
+            printf("Stack Fault Exception\n");
+            break;
+        case 13:
+            printf("General Protection Exception\n");
+            break;
+        case 14:
+            printf("Page-Fault Exception\n");
+            break;
+        case 15:
+            printf("Reserved\n");
+            break;
+        case 16:
+            printf("x87 FPU Floating-Point Error\n");
+            break;
+        case 17:
+            printf("Alignment Check Exception\n");
+            break;
+        case 18:
+            printf("Machine-Check Exception\n");
+            break;
+        case 19:
+            printf("SIMD Floating-Point Exception\n");
+            break;
+        case 20:
+            printf("Reserved\n");
+            break;
+        case 21:
+            printf("Reserved\n");
+            break;
+        case 22:
+            printf("Reserved\n");
+            break;
+        case 23:
+            printf("Reserved\n");
+            break;
+        case 24:
+            printf("Reserved\n");
+            break;
+        case 25:
+            printf("Reserved\n");
+            break;
+        case 26:
+            printf("Reserved\n");
+            break;
+        case 27:
+            printf("Reserved\n");
+            break;
+        case 28:
+            printf("Reserved\n");
+            break;
+        case 29:
+            printf("Reserved\n");
+            break;
+        case 30:
+            printf("Reserved\n");
+            break;
+        case 31:
+            printf("Reserved\n");
+            break;
+    }
     show_blue_screen();
     while(1);
 }
