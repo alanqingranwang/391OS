@@ -1,8 +1,19 @@
 #include "idt.h"
 
+/* 
+ * idt_init
+ *   DESCRIPTION: Initializes the Interrupt Discriptor table with
+ *   x86 exceptions and chosen interrupts (all unused interrupts 
+  *  are marked not present)
+ *   INPUTS: none 
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Initializes the IDT
+ */
 void idt_init() {
     lidt(idt_desc_ptr);
 
+	/* maps each exception to its handler */
     SET_IDT_ENTRY(idt[0], exception_0);
     SET_IDT_ENTRY(idt[1], exception_1);
     SET_IDT_ENTRY(idt[2], exception_2);
@@ -36,6 +47,7 @@ void idt_init() {
     SET_IDT_ENTRY(idt[30], exception_30);
     SET_IDT_ENTRY(idt[31], exception_31);
 
+	/* initializes all exceptions (all present) */
     int i;
     for(i = 0; i < 32; i++ ) {
         idt[i].present = 1;
@@ -49,6 +61,7 @@ void idt_init() {
         idt[i].seg_selector = KERNEL_CS;
     }
 
+	/* initializes all interrupts (all not present) */
     for(i = 32; i < 256; i++) {
         SET_IDT_ENTRY(idt[i], 0);
         idt[i].present = 0;

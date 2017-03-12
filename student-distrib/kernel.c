@@ -146,14 +146,13 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 
+	/* Initialize the IDT */
 	idt_init();
 	/* Init the PIC */
 	i8259_init();
-
+	/* Initialize Paging */
 	paging_init();
 
-	int *k = NULL;
-	int j = *k;
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 

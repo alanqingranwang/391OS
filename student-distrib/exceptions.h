@@ -3,6 +3,7 @@
 
 #include "lib.h"
 
+/* ungeneralized exception handlers */
 extern void exception_0();
 extern void exception_1();
 extern void exception_2();
@@ -36,6 +37,7 @@ extern void exception_29();
 extern void exception_30();
 extern void exception_31();
 
+/* generalized exception handler */
 void exception_handler(int i);
 
 #endif

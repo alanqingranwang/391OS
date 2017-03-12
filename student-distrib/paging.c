@@ -1,5 +1,13 @@
 #include "paging.h"
 
+/* 
+ * 	paging_init
+ *   DESCRIPTION: Initializes Paging
+ *   INPUTS: none 
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Paging is initialized
+ */
 void paging_init() {
     /* set each entry to not present */
     int i;
@@ -23,7 +31,17 @@ void paging_init() {
     enablePaging();
 }
 
+/* 
+ * enablePaging
+ *   DESCRIPTION: Helper function to handle in-line-assembly for
+ *				setting up paging.
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: enables paging
+ */
 void enablePaging() {
+	
     /* Sets cr3 to address of page directory */
     asm volatile(
         "movl %0, %%eax;"
