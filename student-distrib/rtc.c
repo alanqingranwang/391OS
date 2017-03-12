@@ -202,14 +202,7 @@ void rtc_handler(void)
 {
 	// save registers
 	//save_registers();
-	asm volatile("pushl %%ebp \n 	\
-		movl %%esp, %%ebp	\n 		\
-		pushal \n 						\
-		"
-		:
-		:
-		: "ebp", "memory", "cc"
-		);
+	asm volatile("pushal");
 	printf("a");
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);
@@ -217,6 +210,6 @@ void rtc_handler(void)
 
 	send_eoi(RTC_IRQ);
 	asm volatile("popal \n 	\
-		iret");
+		iret");	// consumes the stack, doesn't tear down stack
 	//restore_registers();
 }

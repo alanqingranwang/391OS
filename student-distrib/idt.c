@@ -48,7 +48,7 @@ void idt_init() {
         idt[i].reserved2 = 1;
         idt[i].reserved3 = 0;
         idt[i].reserved4 = 0;
-        idt[i].seg_selector = KERNEL_CS;
+        idt[i].seg_selector = KERNEL_CS; // permissions and gate time
     }
 
     for(i = 32; i < 256; i++) {
