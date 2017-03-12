@@ -3,7 +3,7 @@
 #include "lib.h"
 
 void idt_init() {
-    asm ("lidt idt_desc_ptr");
+    lidt(idt_desc_ptr);
 
     SET_IDT_ENTRY(idt[0], exception_0);
     SET_IDT_ENTRY(idt[1], exception_1);
