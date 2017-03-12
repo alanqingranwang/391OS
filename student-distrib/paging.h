@@ -3,8 +3,11 @@
 
 #include "lib.h"
 
-uint32_t page_directory[1024] __attribute__((aligned(4096)));
-uint32_t page_table[1024] __attribute__((aligned(4096)));
+#define PAGE_SIZE 1024
+#define PAGE_ALIGN PAGE_SIZE * 4
+
+uint32_t page_directory[PAGE_SIZE] __attribute__((aligned(PAGE_ALIGN)));
+uint32_t page_table[PAGE_SIZE] __attribute__((aligned(PAGE_ALIGN)));
 
 void paging_init();
 void enablePaging();

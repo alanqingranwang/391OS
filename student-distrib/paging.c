@@ -3,7 +3,7 @@
 void paging_init() {
     /* set each entry to not present */
     int i;
-    for(i = 0; i < 1024; i++) {
+    for(i = 0; i < PAGE_SIZE; i++) {
         page_directory[i] = 0x00000002;  /* Only R/W is set */
     }
 
@@ -13,7 +13,7 @@ void paging_init() {
     page_directory[0]  = (uint32_t) page_table;
     page_directory[0] |= 0x00000003;
 
-    for(i = 0; i < 1024; i++) {
+    for(i = 0; i < PAGE_SIZE; i++) {
         page_table[i] = 0x00000002;
     }
 
