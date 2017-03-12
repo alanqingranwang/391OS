@@ -1,5 +1,6 @@
 #include "idt.h"
 #include "rtc.h"
+#include "lib.h"
 
 void idt_init() {
     asm ("lidt idt_desc_ptr");
@@ -52,7 +53,7 @@ void idt_init() {
 
     for(i = 32; i < 256; i++) {
         SET_IDT_ENTRY(idt[i], 0);
-        idt[i].present = 1;
+        idt[i].present = 0;
         idt[i].dpl = 0;
         idt[i].reserved0 = 0;
         idt[i].size = 1;
@@ -64,6 +65,6 @@ void idt_init() {
     }
 
     // the RTC interrupt
-    SET_IDT_ENTRY(idt[40], print_time);
+    SET_IDT_ENTRY(idt[40], test_interrupts);
     idt[40].present = 1;
 }
