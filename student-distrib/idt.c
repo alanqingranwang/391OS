@@ -1,7 +1,7 @@
 #include "idt.h"
 
 void idt_init() {
-    asm ("lidt idt_desc_ptr");
+    lidt(idt_desc_ptr);
 
     SET_IDT_ENTRY(idt[0], exception_0);
     SET_IDT_ENTRY(idt[1], exception_1);
@@ -51,7 +51,7 @@ void idt_init() {
 
     for(i = 32; i < 256; i++) {
         SET_IDT_ENTRY(idt[i], 0);
-        idt[i].present = 1;
+        idt[i].present = 0;
         idt[i].dpl = 0;
         idt[i].reserved0 = 0;
         idt[i].size = 1;

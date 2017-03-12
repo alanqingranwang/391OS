@@ -7,6 +7,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "idt.h"
+#include "paging.h"
 #include "debug.h"
 
 /* Macros. */
@@ -149,7 +150,9 @@ entry (unsigned long magic, unsigned long addr)
 	/* Init the PIC */
 	i8259_init();
 
-	int k = 1 / 0; 
+	paging_init();
+
+	/* int k = 1/0; */
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
