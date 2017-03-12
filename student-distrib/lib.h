@@ -39,6 +39,7 @@ void test_interrupts(void);
  *		This is a macro that can be used to save all the registers before an interrupt.
  *		This is used with assembly wrapping. Should be used with interrupt handlers.
  *		pushal - pushes all the general purpose registers.
+ *		Don't create a stack using ebp and esp stuff.
  */
 #define save_registers()		\
 do {									\
@@ -50,7 +51,8 @@ do {									\
  *		This is a macro that can be used to restore all the registers after an interrupt
  *		This is used with assembly wrapping. Should be used with interrupt handlers.
  *		popal - pops all the general purpose registers.
- *		iret - returns from the interrupt
+ *		iret - returns from the interrupt, this isn't like a regular ret.
+ *			it does all sorts of stuff and eats the contents of the stack.
  */
 #define restore_registers()	\
 do {									\

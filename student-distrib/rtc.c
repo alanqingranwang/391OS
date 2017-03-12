@@ -201,15 +201,15 @@ void print_time(void)
 void rtc_handler(void)
 {
 	// save registers
-	//save_registers();
-	asm volatile("pushal");
+	save_registers();
+	// asm volatile("pushal");
 	printf("a");
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);
 	inb(CMOS_RTC_PORT);			// throw away data
 
 	send_eoi(RTC_IRQ);
-	asm volatile("popal \n 	\
+	// asm volatile("popal \n 	\
 		iret");	// consumes the stack, doesn't tear down stack
-	//restore_registers();
+	restore_registers();
 }
