@@ -67,11 +67,15 @@
 #define YEAR_REG 			0x09
 
 #define NIBBLE_MASK 		0x0F
+#define CENTURY			100
+#define TENS 				10
+#define SHIFT4				16
 
 /* Externally-visible functions */
 
 /* Initialize the RTC */
 void rtc_init(void);
+void rtc_handler(void);
 int32_t get_update_flag(void);
 uint8_t get_RTC_reg(int32_t reg);
 void update_time(void);

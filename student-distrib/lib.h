@@ -32,6 +32,31 @@ void show_blue_screen(void);
 
 void test_interrupts(void);
 
+/* JC
+ *	save_regsters
+ *		This is a macro that can be used to save all the registers before an interrupt.
+ *		This is used with assembly wrapping. Should be used with interrupt handlers.
+ *		pushal - pushes all the general purpose registers.
+ */
+#define save_registers()		\
+do {									\
+		asm volatile("pushal");	\
+} while(0)
+
+/* JC
+ * restore_reigsters
+ *		This is a macro that can be used to restore all the registers after an interrupt
+ *		This is used with assembly wrapping. Should be used with interrupt handlers.
+ *		popal - pops all the general purpose registers.
+ *		iret - returns from the interrupt
+ */
+#define restore_registers()	\
+do {									\
+		asm volatile("popal \n	\
+			iret");					\
+} while(0)
+
+
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit
  * unsigned int */

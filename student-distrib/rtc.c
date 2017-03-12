@@ -22,8 +22,10 @@ static uint32_t year;
  * 	INPUT: none
  *		OUTPUT: none
  *		RETURN VALUE: none
- *		SIDE EFFECTS:
- *
+ *		SIDE EFFECTS: Enables Periodic RTC IRQ 8
+ *		NOTE:
+ *			Don't have a huge separate between a register select instruction and a r/w instructions
+ *				This will cause complications to the chip.
  */
 void rtc_init(void)
 {
@@ -32,16 +34,12 @@ void rtc_init(void)
 
 	// Enable Periodic Interrupt, default 1024 Hz rate
 	cli_and_save(flags);
-	enable_irq(RTC_IRQ);								// enable PIC to accept interrupts
 	outb((DISABLE_NMI | REG_B), SELECT_REG); 	// select B and disable NMI
 	prev_data = inb(CMOS_RTC_PORT);				// get current values of B
 	outb((DISABLE_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
 	outb((prev_data | PERIODIC), CMOS_RTC_PORT);		// turn on bit 6 of reg B
+	enable_irq(RTC_IRQ);								// enable PIC to accept interrupts
 	restore_flags(flags);
-
-	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
-	outb(REG_C, SELECT_REG);
-	inb(CMOS_RTC_PORT);			// throw away data
 }
 
 /* JC
@@ -144,12 +142,12 @@ void read_time(void)
 
 	if(!(registerB & BINARY_MODE_BIT))
 	{	// convert to proper time
-		second = (second & NIBBLE_MASK) + ((second/16) * 10);
-		minute = (minute & NIBBLE_MASK) + ((minute/16) * 10);
-		hour = (((hour & NIBBLE_MASK) + (((hour & 0x70)/16) * 10)) | (hour & 0x80)) - 6;
-		day = (day & NIBBLE_MASK) + ((day/16) * 10);
-		month = (month & NIBBLE_MASK) + ((month/16) * 10);
-		year = (year & NIBBLE_MASK) + ((year/16) * 10);
+		second = (second & NIBBLE_MASK) + ((second/SHIFT4) * TENS);
+		minute = (minute & NIBBLE_MASK) + ((minute/SHIFT4) * TENS);
+		hour = (((hour & NIBBLE_MASK) + (((hour & 0x70)/SHIFT4) * TENS)) | (hour & 0x80));
+		day = (day & NIBBLE_MASK) + ((day/SHIFT4) * TENS);
+		month = (month & NIBBLE_MASK) + ((month/SHIFT4) * TENS);
+		year = (year & NIBBLE_MASK) + ((year/SHIFT4) * TENS);
 	}
 
 	// convert from 12 hour to 24 hour if necessary
@@ -157,15 +155,16 @@ void read_time(void)
 		hour = ((hour & 0x7F) + 12) % 24;
 
 	// calculate full year
-	year += (CURRENT_YEAR/100) * 100;
+	year += (CURRENT_YEAR/CENTURY) * CENTURY;
 	if(year < CURRENT_YEAR)
-		year += 100;
+		year += CENTURY;
 }
 
 /* JC - Used as a test for interrupt
  * print_time
  * 	DESCRIPTION:
  *			Reads from the local variables and prints out the time
+ *			This is used for IRQ 8 test
  * 	INPUT: none
  *		OUTPUT: outputs time
  *		RETURN VALUE: none
@@ -189,3 +188,35 @@ void print_time(void)
 	send_eoi(RTC_IRQ);
 }
 
+/* JC
+ * rtc_handler
+ * 	DESCRIPTION:
+ *			
+ * 	INPUT: none
+ *		OUTPUT: none
+ *		RETURN VALUE: 
+ *		SIDE EFFECTS: none
+ *
+ */
+void rtc_handler(void)
+{
+	// save registers
+	//save_registers();
+	asm volatile("pushl %%ebp \n 	\
+		movl %%esp, %%ebp	\n 		\
+		pushal \n 						\
+		"
+		:
+		:
+		: "ebp", "memory", "cc"
+		);
+	printf("a");
+	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
+	outb(REG_C, SELECT_REG);
+	inb(CMOS_RTC_PORT);			// throw away data
+
+	send_eoi(RTC_IRQ);
+	asm volatile("popal \n 	\
+		iret");
+	//restore_registers();
+}

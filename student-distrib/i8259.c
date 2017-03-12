@@ -35,10 +35,6 @@ i8259_init(void)
 	outb(BYTE_MASK, MASTER_MD);
 	outb(BYTE_MASK, SLAVE_MD);
 
-	// initalize all IRQ to off, PIC is active low
-	master_mask = BYTE_MASK;
-	slave_mask = BYTE_MASK;
-
 	// assume that all port writes are immediate
 	// master init
 	outb(ICW1, MASTER_8259_PORT);		// ICW1: select 8259A-1 init
@@ -51,6 +47,10 @@ i8259_init(void)
 	outb(ICW2_SLAVE, SLAVE_MD);		// ICW2: 8259-2 IR0-7 mapped to 0x28 - 0x2F
 	outb(ICW3_SLAVE, SLAVE_MD);		// 8259A-2 is a slave on master's IR2
 	outb(ICW4, SLAVE_MD);				// (slave's support for AEOI in flat mode is to be investigated)
+
+	// initalize all IRQ to off, PIC is active low
+	master_mask = BYTE_MASK;
+	slave_mask = BYTE_MASK;
 
 	// enable slave IRQ 2
 	enable_irq(SLAVE_IRQ);
