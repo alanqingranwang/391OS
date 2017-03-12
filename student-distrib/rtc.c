@@ -38,9 +38,21 @@ void rtc_init(void)
 	prev_data = inb(CMOS_RTC_PORT);				// get current values of B
 	outb((DISABLE_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
 	outb((prev_data | PERIODIC), CMOS_RTC_PORT);		// turn on bit 6 of reg B
+	
+	// setting frequency
+	// outb((DISABLE_NMI | REG_A), SELECT_REG);
+	// prev_data = inb(CMOS_RTC_PORT);
+	// outb((DISABLE_NMI | REG_A), SELECT_REG);
+	// outb((prev_data & 0xF0) | (0x0F), CMOS_RTC_PORT);
+
 	enable_irq(RTC_IRQ);								// enable PIC to accept interrupts
 	restore_flags(flags);
 }
+
+// void set_frequency()
+// {
+
+// }
 
 /* JC
  * get_update_flag
@@ -188,6 +200,8 @@ void print_time(void)
 	send_eoi(RTC_IRQ);
 }
 
+static uint32_t thing = 0;
+static uint32_t fla;
 /* JC
  * rtc_handler
  * 	DESCRIPTION:
@@ -201,15 +215,42 @@ void print_time(void)
 void rtc_handler(void)
 {
 	// save registers
-	save_registers();
-	// asm volatile("pushal");
-	printf("a");
+	//save_registers();
+	asm volatile("		\n\
+			pushl %%eax			\n\
+			pushl %%ebx			\n\
+			pushl %%ecx			\n\
+			pushl %%edx			\n\
+			pushl %%esi			\n\
+			pushl %%edi			\n\
+			pushl %%ebp		\n\
+			"
+			:
+			:
+			: "memory", "cc"
+			);
+	cli();
+	send_eoi(RTC_IRQ);
+	printf("%d", thing);
+	thing++;
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);
 	inb(CMOS_RTC_PORT);			// throw away data
 
-	send_eoi(RTC_IRQ);
-	// asm volatile("popal \n 	\
-		iret");	// consumes the stack, doesn't tear down stack
-	restore_registers();
+	sti();
+		asm volatile("		\n\
+			popl %%ebp			\n\
+			popl %%edi			\n\
+			popl %%esi			\n\
+			popl %%edx			\n\
+			popl %%ecx			\n\
+			popl %%ebx		\n\
+			popl %%eax			\n\
+			iret					\n\
+			"
+			:
+			:
+			// : "memory", "cc"
+				);	// consumes the stack, doesn't tear down stack
+	//restore_registers();
 }

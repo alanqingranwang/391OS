@@ -31,10 +31,6 @@ i8259_init(void)
 	uint32_t flags; // uint32_t suppose to be unsigned long 
 	cli_and_save(flags); // save original flag state and clear interrupts
 
-	// mask the 0x21 and 0xA1 mask/data registers
-	outb(BYTE_MASK, MASTER_MD);
-	outb(BYTE_MASK, SLAVE_MD);
-
 	// assume that all port writes are immediate
 	// master init
 	outb(ICW1, MASTER_8259_PORT);		// ICW1: select 8259A-1 init
@@ -51,6 +47,10 @@ i8259_init(void)
 	// initalize all IRQ to off, PIC is active low
 	master_mask = BYTE_MASK;
 	slave_mask = BYTE_MASK;
+
+	// mask the 0x21 and 0xA1 mask/data registers
+	outb(BYTE_MASK, MASTER_MD);
+	outb(BYTE_MASK, SLAVE_MD);
 
 	// enable slave IRQ 2
 	enable_irq(SLAVE_IRQ);
@@ -86,14 +86,14 @@ enable_irq(uint32_t irq_num)
 	if(irq_num < 8)
 	{
 		// takes the data from the port, and turns on the given irq_num
-		master_mask = inb(MASTER_MD) & ~(1 << irq_num);
+		master_mask &= ~(1 << irq_num);
 		outb(master_mask, MASTER_MD);
 	}
 	else
 	{
 		irq_num -= 8; // reduce the irq_num to be in range
 		// takes the data from the port, and turns on the given irq_num
-		slave_mask = inb(SLAVE_MD) & ~(1 << irq_num);
+		slave_mask &= ~(1 << irq_num);
 		outb(slave_mask, SLAVE_MD);
 	}
 }
@@ -116,14 +116,14 @@ disable_irq(uint32_t irq_num)
 	if(irq_num < 8)
 	{
 		// takes the data from the port, and turns on the given irq_num
-		master_mask = inb(MASTER_MD) | (1 << irq_num);
+		master_mask |= (1 << irq_num);
 		outb(master_mask, MASTER_MD);
 	}
 	else
 	{
 		irq_num -= 8; // reduce the irq_num to be in range
 		// takes the data from the port, and turns on the given irq_num
-		slave_mask = inb(SLAVE_MD) | (1 << irq_num);
+		slave_mask |= (1 << irq_num);
 		outb(slave_mask, SLAVE_MD);
 	}
 }
@@ -153,8 +153,8 @@ send_eoi(uint32_t irq_num)
 {
 	if(irq_num >= 8) // slave interrupts
 	{
-		outb((EOI | (irq_num-8)), SLAVE_8259_PORT); 	// send end of interrupt to slave
 		outb((EOI | SLAVE_IRQ), MASTER_8259_PORT);	// tell master that slave is done too
+		outb((EOI | (irq_num-8)), SLAVE_8259_PORT); 	// send end of interrupt to slave
 	}
 	else
 		outb((EOI | irq_num), MASTER_8259_PORT); 		// send end of interrupt to master

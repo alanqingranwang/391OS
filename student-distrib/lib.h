@@ -43,7 +43,7 @@ void test_interrupts(void);
  */
 #define save_registers()		\
 do {									\
-		asm volatile("pushal");	\
+		asm volatile("push %%e");	\
 } while(0)
 
 /* JC

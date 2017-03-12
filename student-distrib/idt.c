@@ -4,6 +4,19 @@
 
 void idt_init() {
     lidt(idt_desc_ptr);
+    
+    int i;
+    for(i = 0; i < 32; i++ ) {
+        idt[i].present = 1;
+        idt[i].dpl = 0;
+        idt[i].reserved0 = 0;
+        idt[i].size = 1;
+        idt[i].reserved1 = 1;
+        idt[i].reserved2 = 1;
+        idt[i].reserved3 = 0;
+        idt[i].reserved4 = 0;
+        idt[i].seg_selector = KERNEL_CS; // permissions and gate time
+    }
 
     SET_IDT_ENTRY(idt[0], exception_0);
     SET_IDT_ENTRY(idt[1], exception_1);
@@ -38,21 +51,7 @@ void idt_init() {
     SET_IDT_ENTRY(idt[30], exception_30);
     SET_IDT_ENTRY(idt[31], exception_31);
 
-    int i;
-    for(i = 0; i < 32; i++ ) {
-        idt[i].present = 1;
-        idt[i].dpl = 0;
-        idt[i].reserved0 = 0;
-        idt[i].size = 1;
-        idt[i].reserved1 = 1;
-        idt[i].reserved2 = 1;
-        idt[i].reserved3 = 0;
-        idt[i].reserved4 = 0;
-        idt[i].seg_selector = KERNEL_CS; // permissions and gate time
-    }
-
     for(i = 32; i < 256; i++) {
-        SET_IDT_ENTRY(idt[i], 0);
         idt[i].present = 0;
         idt[i].dpl = 0;
         idt[i].reserved0 = 0;
@@ -62,9 +61,10 @@ void idt_init() {
         idt[i].reserved3 = 0;
         idt[i].reserved4 = 0;
 		idt[i].seg_selector = KERNEL_CS;
+        SET_IDT_ENTRY(idt[i], 0);
     }
 
     // the RTC interrupt
-    SET_IDT_ENTRY(idt[40], rtc_handler);
     idt[40].present = 1;
+    SET_IDT_ENTRY(idt[40], rtc_handler);
 }
