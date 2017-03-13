@@ -58,7 +58,11 @@ void keyboard_handler() {
     int32_t i;
     key = inb(KBD_DATA_PORT);
 
-    if(key >= 0x02 && key <= 0x32) {
+    if(key == 0x29) {
+        test_interrupts();
+    }
+
+    else if(key >= 0x02 && key <= 0x32) {
         i = 0;
         while(1) {
             if(key == kbd_scan_code[i])

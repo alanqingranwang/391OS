@@ -34,6 +34,7 @@ void rtc_init(void)
 
 	// Enable Periodic Interrupt, default 1024 Hz rate
 	cli_and_save(flags);
+	
 	outb((DISABLE_NMI | REG_B), SELECT_REG); 	// select B and disable NMI
 	prev_data = inb(CMOS_RTC_PORT);				// get current values of B
 	outb((DISABLE_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
