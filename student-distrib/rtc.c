@@ -34,6 +34,7 @@ void rtc_init(void)
 
 	// Enable Periodic Interrupt, default 1024 Hz rate
 	cli_and_save(flags);
+	
 	outb((DISABLE_NMI | REG_B), SELECT_REG); 	// select B and disable NMI
 	prev_data = inb(CMOS_RTC_PORT);				// get current values of B
 	outb((DISABLE_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
@@ -63,7 +64,7 @@ void rtc_handler(void)
 
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
 
-	print_time();
+	//print_time();
 
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);
@@ -159,7 +160,7 @@ void read_time(void)
 	uint8_t registerB; // holds data for register B
 
 	// wait till we can interrupt
-	while(get_update_flag()); 
+	while(get_update_flag());
 	update_time(); // update time variables
 
 	// keep getting new time till it's different
@@ -221,4 +222,3 @@ void print_time(void)
 	printf("month: %d ", month);
 	printf("year: %d\n", year);
 }
-

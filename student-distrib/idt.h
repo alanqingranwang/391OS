@@ -3,6 +3,9 @@
 
 #include "x86_desc.h"
 #include "exceptions.h"
+#include "rtc.h"
+#include "lib.h"
+#include "keyboard.h"
 
 void idt_init(void);
 
