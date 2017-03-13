@@ -7,6 +7,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "rtc.h"	// JC
+#include "paging.h"
 #include "idt.h"
 #include "debug.h"
 

@@ -57,7 +57,9 @@ void rtc_handler(void)
 {
 	// save registers
 	save_registers();
-	cli();
+	// save flags
+	uint32_t flags;
+	cli_and_save(flags);
 
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
 
@@ -67,7 +69,7 @@ void rtc_handler(void)
 	outb(REG_C, SELECT_REG);
 	inb(CMOS_RTC_PORT);			// throw away data
 
-	sti();
+	restore_flags(flags); // restore interrupt state
 	restore_registers();
 }
 

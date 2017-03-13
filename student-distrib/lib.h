@@ -43,8 +43,7 @@ void test_interrupts(void);
  */
 #define save_registers()				\
 do {											\
-	asm volatile("pusha\n"				\
-				 	"pushl %ebp \n");		\
+	asm volatile("pushal\n");			\
 } while(0)
 
 /* JC
@@ -58,8 +57,7 @@ do {											\
  */
 #define restore_registers()		\
 do {										\
-	asm volatile("popl %ebp \n"	\
-					"popa\n"				\
+	asm volatile("popal\n"			\
 					"leave \n"			\
 					"iret  \n");		\
 } while(0)
