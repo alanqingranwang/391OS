@@ -11,6 +11,9 @@ void keyboard__handler() {
     unsigned char status;
     unsigned char key;
 
+    save_registers();
+    cli();
+
     send_eoi(KBD_IRQ);
     status = inb(KBD_STATUS_PORT);
 
@@ -19,5 +22,6 @@ void keyboard__handler() {
         putc(key);
     //}
 
-    asm volatile("iret");
+    sti();
+    restore_registers();
 }

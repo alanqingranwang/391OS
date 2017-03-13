@@ -3,6 +3,7 @@
 
 #include "i8259.h"
 #include "idt.h"
+#include "lib.h"
 
 #define KBD_IRQ 0x21
 #define KBD_DATA_PORT   0x60
