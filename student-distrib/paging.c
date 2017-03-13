@@ -9,30 +9,25 @@
  *   SIDE EFFECTS: Paging is initialized
  */
 void paging_init() {
-    /* initialize Page directory */
+    /* set each entry to not present */
     int i;
     for(i = 0; i < 1024; i++) {
         page_directory[i] = 0x00000002;  /* Only R/W is set */
     }
 
-	/* set up memory from (4-8MB) as one 4MB page*/
     page_directory[1]  = 0x00400000;
     page_directory[1] |= 0x00000083;
 
-	/* split memory from (0-4MB) into 4kb pages */
     page_directory[0]  = (uint32_t) page_table;
     page_directory[0] |= 0x00000003;
-	
-	/* initialize the video memory page table */
+
     for(i = 0; i < 1024; i++) {
-        page_table[i] = 0x00000002; /* Only R/W is set */
+        page_table[i] = 0x00000002;
     }
 
-	/* assign video memory a page */
     page_table[VIDEO >> 12]  = VIDEO;
     page_table[VIDEO >> 12] |= 0x00000003;
 
-	/* in line assembly for paging initialization */
     enablePaging();
 }
 
@@ -60,9 +55,9 @@ void enablePaging() {
         "movl %%cr4, %%eax;"
         "orl  $0x00000010, %%eax;"
         "movl %%eax, %%cr4;"
-    :	/* No outputs */
-    :	/* No inputs */
-    :   "%eax" /* clobbers eax */
+    :
+    :
+    :   "%eax"
     );
 
     /* Sets PG flag */
@@ -70,8 +65,8 @@ void enablePaging() {
         "movl  %%cr0, %%eax;"
         "orl  $0x80000000, %%eax;"
         "movl %%eax, %%cr0;"
-    :	/* No outputs */
-    :	/* No inputs */
-    : "%eax" /* clobbers eax */
+    :
+    :
+    : "%eax"
     );
 }
