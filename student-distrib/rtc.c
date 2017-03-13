@@ -4,7 +4,6 @@
  */
 
 #include "rtc.h"
-#include "lib.h"
 
 /* Keeps track of current time */
 static uint8_t second;
@@ -35,6 +34,11 @@ void rtc_init(void)
 	// Enable Periodic Interrupt, default 1024 Hz rate
 	cli_and_save(flags);
 	
+	// set the IDT table entry for RTC
+ 	// Map RTC interrupts to IDT
+   idt[40].present = 1;
+   SET_IDT_ENTRY(idt[40], rtc_handler);
+
 	outb((DISABLE_NMI | REG_B), SELECT_REG); 	// select B and disable NMI
 	prev_data = inb(CMOS_RTC_PORT);				// get current values of B
 	outb((DISABLE_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
@@ -65,9 +69,9 @@ void rtc_handler(void)
 	cli_and_save(flags);
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
 
-	// INSERT HERE FOR THE HANDLER TO DO SOMETHING
-	//print_time();
-	//test_interrupts();
+	// INSERT HERE FOR THE HANDLER TO DO SOMETHING OR UNCOMMENT
+	// print_time();	// this one looks cooler
+	// test_interrupts();	// this one looks like a rave
 
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);

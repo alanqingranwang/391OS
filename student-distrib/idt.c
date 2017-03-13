@@ -1,5 +1,17 @@
 #include "idt.h"
 
+/* 
+ *  idt_init
+ *      DESCRIPTION:
+ *          Initializes the Interrupt Descriptor Table (IDT)
+ *              with the first 32 Intel predefined exceptions.
+ *          Initializes the vector numbers from 32 to 255 with
+ *              no function pointer and not present.
+ *      INPUT: none
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: initializes the IDT
+ */
 void idt_init() {
     lidt(idt_desc_ptr); // load IDT
 
@@ -67,11 +79,4 @@ void idt_init() {
 		idt[i].seg_selector = KERNEL_CS;
         SET_IDT_ENTRY(idt[i], 0);
     }
-
-    // Map keyboard and RTC interrupts to IDT
-    idt[33].present = 1;
-    SET_IDT_ENTRY(idt[33], keyboard_handler);
-
-    idt[40].present = 1;
-    SET_IDT_ENTRY(idt[40], rtc_handler);
 }

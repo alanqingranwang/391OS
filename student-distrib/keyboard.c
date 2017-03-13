@@ -39,8 +39,18 @@ static unsigned char kbd_ascii_key_map[TOTAL_SCANCODES] =
  *      RETURN VALUE: none
  *      SIDE EFFECTS: none
  */
-void keyboard_init() {
-    enable_irq(KBD_IRQ);
+void keyboard_init()
+{
+    uint32_t flags;
+    cli_and_save(flags);
+
+    // set the IDT table entry for KBD
+    // Map keyboard interrupts to IDT
+    idt[33].present = 1;
+    SET_IDT_ENTRY(idt[33], keyboard_handler);    
+
+    enable_irq(KBD_IRQ);    // enable IRQ 1
+    restore_flags(flags);
 }
 
 /* AW

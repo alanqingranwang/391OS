@@ -150,11 +150,16 @@ entry (unsigned long magic, unsigned long addr)
 	idt_init();	// initialize the IDT
 	i8259_init();	// initialize the PIC
 	keyboard_init();	// initialize the keyboard
+	// to test rtc, uncomment function in handler
 	rtc_init();	// initialize the RTC
 	paging_init();	// initialize Paging
 
-	int *k = NULL;
-	int j = *k;
+	// testing exception 0
+	// int32_t p = 1/0;
+
+	// testing page fault (paging exists)
+	// int32_t *k = NULL;
+	// int32_t j = *k;
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
