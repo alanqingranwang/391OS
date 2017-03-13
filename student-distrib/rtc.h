@@ -20,7 +20,6 @@
 #ifndef _RTC_H
 #define _RTC_H
 
-#include "types.h"
 #include "i8259.h"
 
 /* port 0x70 is used to specify an index or "register number"
@@ -58,6 +57,7 @@
 
 /* Keeping track of time */
 #define CURRENT_YEAR		2017
+
 /* Registers for each time info */
 #define SEC_REG 			0x00
 #define MIN_REG			0x02

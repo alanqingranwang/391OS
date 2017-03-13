@@ -47,7 +47,9 @@ void rtc_init(void)
 /* JC
  * rtc_handler
  * 	DESCRIPTION:
- *			This function is called when an RTC interrupt occurs. Make sure to follow interrupt convention
+ *			This function is called when an RTC interrupt occurs.
+ *			Add functionality to make the handler to do additional tasks
+ *				after each itnerrupt.
  * 	INPUT: none
  *		OUTPUT: none
  *		RETURN VALUE: none
@@ -56,19 +58,22 @@ void rtc_init(void)
  */
 void rtc_handler(void)
 {
-	// save registers
+	// save registers, assembly wrapping
 	save_registers();
-	cli();
-
+	uint32_t flags;
+   // save previous state of interrupts, and prevent them
+	cli_and_save(flags);
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
 
+	// INSERT HERE FOR THE HANDLER TO DO SOMETHING
 	//print_time();
+	//test_interrupts();
 
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);
-	inb(CMOS_RTC_PORT);			// throw away data
+	inb(CMOS_RTC_PORT);	// throw away data
 
-	sti();
+	restore_flags(flags);
 	restore_registers();
 }
 

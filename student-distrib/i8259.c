@@ -129,10 +129,10 @@ disable_irq(uint32_t irq_num)
 }
 
 /*
-EOIs may indicate the interrupt vector implicitly, or explicitly. An explicit EOI vector is indicated with the EOI,
-whereas an implicit EOI vector will typically use a vector as indicated
-by the PICs priority schema. For example, the highest vector in the ISR. Also, EOIs may be sent at the end of interrupt
-processing by an interrupt handler, or the operation of a PIC may be set to auto-EOI at the start of the interrupt handler.
+ *	EOIs may indicate the interrupt vector implicitly, or explicitly. An explicit EOI vector is indicated with the EOI,
+ * whereas an implicit EOI vector will typically use a vector as indicated
+ * by the PICs priority schema. For example, the highest vector in the ISR. Also, EOIs may be sent at the end of interrupt
+ * processing by an interrupt handler, or the operation of a PIC may be set to auto-EOI at the start of the interrupt handler.
  */
 
 /* Send end-of-interrupt signal for the specified IRQ */
