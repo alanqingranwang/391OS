@@ -1,10 +1,12 @@
 #include "idt.h"
 
 void idt_init() {
-    lidt(idt_desc_ptr);
+    lidt(idt_desc_ptr); // load IDT
 
     int i;
-    for(i = 0; i < 32; i++ ) {
+    /* For exceptions, entries are present,
+       kernel-level access, configure for interrupt gates. */
+    for(i = 0; i < NUM_EXCEPTIONS; i++) {
         idt[i].present = 1;
         idt[i].dpl = 0;
         idt[i].reserved0 = 0;
@@ -13,9 +15,10 @@ void idt_init() {
         idt[i].reserved2 = 1;
         idt[i].reserved3 = 0;
         idt[i].reserved4 = 0;
-        idt[i].seg_selector = KERNEL_CS; // permissions and gate time
+        idt[i].seg_selector = KERNEL_CS;
     }
 
+    // Map exceptions to IDT
     SET_IDT_ENTRY(idt[0], exception_0);
     SET_IDT_ENTRY(idt[1], exception_1);
     SET_IDT_ENTRY(idt[2], exception_2);
@@ -49,7 +52,10 @@ void idt_init() {
     SET_IDT_ENTRY(idt[30], exception_30);
     SET_IDT_ENTRY(idt[31], exception_31);
 
-    for(i = 32; i < 256; i++) {
+    /* For the rest, entries are not present,
+       kernel-level access, configure for interrupt gates.
+       Clear IDT entries for safety. */
+    for(i = NUM_EXCEPTIONS; i < IDT_SIZE; i++) {
         idt[i].present = 0;
         idt[i].dpl = 0;
         idt[i].reserved0 = 0;
@@ -62,10 +68,10 @@ void idt_init() {
         SET_IDT_ENTRY(idt[i], 0);
     }
 
+    // Map keyboard and RTC interrupts to IDT
     idt[33].present = 1;
     SET_IDT_ENTRY(idt[33], keyboard_handler);
 
-    // the RTC interrupt
     idt[40].present = 1;
     SET_IDT_ENTRY(idt[40], rtc_handler);
 }

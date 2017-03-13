@@ -153,6 +153,9 @@ entry (unsigned long magic, unsigned long addr)
 	rtc_init();	// initialize the RTC
 	paging_init();	// initialize Paging
 
+	int *k = NULL;
+	int j = *k;
+
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
