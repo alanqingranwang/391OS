@@ -46,8 +46,8 @@ void keyboard_init()
 
     // set the IDT table entry for KBD
     // Map keyboard interrupts to IDT
-    idt[33].present = 1;
-    SET_IDT_ENTRY(idt[33], keyboard_handler);    
+    idt[KBD_VECTOR_NUM].present = 1;
+    SET_IDT_ENTRY(idt[KBD_VECTOR_NUM], keyboard_handler);    
 
     enable_irq(KBD_IRQ);    // enable IRQ 1
     restore_flags(flags);
