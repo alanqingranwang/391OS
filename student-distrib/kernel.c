@@ -6,9 +6,8 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "i8259.h"
+#include "rtc.h"	// JC
 #include "idt.h"
-#include "paging.h"
-#include "keyboard.h"
 #include "debug.h"
 
 /* Macros. */
@@ -150,10 +149,8 @@ entry (unsigned long magic, unsigned long addr)
 	idt_init();
 	/* Init the PIC */
 	i8259_init();
+	rtc_init();
 
-	keyboard_init();
-
-	paging_init();
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
@@ -162,8 +159,8 @@ entry (unsigned long magic, unsigned long addr)
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
-	/*printf("Enabling Interrupts\n");
-	sti();*/
+	printf("Enabling Interrupts\n");
+	sti();
 
 	/* Execute the first program (`shell') ... */
 
