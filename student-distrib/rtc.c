@@ -36,8 +36,8 @@ void rtc_init(void)
 	
 	// set the IDT table entry for RTC
  	// Map RTC interrupts to IDT
-   idt[40].present = 1;
-   SET_IDT_ENTRY(idt[40], rtc_handler);
+   idt[RTC_VECTOR_NUM].present = 1;
+   SET_IDT_ENTRY(idt[RTC_VECTOR_NUM], rtc_handler);
 
 	outb((DISABLE_NMI | REG_B), SELECT_REG); 	// select B and disable NMI
 	prev_data = inb(CMOS_RTC_PORT);				// get current values of B

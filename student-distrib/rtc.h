@@ -39,7 +39,6 @@
 #define CMOS_RTC_PORT	0x71	// r/w from/to the CMOS configuration space
 
 #define RTC_IRQ			8		// slave IRQ 0
-#define RTC_VECTOR_NUM 	40		// 0x28
 
 /* Write these to port 0x70 to select and/or disable NMI.
  *	Register A - used to select an interrupt rate.

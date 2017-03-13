@@ -16,7 +16,6 @@
 #define KBD_STATUS_PORT 0x64
 
 #define KBD_IRQ 1					// the PIC IRQ for keyboard
-#define KBD_VECTOR_NUM 	33		// 0x21
 
 /* Scancode definitions */
 #define ABC_LOW_SCANS 	0x02
