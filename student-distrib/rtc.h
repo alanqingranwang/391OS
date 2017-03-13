@@ -8,8 +8,8 @@
  *		http://wiki.osdev.org/RTC
  *		RTC is capable of multiple frequencies but is pre-programmed
  *			at 32.768 kHz. This is the only one that keeps proper time.
- *		Stronly advised not to change this base frequency.
- *		
+ *		Strongly advised not to change this base frequency.
+ *
  *		The output (interrupt) divider frequency is by default set so
  *			that there is an interrupt rate of 1024 Hz.
  *
@@ -20,8 +20,9 @@
 #ifndef _RTC_H
 #define _RTC_H
 
-#include "types.h"
 #include "i8259.h"
+#include "lib.h"
+#include "idt.h"
 
 /* port 0x70 is used to specify an index or "register number"
  *		and to disable non-maskable-interrupt (NMI).
@@ -30,13 +31,15 @@
  *		Low order of any byte is used to address CMOS registers.
  * port 0x71 is used to read or write from/to that byte of CMOS
  *		configuration space.
- * 
+ *
  *	Only three bytes are used, which are called RTC Status Register A, B, and C.
  * 	Offset 0xA, 0xB, 0xC in CMOS RAM.
  */
 #define SELECT_REG		0x70	// output to this port to select register
 #define CMOS_RTC_PORT	0x71	// r/w from/to the CMOS configuration space
+
 #define RTC_IRQ			8		// slave IRQ 0
+#define RTC_VECTOR_NUM 	40		// 0x28
 
 /* Write these to port 0x70 to select and/or disable NMI.
  *	Register A - used to select an interrupt rate.
@@ -58,6 +61,7 @@
 
 /* Keeping track of time */
 #define CURRENT_YEAR		2017
+
 /* Registers for each time info */
 #define SEC_REG 			0x00
 #define MIN_REG			0x02
@@ -83,4 +87,3 @@ void read_time(void);
 void print_time(void);
 
 #endif /* _RTC_H */
-

@@ -567,6 +567,12 @@ test_interrupts(void)
 	}
 }
 
+/*
+* void show_blue_screen(void)
+*   Inputs: void
+*   Return Value: void
+*	Function: Draws a blue color to screen, to be used for exceptions
+*/
 void
 show_blue_screen(void) {
 

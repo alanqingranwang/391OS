@@ -30,12 +30,20 @@ int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
 int32_t bad_userspace_addr(const void* addr, int32_t len);
 int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
+/*
+ *	show_blue_screen
+ *		Draws a blue color onto video memory, to be used for exceptions
+ */
 void show_blue_screen(void);
 
+/*
+ *	test_interrupts
+ *		Increments video memory. To be used to test rtc
+ */
 void test_interrupts(void);
 
-/* JC
- *	save_regsters
+/*
+ *	save_registers
  *		This is a macro that can be used to save all the registers before an interrupt.
  *		This is used with assembly wrapping. Should be used with interrupt handlers.
  *		pusha - pushes all the general purpose registers.
@@ -47,8 +55,8 @@ do {											\
 				);		\
 } while(0)
 
-/* JC
- * restore_reigsters
+/*
+ * restore_registers
  *		This is a macro that can be used to restore all the registers after an interrupt
  *		This is used with assembly wrapping. Should be used with interrupt handlers.
  *		popa - pops all the general purpose registers.
