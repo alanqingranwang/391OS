@@ -1,5 +1,6 @@
 #include "exceptions.h"
 
+/* map exception to proper handler function */
 void exception_0() { exception_handler(0);}
 void exception_1() { exception_handler(1);}
 void exception_2() { exception_handler(2);}
@@ -33,6 +34,15 @@ void exception_29() { exception_handler(29);}
 void exception_30() { exception_handler(30);}
 void exception_31() { exception_handler(31);}
 
+/* 
+ * exception_handler
+ *   DESCRIPTION: Prints proper exception to blue screen of death
+ *   INPUTS: i - determines which exception was reached
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Halts OS by looping infinitely. Displays blue
+ *   screen of death.
+ */
 void exception_handler(int i) {
     clear();
     switch(i) {
