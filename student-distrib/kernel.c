@@ -7,6 +7,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "rtc.h"	// JC
+#include "paging.h"
 #include "idt.h"
 #include "debug.h"
 
@@ -150,7 +151,7 @@ entry (unsigned long magic, unsigned long addr)
 	/* Init the PIC */
 	i8259_init();
 	rtc_init();
-
+	paging_init();
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
