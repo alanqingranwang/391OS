@@ -1,10 +1,8 @@
 #include "idt.h"
-#include "rtc.h"
-#include "lib.h"
 
 void idt_init() {
     lidt(idt_desc_ptr);
-    
+
     int i;
     for(i = 0; i < 32; i++ ) {
         idt[i].present = 1;
@@ -63,6 +61,9 @@ void idt_init() {
 		idt[i].seg_selector = KERNEL_CS;
         SET_IDT_ENTRY(idt[i], 0);
     }
+
+    idt[33].present = 1;
+    SET_IDT_ENTRY(idt[33], keyboard_handler);
 
     // the RTC interrupt
     idt[40].present = 1;
