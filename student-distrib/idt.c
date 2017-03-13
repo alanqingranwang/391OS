@@ -79,4 +79,7 @@ void idt_init() {
 		idt[i].seg_selector = KERNEL_CS;
         SET_IDT_ENTRY(idt[i], 0);
     }
+
+    // mapped keyboard in keyboard init
+    // mapped RTC in RTC init
 }
