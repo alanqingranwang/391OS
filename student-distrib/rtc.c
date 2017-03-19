@@ -91,7 +91,7 @@ void rtc_handler(void)
 // }
 
 /* JC
- * get_update_flag
+ * get_update_flag - helper
  * 	DESCRIPTION:
  *			reads from register A, and checks whether NMI is enable/disabled
  * 	INPUT: none
@@ -125,7 +125,7 @@ uint8_t get_RTC_reg(int32_t reg)
 }
 
 /* JC
- * update_time
+ * update_time - helper
  * 	DESCRIPTION:
  *			Updates all the local variables declared at the top.
  * 	INPUT: none
@@ -155,7 +155,7 @@ void update_time(void)
  *		SIDE EFFECTS: none
  *
  */
-void read_time(void)
+void binary_to_real_time(void)
 {
 	// hold the previous data
 	uint8_t last_second;

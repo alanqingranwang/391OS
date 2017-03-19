@@ -6,6 +6,7 @@
 #define _LIB_H
 
 #include "types.h"
+//#include "syscall.h" // no interaction, but allows users to simply include lib.h to access
 
 #define VIDEO 0xB8000
 

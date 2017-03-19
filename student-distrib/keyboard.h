@@ -9,6 +9,7 @@
 
 #include "i8259.h"
 #include "lib.h"
+/* adding the interrupt to the table is the job of the init */
 #include "idt.h"
 
 /* Keyboard ports */

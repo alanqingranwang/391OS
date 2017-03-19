@@ -1,5 +1,5 @@
 /* JC
- * rtc.h - Defines used in interactions with the RTC interrupt port
+ * rtc.h - Declarations used in interactions with the RTC interrupt port
  *		on the PIC. IRQ 8 (IRQ 0 on the slave)
  *	tab size = 3, no space
  */
@@ -22,6 +22,7 @@
 
 #include "i8259.h"
 #include "lib.h"
+/* adding the interrupt to the table is the job of the init */
 #include "idt.h"
 
 /* port 0x70 is used to specify an index or "register number"
@@ -79,10 +80,31 @@
 /* Initialize the RTC */
 void rtc_init(void);
 void rtc_handler(void);
+
+/* Real-Time Clock Driver */
+// open
+// read
+// write
+// close
+
+// Change clock frequency
+
+// driver
+
+
+/* Additional Functionalities */
+
+/* Following 4 functions are used to
+ * update the static global time variables
+ */
 int32_t get_update_flag(void);
 uint8_t get_RTC_reg(int32_t reg);
 void update_time(void);
-void read_time(void);
+void binary_to_real_time(void);
+
+/* Calls binary_to_real_time to get current
+ * time and prints them out
+ */
 void print_time(void);
 
 #endif /* _RTC_H */
