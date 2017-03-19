@@ -221,7 +221,7 @@ void binary_to_real_time(void)
  */
 void print_time(void)
 {
-	read_time();
+	binary_to_real_time();
 	printf("second: %d ", second);
 	printf("minute: %d ", minute);
 	printf("hour: %d ", hour);
