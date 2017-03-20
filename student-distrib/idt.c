@@ -80,6 +80,11 @@ void idt_init() {
         SET_IDT_ENTRY(idt[i], 0);
     }
 
+    /* Turn on system call interrupt 0x80 */
+    // uncomment when done with system call
+    // idt[SYSCALL_VECTOR_NUM].present = 1;
+    // SET_IDT_ENTRY(idt[SYSCALL_VECTOR_NUM], syscall_handler);
+
     // mapped keyboard in keyboard init
     // mapped RTC in RTC init
 }

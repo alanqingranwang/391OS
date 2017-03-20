@@ -6,7 +6,6 @@
 #define _LIB_H
 
 #include "types.h"
-//#include "syscall.h" // no interaction, but allows users to simply include lib.h to access
 
 #define VIDEO 0xB8000
 
@@ -52,8 +51,7 @@ void test_interrupts(void);
  */
 #define save_registers()				\
 do {											\
-	asm volatile("pushal\n"				\
-				);		\
+	asm volatile("pushal");				\
 } while(0)
 
 /*
@@ -67,7 +65,7 @@ do {											\
  */
 #define restore_registers()		\
 do {										\
-	asm volatile( "popal\n"				\
+	asm volatile( "popal\n"			\
 					"leave \n"			\
 					"iret  \n");		\
 } while(0)
