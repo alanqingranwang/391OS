@@ -14,6 +14,10 @@ static uint8_t day;
 static uint8_t month;
 static uint32_t year;
 
+// set of possible frequencies, inclusive of what we don't want
+static uint32_t frequencies[NUM_FREQ] = {32768, 16384, 8192, 4096, 2048, 1024,
+				512, 256, 128, 64, 32, 16, 8, 4, 2};
+
 /* JC
  * rtc_init
  * 	DESCRIPTION:
@@ -34,19 +38,29 @@ void rtc_init(void)
 
 	// Enable Periodic Interrupt, default 1024 Hz rate
 	cli_and_save(flags);
+
+	// set the IDT table entry for RTC
+ 	// Map RTC interrupts to IDT
+   idt[RTC_VECTOR_NUM].present = 1;
+   SET_IDT_ENTRY(idt[RTC_VECTOR_NUM], rtc_handler);
+
 	outb((DISABLE_NMI | REG_B), SELECT_REG); 	// select B and disable NMI
 	prev_data = inb(CMOS_RTC_PORT);				// get current values of B
 	outb((DISABLE_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
-	outb((prev_data | PERIODIC), CMOS_RTC_PORT);		// turn on bit 6 of reg B
+	outb((prev_data | PERIODIC), CMOS_RTC_PORT);	// turn on bit 6 of reg B
 
-	enable_irq(RTC_IRQ);								// enable PIC to accept interrupts
+	set_frequency(DEFAULT_FREQ); // default should be 15
+	enable_irq(RTC_IRQ);	// enable PIC to accept interrupts
+
 	restore_flags(flags);
 }
 
 /* JC
  * rtc_handler
  * 	DESCRIPTION:
- *			This function is called when an RTC interrupt occurs. Make sure to follow interrupt convention
+ *			This function is called when an RTC interrupt occurs.
+ *			Add functionality to make the handler to do additional tasks
+ *				after each itnerrupt.
  * 	INPUT: none
  *		OUTPUT: none
  *		RETURN VALUE: none
@@ -82,6 +96,75 @@ void rtc_handler(void)
 
 /* JC
  * get_update_flag
+=======
+	// save registers, assembly wrapping
+	save_registers();
+	uint32_t flags;
+   // save previous state of interrupts, and prevent them
+	cli_and_save(flags);
+	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
+
+	// INSERT HERE FOR THE HANDLER TO DO SOMETHING OR UNCOMMENT
+	 print_time();	// this one looks cooler
+	// test_interrupts();	// this one looks like a rave
+
+	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
+	outb(REG_C, SELECT_REG);
+	inb(CMOS_RTC_PORT);	// throw away data
+
+	restore_flags(flags);
+	restore_registers();
+}
+
+/* JC
+ * set_frequency
+ *		DESCRIPTION:
+ *			Given a rate, the function will change how frequent interrupts
+ *			will occur. The frequency is in powers of 2, with maximum value of 32768, but
+ *			RTC device itself can only interrupt up to 8192Hz, which is rate 3. The higher the
+ *			rate the less frequent the interrupts.
+ *			This function wil limit the frequency up to 1024 interrupts per second.
+ *			This is a rate of 6. So anything less than 6 will be forced to 6.
+ *		INPUT: rate - passes in a value from 6 to 15, to determine
+ *			how frequent the interrupts should occur.
+ *		OUTPUT: none
+ *		RETURN VALUE: none
+ *		SIDE EFFECTS: changes interrupt frequency based on the calculation
+ *			frequency = 32768 >> (rate-1)
+ *
+ */
+void set_frequency(uint32_t frequency)
+{
+	uint8_t rate; // loop counter and rate
+	for(rate = 0; rate < NUM_FREQ; rate++)
+		if(frequency == frequencies[rate]) // find the frequency
+			break;
+
+	rate++; // need to increment for calculations
+	// check if it's within range
+	rate &= NIBBLE_MASK;	// can't be over 15
+	if(rate < MAX_RATE) // can't be less than 3
+		rate = MAX_RATE; // forced to 1024 Hz
+
+	uint32_t flags;
+	int8_t prev_data;
+
+	// lock it
+	cli_and_save(flags);
+
+	// setting frequency
+	outb((DISABLE_NMI | REG_A), SELECT_REG);	// select register A
+	prev_data = inb(CMOS_RTC_PORT);	// get current data of A
+	outb((DISABLE_NMI | REG_A), SELECT_REG);	// get A again
+	outb(((prev_data & 0xF0) | rate), CMOS_RTC_PORT);	// write new rate
+
+	// unlock it
+	restore_flags(flags);
+}
+
+/* JC
+ * get_update_flag - helper
+>>>>>>> 017dc5abc10015d294a8ac3ebbc4afcebcead8eb
  * 	DESCRIPTION:
  *			reads from register A, and checks whether NMI is enable/disabled
  * 	INPUT: none
@@ -115,7 +198,11 @@ uint8_t get_RTC_reg(int32_t reg)
 }
 
 /* JC
+<<<<<<< HEAD
  * update_time
+=======
+ * update_time - helper
+>>>>>>> 017dc5abc10015d294a8ac3ebbc4afcebcead8eb
  * 	DESCRIPTION:
  *			Updates all the local variables declared at the top.
  * 	INPUT: none
@@ -138,14 +225,18 @@ void update_time(void)
  * read_time
  * 	DESCRIPTION:
  *			Reads all the required info registers and converts
+<<<<<<< HEAD
  *				it to current time.
+=======
+ *				binary to real current time.
+>>>>>>> 017dc5abc10015d294a8ac3ebbc4afcebcead8eb
  * 	INPUT: none
  *		OUTPUT: none
  *		RETURN VALUE: none
  *		SIDE EFFECTS: none
  *
  */
-void read_time(void)
+void binary_to_real_time(void)
 {
 	// hold the previous data
 	uint8_t last_second;
@@ -211,7 +302,7 @@ void read_time(void)
  */
 void print_time(void)
 {
-	read_time();
+	binary_to_real_time();
 	printf("second: %d ", second);
 	printf("minute: %d ", minute);
 	printf("hour: %d ", hour);

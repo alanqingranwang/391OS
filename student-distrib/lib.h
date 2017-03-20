@@ -30,7 +30,46 @@ int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
 int32_t bad_userspace_addr(const void* addr, int32_t len);
 int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
+/*
+ *	show_blue_screen
+ *		Draws a blue color onto video memory, to be used for exceptions
+ */
 void show_blue_screen(void);
+
+/*
+ *	test_interrupts
+ *		Increments video memory. To be used to test rtc
+ */
+void test_interrupts(void);
+
+/*
+ *	save_registers
+ *		This is a macro that can be used to save all the registers before an interrupt.
+ *		This is used with assembly wrapping. Should be used with interrupt handlers.
+ *		pusha - pushes all the general purpose registers.
+ *		Don't create a stack using ebp and esp stuff.
+ */
+#define save_registers()				\
+do {											\
+	asm volatile("pushal");				\
+} while(0)
+
+/*
+ * restore_registers
+ *		This is a macro that can be used to restore all the registers after an interrupt
+ *		This is used with assembly wrapping. Should be used with interrupt handlers.
+ *		popa - pops all the general purpose registers.
+ *		leave - the function pointer still sets up the stack
+ *		iret - returns from the interrupt, this isn't like a regular ret.
+ *			it does all sorts of stuff and eats the contents of the stack.
+ */
+#define restore_registers()		\
+do {										\
+	asm volatile( "popal\n"			\
+					"leave \n"			\
+					"iret  \n");		\
+} while(0)
+
 
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit

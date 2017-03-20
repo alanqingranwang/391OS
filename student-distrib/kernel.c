@@ -8,6 +8,7 @@
 #include "i8259.h"
 #include "rtc.h"	// JC
 #include "idt.h"
+#include "paging.h"
 #include "debug.h"
 
 /* Macros. */
@@ -146,10 +147,11 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 
-	idt_init();
-	/* Init the PIC */
-	i8259_init();
-	rtc_init();
+	idt_init();	// initialize the IDT
+	i8259_init();	// initialize the PIC
+	keyboard_init();	// initialize the keyboard
+	rtc_init();	// initialize the RTC
+	paging_init();	// initialize Paging
 
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
