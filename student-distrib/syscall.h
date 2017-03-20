@@ -49,11 +49,7 @@ do {													\
 					: "%eax" ); 					\
 } while(0)
 
-
+/* Called when an INT 0x80 is raised */
 void syscall_handler();
-
-/* Prototypes appear below. Unless otherwise specified, successful calls should
- *	return 0, and failed calls should return -1.
- */
 
 #endif /* _SYSCALL_H */

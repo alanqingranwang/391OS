@@ -13,6 +13,10 @@ static uint8_t day;
 static uint8_t month;
 static uint32_t year;
 
+// set of possible frequencies, inclusive of what we don't want
+static uint32_t frequencies[NUM_FREQ] = {32768, 16384, 8192, 4096, 2048, 1024,
+				512, 256, 128, 64, 32, 16, 8, 4, 2};
+
 /* JC
  * rtc_init
  * 	DESCRIPTION:
@@ -44,7 +48,7 @@ void rtc_init(void)
 	outb((DISABLE_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
 	outb((prev_data | PERIODIC), CMOS_RTC_PORT);	// turn on bit 6 of reg B
 
-	set_frequency(DEFAULT_RATE); // default should be 15
+	set_frequency(DEFAULT_FREQ); // default should be 15
 	enable_irq(RTC_IRQ);	// enable PIC to accept interrupts
 
 	restore_flags(flags);
@@ -72,7 +76,7 @@ void rtc_handler(void)
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
 
 	// INSERT HERE FOR THE HANDLER TO DO SOMETHING OR UNCOMMENT
-	// print_time();	// this one looks cooler
+	 print_time();	// this one looks cooler
 	// test_interrupts();	// this one looks like a rave
 
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
@@ -98,10 +102,17 @@ void rtc_handler(void)
  *		RETURN VALUE: none
  *		SIDE EFFECTS: changes interrupt frequency based on the calculation
  *			frequency = 32768 >> (rate-1)
+ *
  */
-void set_frequency(uint8_t rate)
+void set_frequency(uint32_t frequency)
 {
-	// rate is out of range
+	uint8_t rate; // loop counter and rate
+	for(rate = 0; rate < NUM_FREQ; rate++)
+		if(frequency == frequencies[rate]) // find the frequency
+			break;
+
+	rate++; // need to increment for calculations
+	// check if it's within range
 	rate &= NIBBLE_MASK;	// can't be over 15
 	if(rate < MAX_RATE) // can't be less than 3
 		rate = MAX_RATE; // forced to 1024 Hz
