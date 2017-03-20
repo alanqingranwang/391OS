@@ -53,9 +53,54 @@ void syscall_handler()
 
 	switch(num)
 	{
+		case SYS_HALT:
+			syscall_return(halt(param1)); // change if necessary
+			break; // just incase
+
+		case SYS_EXECUTE:
+			syscall_return(execute(param1)); // change if necessary
+			break; // just incase
+
+		case SYS_READ:
+			syscall_return(read(param1, param2, param3)); // change if necessary
+			break; // just incase
+
+		case SYS_WRITE:
+			syscall_return(write(param1, param2, param3)); // change if necessary
+			break; // just incase
+
+		case SYS_OPEN:
+			syscall_return(open(param1)); // change if necessary
+			break; // just incase
+
+		case SYS_CLOSE:
+			syscall_return(close(param1)); // change if necessary
+			break; // just incase
+
+		case SYS_GETARGS:
+			syscall_return(getargs(param1, param2)); // change if necessary
+			break; // just incase
+
+		case SYS_VIDMAP:
+			syscall_return(vidmap(param1)); // change if necessary
+			break; // just incase
+
+		case SYS_SET_HANDLER:
+			syscall_return(set_handler(param1, param2)); // change if necessary
+			break; // just incase
+
+		case SYS_SIGRETURN:
+			syscall_return(sigreturn()); // change if necessary
+			break; // just incase
+
+		default:
+			syscall_return(-1); // places -1 into eax, invalud number
+
+	}
+}
 
 /* JC
- * int32_t halt(uint8_t status)
+ * halt
  * 	DESCRIPTION:
  *			Terminates a process, returning the specified value to its parent process
  *			The system call handler itself is responsible for expanding the 8-bit argument
@@ -68,13 +113,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_HALT:
-
-
-			syscall_return(-1); // change if necessary
+int32_t halt(uint8_t status)
+{
+	return -1;
+}
 
 /* JC
- * int32_t execute(const uint8_t* command)
+ * execute
  * 	DESCRIPTION:
  *			Attempts to load and execute a new program, handing off
  *			the processor to the new program until it terminates.
@@ -91,13 +136,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_EXECUTE:
-
-
-			syscall_return(-1); // change if necessary
+int32_t execute(const uint8_t* command)
+{
+	return -1;
+}
 
 /* JC
- * int32_t read(int32_t fd, void* buf, int32_t nbytes)
+ * read
  * 	DESCRIPTION:
  *			Reads data from the keyboard, a file, or device (RTC), or directory. This call returns the
  *			number of bytes read.
@@ -127,13 +172,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_READ:
-
-
-			syscall_return(-1); // change if necessary
+int32_t read(int32_t fd, void* buf, int32_t nbytes)
+{
+	return -1;
+}
 
 /* JC
- * int32_t write(int32_t fd, const void* buf, int32_t nbytes)
+ * write
  * 	DESCRIPTION:
  *			Writes data to the terminal or to a device (RTC). In the case of the terminal, all data should be
  *			displayed to the screen immediately. In the case of the RTC, the system call should always accept only
@@ -149,13 +194,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_WRITE:
-
-
-			syscall_return(-1); // change if necessary
+int32_t write(int32_t fd, const void* buf, int32_t nbytes)
+{
+	return -1;
+}
 
 /* JC
- * int32_t open(const uint8_t* filename)
+ * open
  * 	DESCRIPTION:
  *			Provides access to file system. The call should find the directory entry corresponding to the named file,
  *			allocate an unused file descriptor, and set up any data necessary to handle the given type of file (directory,
@@ -166,13 +211,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_OPEN:
-
-
-			syscall_return(-1); // change if necessary
+int32_t open(const uint8_t* filename)
+{
+	return -1;
+}
 
 /* JC
- * int32_t close(int32_t fd)
+ * close
  * 	DESCRIPTION:
  *			Closes the specified file descriptor and makes it available for return from later calls to open. You should now
  *			allow the user to close the default descriptors (0 for input and 1 for output).
@@ -183,13 +228,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_CLOSE:
-
-
-			syscall_return(-1); // change if necessary
+int32_t close(int32_t fd)
+{
+	return -1;
+}
 
 /* JC
- * int32_t getargs(uint8_t* buf, int32_t nbytes)
+ * getargs
  * 	DESCRIPTION:
  *			Reads the program's command line arguments into a user-level buffer. Obviously these arguments must be stored
  *			as a part of the task data when a new program is loaded. Here they were merely copied into user space. The shell
@@ -202,13 +247,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_GETARGS:
-
-
-			syscall_return(-1); // change if necessary
+int32_t getargs(uint8_t* buf, int32_t nbytes)
+{
+	return -1;
+}
 
 /* JC
- * int32_t vidmap(uint8_t** screen_start)
+ * vidmap
  * 	DESCRIPTION:
  *			Maps the text-mode video memory into user space at a pre-set virtual address. Although the address returned is
  *			always the same (see the memory map section later in the handout), it should be written into the memory
@@ -223,13 +268,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_VIDMAP:
-
-
-			syscall_return(-1); // change if necessary
+int32_t vidmap(uint8_t** screen_start)
+{
+	return -1;
+}
 
 /* JC
- * int32_t set_handler(int32_t signum, void* handler_address)
+ * set_handler
  * 	DESCRIPTION:
  * 	INPUT: signum - 
  *				 handler_address - 
@@ -238,12 +283,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_SET_HANDLER:
-
-			syscall_return(-1); // change if necessary
+int32_t set_handler(int32_t signum, void* handler_address)
+{
+	return -1;
+}
 
 /* JC
- * int32_t sigreturn(void)
+ * sigreturn
  * 	DESCRIPTION:
  * 	INPUT: none
  *		OUTPUT:
@@ -251,13 +297,8 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_SIGRETURN:
-
-			syscall_return(-1); // change if necessary
-
-		default:
-			syscall_return(-1); // places -1 into eax, invalud number
-
-	}
+int32_t sigreturn(void)
+{
+	return -1;
 }
 
