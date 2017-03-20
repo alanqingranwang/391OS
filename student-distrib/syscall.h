@@ -18,7 +18,6 @@
 #define _SYSCALL_H
 
 #include "lib.h"
-#include "types.h"
 
 /* Migrated from "../syscalls/ece391sysnum.h" */
 #define SYS_HALT    1
