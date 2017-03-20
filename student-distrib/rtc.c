@@ -76,7 +76,7 @@ void rtc_handler(void)
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
 
 	// INSERT HERE FOR THE HANDLER TO DO SOMETHING OR UNCOMMENT
-	 print_time();	// this one looks cooler
+	// print_time();	// this one looks cooler
 	// test_interrupts();	// this one looks like a rave
 
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again

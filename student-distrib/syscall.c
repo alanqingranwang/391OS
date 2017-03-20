@@ -20,6 +20,14 @@
  * 	RTC flag, turn flag off after change, turn flag on after interrupt.
  */
 
+/* These variables will be overwritten each time a syscall happens.
+ * They will be used in each system call.
+ */
+static uint32_t num;
+static uint32_t param1;
+static uint32_t param2;
+static uint32_t param3;
+
 /* JC
  * syscall_handler
  * 	DESCRIPTION:
@@ -41,7 +49,8 @@ void syscall_handler()
 	// do I need to do this?
 	save_registers();
 
-	uint32_t num, param1, param2, param3; // more descriptive names later
+	uint32_t flags;
+	cli_and_save(flags); // lock it
 	// get the parameters from registers, and place into variables
 	asm volatile(
 		"movl %%eax, %0 \n"
@@ -51,47 +60,59 @@ void syscall_handler()
 		: "=r"(num), "=r"(param1), "=r"(param2), "=r"(param3)
 	);
 
+	uint32_t retval; // holds the return value that needs to be put into EAX upon return
+
 	switch(num)
 	{
 		case SYS_HALT:
-			syscall_return(halt(param1)); // change if necessary
-			break; // just incase
+			retval = halt();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
 
 		case SYS_EXECUTE:
-			syscall_return(execute(param1)); // change if necessary
-			break; // just incase
+			retval = execute();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
 
 		case SYS_READ:
-			syscall_return(read(param1, param2, param3)); // change if necessary
-			break; // just incase
+			retval = read();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
 
 		case SYS_WRITE:
-			syscall_return(write(param1, param2, param3)); // change if necessary
-			break; // just incase
+			retval = write();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
 
 		case SYS_OPEN:
-			syscall_return(open(param1)); // change if necessary
-			break; // just incase
+			retval = open();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
 
 		case SYS_CLOSE:
-			syscall_return(close(param1)); // change if necessary
-			break; // just incase
+			retval = close();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
 
 		case SYS_GETARGS:
-			syscall_return(getargs(param1, param2)); // change if necessary
-			break; // just incase
+			retval = getargs();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
 
 		case SYS_VIDMAP:
-			syscall_return(vidmap(param1)); // change if necessary
-			break; // just incase
+			retval = vidmap();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
 
 		case SYS_SET_HANDLER:
-			syscall_return(set_handler(param1, param2)); // change if necessary
-			break; // just incase
+			retval = set_handler();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
 
 		case SYS_SIGRETURN:
-			syscall_return(sigreturn()); // change if necessary
-			break; // just incase
+			retval = sigreturn();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
 
 		default:
 			syscall_return(-1); // places -1 into eax, invalud number
@@ -100,7 +121,7 @@ void syscall_handler()
 }
 
 /* JC
- * halt
+ * int32_t halt(uint8_t status) 
  * 	DESCRIPTION:
  *			Terminates a process, returning the specified value to its parent process
  *			The system call handler itself is responsible for expanding the 8-bit argument
@@ -113,13 +134,15 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-int32_t halt(uint8_t status)
+int32_t halt()
 {
+	uint8_t status = param1 & BYTE_MASK; // just retrieve the lower byte, safe way vs typecast
+
 	return -1;
 }
 
 /* JC
- * execute
+ * int32_t execute(const uint8_t* command)
  * 	DESCRIPTION:
  *			Attempts to load and execute a new program, handing off
  *			the processor to the new program until it terminates.
@@ -136,13 +159,15 @@ int32_t halt(uint8_t status)
  *		SIDE EFFECTS:
  *
  */
-int32_t execute(const uint8_t* command)
+int32_t execute()
 {
+	uint8_t* command = (uint8_t*)param1; // type cast into the proper parameter
+
 	return -1;
 }
 
 /* JC
- * read
+ * int32_t read(int32_t fd, void* buf, int32_t nbytes)
  * 	DESCRIPTION:
  *			Reads data from the keyboard, a file, or device (RTC), or directory. This call returns the
  *			number of bytes read.
@@ -172,13 +197,17 @@ int32_t execute(const uint8_t* command)
  *		SIDE EFFECTS:
  *
  */
-int32_t read(int32_t fd, void* buf, int32_t nbytes)
+int32_t read()
 {
+	int32_t fd = (int32_t)param1;
+	void* buf = (void*)param2;
+	int32_t nbytes = (int32_t)param3;
+
 	return -1;
 }
 
 /* JC
- * write
+ * int32_t write(int32_t fd, const void* buf, int32_t nbytes)
  * 	DESCRIPTION:
  *			Writes data to the terminal or to a device (RTC). In the case of the terminal, all data should be
  *			displayed to the screen immediately. In the case of the RTC, the system call should always accept only
@@ -194,13 +223,17 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
  *		SIDE EFFECTS:
  *
  */
-int32_t write(int32_t fd, const void* buf, int32_t nbytes)
+int32_t write()
 {
+	int32_t fd = (int32_t)param1;
+	const void* buf = (void*)param2;
+	int32_t nbytes = (int32_t)param3;
+
 	return -1;
 }
 
 /* JC
- * open
+ * int32_t open(const uint8_t* filename)
  * 	DESCRIPTION:
  *			Provides access to file system. The call should find the directory entry corresponding to the named file,
  *			allocate an unused file descriptor, and set up any data necessary to handle the given type of file (directory,
@@ -211,13 +244,15 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
  *		SIDE EFFECTS:
  *
  */
-int32_t open(const uint8_t* filename)
+int32_t open()
 {
+	const uint8_t* filename = (uint8_t*)param1;
+
 	return -1;
 }
 
 /* JC
- * close
+ * int32_t close(int32_t fd)
  * 	DESCRIPTION:
  *			Closes the specified file descriptor and makes it available for return from later calls to open. You should now
  *			allow the user to close the default descriptors (0 for input and 1 for output).
@@ -228,13 +263,15 @@ int32_t open(const uint8_t* filename)
  *		SIDE EFFECTS:
  *
  */
-int32_t close(int32_t fd)
+int32_t close()
 {
+	int32_t fd = (int32_t)param1;
+
 	return -1;
 }
 
 /* JC
- * getargs
+ * int32_t getargs(uint8_t* buf, int32_t nbytes)
  * 	DESCRIPTION:
  *			Reads the program's command line arguments into a user-level buffer. Obviously these arguments must be stored
  *			as a part of the task data when a new program is loaded. Here they were merely copied into user space. The shell
@@ -247,13 +284,16 @@ int32_t close(int32_t fd)
  *		SIDE EFFECTS:
  *
  */
-int32_t getargs(uint8_t* buf, int32_t nbytes)
+int32_t getargs()
 {
+	uint8_t* buf = (uint8_t*)param1;
+	int32_t nbytes = (int32_t)param2;
+
 	return -1;
 }
 
 /* JC
- * vidmap
+ * int32_t vidmap(uint8_t** screen_start)
  * 	DESCRIPTION:
  *			Maps the text-mode video memory into user space at a pre-set virtual address. Although the address returned is
  *			always the same (see the memory map section later in the handout), it should be written into the memory
@@ -268,13 +308,15 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
  *		SIDE EFFECTS:
  *
  */
-int32_t vidmap(uint8_t** screen_start)
+int32_t vidmap()
 {
+	uint8_t** screen_start = (uint8_t**)param1;
+
 	return -1;
 }
 
 /* JC
- * set_handler
+ * int32_t set_handler(int32_t signum, void* handler_address)
  * 	DESCRIPTION:
  * 	INPUT: signum - 
  *				 handler_address - 
@@ -283,13 +325,16 @@ int32_t vidmap(uint8_t** screen_start)
  *		SIDE EFFECTS:
  *
  */
-int32_t set_handler(int32_t signum, void* handler_address)
+int32_t set_handler()
 {
+	int32_t signum = (int32_t)param1;
+	void* handler_address = (void*)handler_address;
+
 	return -1;
 }
 
 /* JC
- * sigreturn
+ * int32_t sigreturn(void)
  * 	DESCRIPTION:
  * 	INPUT: none
  *		OUTPUT:

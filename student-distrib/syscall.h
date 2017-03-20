@@ -32,6 +32,10 @@
 #define SYS_SET_HANDLER  9
 #define SYS_SIGRETURN  10
 
+/* Additional Macros */
+#define BYTE_MASK	0xFF
+
+
 /*
  * syscall_return
  *		Slight alteration to restore registers.
@@ -53,16 +57,16 @@ do {													\
 void syscall_handler();
 
 /* System Call Prototypes */
-int32_t halt(uint8_t status);
-int32_t execute(const uint8_t* command);
-int32_t read(int32_t fd, void* buf, int32_t nbytes);
-int32_t write(int32_t fd, const void* buf, int32_t nbytes);
-int32_t open(const uint8_t* filename);
-int32_t close(int32_t fd);
-int32_t getargs(uint8_t* buf, int32_t nbytes);
-int32_t vidmap(uint8_t** screen_start);
-int32_t set_handler(int32_t signum, void* handler_address);
-int32_t sigreturn(void);
+int32_t halt();
+int32_t execute();
+int32_t read();
+int32_t write();
+int32_t open();
+int32_t close();
+int32_t getargs();
+int32_t vidmap();
+int32_t set_handler();
+int32_t sigreturn();
 
 #endif /* _SYSCALL_H */
 
