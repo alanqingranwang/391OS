@@ -42,9 +42,11 @@ void rtc_init(void)
 	outb((DISABLE_NMI | REG_B), SELECT_REG); 	// select B and disable NMI
 	prev_data = inb(CMOS_RTC_PORT);				// get current values of B
 	outb((DISABLE_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
-	outb((prev_data | PERIODIC), CMOS_RTC_PORT);		// turn on bit 6 of reg B
+	outb((prev_data | PERIODIC), CMOS_RTC_PORT);	// turn on bit 6 of reg B
 
-	enable_irq(RTC_IRQ);								// enable PIC to accept interrupts
+	set_frequency(DEFAULT_RATE); // default should be 15
+	enable_irq(RTC_IRQ);	// enable PIC to accept interrupts
+
 	restore_flags(flags);
 }
 
@@ -81,14 +83,44 @@ void rtc_handler(void)
 	restore_registers();
 }
 
-// void set_frequency()
-// {
+/* JC
+ * set_frequency
+ *		DESCRIPTION:
+ *			Given a rate, the function will change how frequent interrupts
+ *			will occur. The frequency is in powers of 2, with maximum value of 32768, but
+ *			RTC device itself can only interrupt up to 8192Hz, which is rate 3. The higher the
+ *			rate the less frequent the interrupts.
+ *			This function wil limit the frequency up to 1024 interrupts per second.
+ *			This is a rate of 6. So anything less than 6 will be forced to 6.
+ *		INPUT: rate - passes in a value from 6 to 15, to determine
+ *			how frequent the interrupts should occur.			
+ *		OUTPUT: none
+ *		RETURN VALUE: none
+ *		SIDE EFFECTS: changes interrupt frequency based on the calculation
+ *			frequency = 32768 >> (rate-1)
+ */
+void set_frequency(uint8_t rate)
+{
+	// rate is out of range
+	rate &= NIBBLE_MASK;	// can't be over 15
+	if(rate < MAX_RATE) // can't be less than 3
+		rate = MAX_RATE; // forced to 1024 Hz
+
+	uint32_t flags;
+	int8_t prev_data;
+
+	// lock it
+	cli_and_save(flags);
+
 	// setting frequency
-	// outb((DISABLE_NMI | REG_A), SELECT_REG);
-	// prev_data = inb(CMOS_RTC_PORT);
-	// outb((DISABLE_NMI | REG_A), SELECT_REG);
-	// outb((prev_data & 0xF0) | (0x0F), CMOS_RTC_PORT);
-// }
+	outb((DISABLE_NMI | REG_A), SELECT_REG);	// select register A
+	prev_data = inb(CMOS_RTC_PORT);	// get current data of A
+	outb((DISABLE_NMI | REG_A), SELECT_REG);	// get A again
+	outb(((prev_data & 0xF0) | rate), CMOS_RTC_PORT);	// write new rate
+
+	// unlock it
+	restore_flags(flags);
+}
 
 /* JC
  * get_update_flag - helper
@@ -148,7 +180,7 @@ void update_time(void)
  * read_time
  * 	DESCRIPTION:
  *			Reads all the required info registers and converts
- *				it to current time.
+ *				binary to real current time.
  * 	INPUT: none
  *		OUTPUT: none
  *		RETURN VALUE: none

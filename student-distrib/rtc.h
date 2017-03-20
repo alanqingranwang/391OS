@@ -75,6 +75,9 @@
 #define TENS 				10
 #define SHIFT4				16
 
+#define DEFAULT_RATE		15 	// 2Hz = 2 interrupts/second
+#define MAX_RATE			6		// 1024Hz
+
 /* Externally-visible functions */
 
 /* Initialize the RTC */
@@ -86,11 +89,9 @@ void rtc_handler(void);
 // read
 // write
 // close
-
-// Change clock frequency
-
 // driver
 
+void set_frequency(uint8_t rate);
 
 /* Additional Functionalities */
 
