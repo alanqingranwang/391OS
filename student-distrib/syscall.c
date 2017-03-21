@@ -136,7 +136,8 @@ void syscall_handler()
  */
 int32_t halt()
 {
-	uint8_t status = param1 & BYTE_MASK; // just retrieve the lower byte, safe way vs typecast
+	/* uncomment when ready */
+	// uint8_t status = param1 & BYTE_MASK; // just retrieve the lower byte, safe way vs typecast
 
 	return -1;
 }
@@ -161,7 +162,8 @@ int32_t halt()
  */
 int32_t execute()
 {
-	uint8_t* command = (uint8_t*)param1; // type cast into the proper parameter
+	/* uncomment when ready */
+	// uint8_t* command = (uint8_t*)param1; // type cast into the proper parameter
 
 	return -1;
 }
@@ -199,9 +201,10 @@ int32_t execute()
  */
 int32_t read()
 {
-	int32_t fd = (int32_t)param1;
-	void* buf = (void*)param2;
-	int32_t nbytes = (int32_t)param3;
+	/* uncomment when ready */
+	// int32_t fd = (int32_t)param1;
+	// void* buf = (void*)param2;
+	// int32_t nbytes = (int32_t)param3;
 
 	return -1;
 }
@@ -225,9 +228,10 @@ int32_t read()
  */
 int32_t write()
 {
-	int32_t fd = (int32_t)param1;
-	const void* buf = (void*)param2;
-	int32_t nbytes = (int32_t)param3;
+	/* uncomment when ready */
+	// int32_t fd = (int32_t)param1;
+	// const void* buf = (void*)param2;
+	// int32_t nbytes = (int32_t)param3;
 
 	return -1;
 }
@@ -246,7 +250,8 @@ int32_t write()
  */
 int32_t open()
 {
-	const uint8_t* filename = (uint8_t*)param1;
+	/* uncomment when ready */
+	// const uint8_t* filename = (uint8_t*)param1;
 
 	return -1;
 }
@@ -265,7 +270,8 @@ int32_t open()
  */
 int32_t close()
 {
-	int32_t fd = (int32_t)param1;
+	/* uncomment when ready */
+	// int32_t fd = (int32_t)param1;
 
 	return -1;
 }
@@ -286,8 +292,9 @@ int32_t close()
  */
 int32_t getargs()
 {
-	uint8_t* buf = (uint8_t*)param1;
-	int32_t nbytes = (int32_t)param2;
+	/* uncomment when ready */
+	// uint8_t* buf = (uint8_t*)param1;
+	// int32_t nbytes = (int32_t)param2;
 
 	return -1;
 }
@@ -310,7 +317,8 @@ int32_t getargs()
  */
 int32_t vidmap()
 {
-	uint8_t** screen_start = (uint8_t**)param1;
+	/* uncomment when ready */
+	// uint8_t** screen_start = (uint8_t**)param1;
 
 	return -1;
 }
@@ -327,8 +335,9 @@ int32_t vidmap()
  */
 int32_t set_handler()
 {
-	int32_t signum = (int32_t)param1;
-	void* handler_address = (void*)handler_address;
+	/* uncomment when ready */
+	// int32_t signum = (int32_t)param1;
+	// void* handler_address = (void*)handler_address;
 
 	return -1;
 }

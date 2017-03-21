@@ -77,7 +77,7 @@
 
 #define DEFAULT_FREQ		2 	// 2Hz = 2 interrupts/second
 #define MAX_RATE			6		// 1024Hz
-#define NUM_FREQ			15
+#define NUM_FREQ			14
 
 /* Externally-visible functions */
 

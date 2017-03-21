@@ -13,9 +13,9 @@ static uint8_t day;
 static uint8_t month;
 static uint32_t year;
 
-// set of possible frequencies, inclusive of what we don't want
+/* Purposely didn't include 2 Hz, it will be a default if an invalid freq is selected */
 static uint32_t frequencies[NUM_FREQ] = {32768, 16384, 8192, 4096, 2048, 1024,
-				512, 256, 128, 64, 32, 16, 8, 4, 2};
+				512, 256, 128, 64, 32, 16, 8, 4};
 
 /* JC
  * rtc_init
@@ -48,7 +48,7 @@ void rtc_init(void)
 	outb((DISABLE_NMI | REG_B), SELECT_REG);	// set index again (a read resets the index to register D)
 	outb((prev_data | PERIODIC), CMOS_RTC_PORT);	// turn on bit 6 of reg B
 
-	set_frequency(DEFAULT_FREQ); // default should be 15
+	set_frequency(DEFAULT_FREQ); // default should be 2Hz
 	enable_irq(RTC_IRQ);	// enable PIC to accept interrupts
 
 	restore_flags(flags);
@@ -96,6 +96,9 @@ void rtc_handler(void)
  *			rate the less frequent the interrupts.
  *			This function wil limit the frequency up to 1024 interrupts per second.
  *			This is a rate of 6. So anything less than 6 will be forced to 6.
+ *
+ *			The way this function is set up, if the input frequency isn't a power of two
+ *			or doesn't exist in the table, the frequency will default to 2Hz.
  *		INPUT: rate - passes in a value from 6 to 15, to determine
  *			how frequent the interrupts should occur.			
  *		OUTPUT: none
