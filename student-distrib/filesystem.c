@@ -97,10 +97,9 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
 	int32_t entry_name_len; // holds how long the dentry's filename is
 	int32_t dentry_loop;
 	int32_t given_name_len = strlen((int8_t*)fname);
-	int32_t found_flag = -1;
 
 	if(given_name_len > MAX_NAME_CHARACTERS)
-		return found_flag; // not valid name, too long
+		return -1; // not valid name, too long
 
 	// go through all the dentries
 	for(dentry_loop = 0; dentry_loop < MAX_ENTRIES; dentry_loop++)
@@ -114,15 +113,15 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
 			// if the strings are the same, copy over data
 			if(strncmp((int8_t*)fname, (entries[dentry_loop]).file_name, entry_name_len) == 0)
 			{
-				strcpy(dentry->file_name, (entries[dentry_loop]).file_name); // (dest, src)
+				strncpy(dentry->file_name, (entries[dentry_loop]).file_name, character_count[dentry_loop]); // (dest, src)
 				dentry->file_type = (entries[dentry_loop]).file_type;
 				dentry->inode_idx = (entries[dentry_loop]).inode_idx;
-				found_flag = 0; // change to found
+				return 0; // found the entry
 			}
 		}
 	}
 
-	return found_flag;
+	return -1;
 }
 
 /* JC
@@ -145,7 +144,7 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry)
 		return -1; // invalid index
 
 	// copy over the data
-	strcpy(dentry->file_name, (entries[index]).file_name);
+	strncpy(dentry->file_name, (entries[index]).file_name, character_count[index]);
 	dentry->file_type = (entries[index]).file_type;
 	dentry->inode_idx = (entries[index]).inode_idx;
 	return 0;
