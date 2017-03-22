@@ -1,5 +1,6 @@
 /* JC
- * filesystem.h - Functionality declaration for the file system
+ * filesystem.h - Contains structures' prototypes to interpret the given filesys_img
+ *		Declares function prototypes to read from the filesystem.
  * tab size = 3, no space
  */
 
@@ -8,24 +9,7 @@
 
 #include "lib.h"
 
-/* The file system is already created for us in the file system image.
- * 	We do not need to create the structure itself.
- */
-
-/* We need to create, 3 functions, plus some initialization to set
- * up everything. You'll also need to define file_o/c/r/w and dir_o/c/r/w, but
- *	these will be dummy functions for checkpoint 2.
- */
-
-/* We need to create a process control block whenever a process is started.
- * 
- *
- */
-
-// need to figure out how to access the file system's boot block, and the file system in general
-
-/*  */
-// need a file system init here
+// need to create a process thingy
 /* should automatically open stdin and stdout, which correspond to the file
  *		descriptors 0 and 1, respectively. stdin is a read-only file which corresponds
  *		to keyboard input. stdout is a write-only location in the file array, and marking
@@ -34,6 +18,56 @@
  *		the open system call is made (return -1 if the array is full).
  */
 
+/* We need to create a process control block whenever a process is started.
+ * 
+ *
+ */
+
+/* All The Macros */
+/* Init Offset Macros */
+#define DENTRY_OFFSET 64 // should be after the 64 Bytes in boot block
+#define BLOCK_SIZE 4096 // absolute block size in Bytes
+
+/* Struct Macros */
+#define BOOT_RESERVE_SIZE 13 // the size is in 32bit units
+#define MAX_NAME_CHARACTERS 32 // maximum number of characters
+#define MAX_ENTRIES 63 // maximum possible dentries
+#define DENTRY_RESERVE_SIZE 6 
+#define MAX_INODE_DATA_BLOCKS 1023 // this is how many data blocks an inode can have
+#define MAX_CHARS_IN_DATA 4096 // this is how many characters exist in a data block
+
+/* The structures used to organize the filesys_img data */
+typedef struct dentry_t {
+	int8_t file_name[MAX_NAME_CHARACTERS]; // 32 chars in the file name
+	uint32_t file_type;
+	uint32_t inode_idx;
+	uint32_t reserved[DENTRY_RESERVE_SIZE];
+} dentry_t; /* represents a single directory entry's information */
+
+typedef struct boot_block_t {
+	uint32_t num_dir_entries;
+	uint32_t N;
+	uint32_t D;
+	uint32_t reserved[BOOT_RESERVE_SIZE];
+	dentry_t dir_entries[MAX_ENTRIES];
+} boot_block_t; /* represents the information about the file system's information */
+
+typedef struct inode_t {
+	uint32_t file_size; // measured in Bytes, can be thought of as number of chars
+	int32_t datablock_idx[MAX_INODE_DATA_BLOCKS]; // holds indexs for each data block
+} inode_t; /* represents where the file's data is all located */
+
+/* data blocks should be all chars */
+typedef struct data_block_t {
+	int8_t data[MAX_CHARS_IN_DATA];
+} data_block_t; /* Represents part of a file's set of data */
+
+
+/* Initializes the file system with relevant information */
+void filesystem_init();
+
+/* Helpers */
+void create_char_count();
 
 /* The three routines provided by the file system module return -1 on failure
  * more documentation in MP3.
