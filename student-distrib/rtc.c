@@ -5,6 +5,9 @@
 
 #include "rtc.h"
 
+/* Interrupt Happened Flag */
+uint32_t interrupt_flag; // When interrupt happens this changes to 1
+
 /* Keeps track of current time */
 static uint8_t second;
 static uint8_t minute;
@@ -49,6 +52,7 @@ void rtc_init(void)
 	outb((prev_data | PERIODIC), CMOS_RTC_PORT);	// turn on bit 6 of reg B
 
 	set_frequency(DEFAULT_FREQ); // default should be 2Hz
+	interrupt_flag = 1; // initialize to 1
 	enable_irq(RTC_IRQ);	// enable PIC to accept interrupts
 
 	restore_flags(flags);
@@ -74,6 +78,7 @@ void rtc_handler(void)
    // save previous state of interrupts, and prevent them
 	cli_and_save(flags);
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
+	interrupt_flag = 1; // Allow read/write to return
 
 	// INSERT HERE FOR THE HANDLER TO DO SOMETHING OR UNCOMMENT
 	// print_time();	// this one looks cooler
