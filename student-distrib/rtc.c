@@ -142,6 +142,37 @@ void set_frequency(uint32_t frequency)
 }
 
 /* JC
+ * rtc_driver
+ * 	DESCRIPTION:
+ *
+ *		INPUT: 
+ *
+ *		OUTPUT: 
+ *		RETURN VALUE:
+ *		SIDE_EFFECTS: none
+ */
+int32_t rtc_driver()
+{
+	
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* IGNORE STUFF BELOW */
+
+/* JC
  * get_update_flag - helper
  * 	DESCRIPTION:
  *			reads from register A, and checks whether NMI is enable/disabled

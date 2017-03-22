@@ -29,9 +29,10 @@ static int32_t character_count[MAX_ENTRIES];
  */
 void filesystem_init()
 {
+	uint32_t flags;
+	cli_and_save(flags);
 	// initialize boot block pointer, and retreive all information
-	boot_block = (boot_block_t*)0x4000; // THIS IS INCORRECT WE CAN"T DO THIS
-	// WE NEED TO FIND THE BOOTBLOCK
+	boot_block = (boot_block_t*)BOOT_START_ADDR; 
 
 	num_entries = boot_block->num_dir_entries;
 	num_inodes = boot_block->N;
@@ -44,6 +45,25 @@ void filesystem_init()
 	data_blocks = (data_block_t*)(inodes+(num_inodes*BLOCK_SIZE));
 	// initiaize the file_name table
 	create_char_count();
+
+	restore_flags(flags);
+}
+
+/* JC
+ * Initializes the file descriptor table, will migrate to the execute syscall
+ *		When we start creating multiple processes.
+ */
+void fd_table_init()
+{
+	uint32_t table_loop;
+	for(table_loop = 0; table_loop < MAX_OPEN_FILES; table_loop++)
+	{
+		(fd_table[table_loop]).file_op_table_ptr = NULL;
+		(fd_table[table_loop]).flags = -1; // initialize all not in use.
+	}
+
+	// open stdin
+	// open stdout
 }
 
 /* JC

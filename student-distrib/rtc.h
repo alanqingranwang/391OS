@@ -25,6 +25,9 @@
 /* adding the interrupt to the table is the job of the init */
 #include "idt.h"
 
+
+#include "filesystem.h" // added
+
 /* port 0x70 is used to specify an index or "register number"
  *		and to disable non-maskable-interrupt (NMI).
  *		High order bit tells the hardware enable/disable NMIs
@@ -91,6 +94,11 @@ void rtc_handler(void);
 // write
 // close
 // driver
+int32_t rtc_driver();
+int32_t rtc_open(const uint8_t* filename);
+int32_t rtc_read(const uint8_t* filename);
+int32_t rtc_write(const uint8_t* filename);
+int32_t rtc_close(const uint8_t* filename);
 
 void set_frequency(uint32_t frequency);
 

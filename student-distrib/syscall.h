@@ -18,6 +18,9 @@
 #define _SYSCALL_H
 
 #include "lib.h"
+// #include "rtc.h" // need to call it's stuff
+// #include "filesystem.h" // need dentry and shit
+
 
 /* Migrated from "../syscalls/ece391sysnum.h" */
 #define SYS_HALT    1

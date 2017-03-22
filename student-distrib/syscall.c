@@ -253,6 +253,16 @@ int32_t open()
 	/* uncomment when ready */
 	// const uint8_t* filename = (uint8_t*)param1;
 
+	// dentry_t dentry; // looking for this dentry
+	// read_dentry_by_name(filename, &dentry); // find the dentry
+
+	// if(dentry.file_type == 0) // it's the rtc
+	// {
+	// 	// add rtc to the file descriptor thing
+	// }
+
+
+
 	return -1;
 }
 
