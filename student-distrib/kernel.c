@@ -10,6 +10,7 @@
 #include "idt.h"
 #include "paging.h"
 #include "debug.h"
+#include "filesystem.h" // JC
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -154,6 +155,9 @@ entry (unsigned long magic, unsigned long addr)
 	rtc_init();	// initialize the RTC
 	paging_init();	// initialize Paging
 
+
+	filesystem_init();
+	fd_table_init();
 	// testing exception 0
 	// int32_t p = 1/0;
 
@@ -170,6 +174,22 @@ entry (unsigned long magic, unsigned long addr)
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
+
+	/* Testing the RTC driver */
+	// op_data_t package;
+	// int32_t filed = rtc_driver(OPEN, package);
+	// if(filed != -1)
+	// {
+	// 	package.fd = filed;
+	// 	uint32_t frequency = 1024;
+	// 	package.buf = (void*)(&frequency);
+	// 	rtc_driver(WRITE, package);
+	// 	rtc_driver(CLOSE, package);
+	// }
+	// else
+	// 	printf("couldn't open\n");
+
+	// find_something();
 
 	/* Execute the first program (`shell') ... */
 
