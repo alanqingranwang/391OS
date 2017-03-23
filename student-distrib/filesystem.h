@@ -43,9 +43,16 @@
 /* File Descriptor Macros */
 #define MAX_OPEN_FILES 8
 
+typedef struct op_data_t {
+	uint8_t *filename; // used in open
+	int32_t fd; // used in read, write, close
+	void* buf; // used in read and write
+	int32_t nbytes; // used in read, and write
+} op_data_t;
+
 /* File Descriptor Structure Described in 7.2 Documentation */
 typedef struct file_descriptor_t {
-	void* file_op_table_ptr; // points at the file type's driver function
+	uint32_t (*file_op_table_ptr)(uint32_t, op_data_t); // points at the file type's driver function
 	uint32_t inode_ptr; // index to the inode for this file, NULL for non_files
 	uint32_t file_position; // current reading location in file, read system call should update this.
 	int32_t flags; // among other things, marks file descriptor as in-use
