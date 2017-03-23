@@ -45,26 +45,79 @@ void filesystem_init()
 	data_blocks = (data_block_t*)(inodes+(num_inodes*BLOCK_SIZE));
 	// initiaize the file_name table
 	create_char_count();
+	fd_table_init(); // will be by itself later on?
 
 	restore_flags(flags);
 }
 
+/*************************************************************/
 /* JC
  * Initializes the file descriptor table, will migrate to the execute syscall
  *		When we start creating multiple processes.
  */
 void fd_table_init()
 {
+	uint32_t flags;
+	cli_and_save(flags);
+
 	uint32_t table_loop;
 	for(table_loop = 0; table_loop < MAX_OPEN_FILES; table_loop++)
 	{
-		(fd_table[table_loop]).file_op_table_ptr = NULL;
-		(fd_table[table_loop]).flags = -1; // initialize all not in use.
+		(fd_table[table_loop]).flags = 0; // initialize all not in use.
 	}
 
 	// open stdin
 	// open stdout
+	restore_flags(flags);
 }
+
+// trying to find rtc
+// void find_something()
+// {
+// 	/* Testing Something */
+// 	clear();
+// 	uint32_t find_name;
+// 	for(find_name = 0; find_name < MAX_ENTRIES; find_name++)
+// 	{
+// 		if((entries[find_name]).file_type == 0)
+// 		{
+// 			uint32_t ind = find_name;
+// 			printf("Found something\n");
+// 			for(find_name = 0; find_name < MAX_NAME_CHARACTERS; find_name++)
+// 			{
+// 				printf("%c", (entries[ind].file_name)[find_name]);
+// 			}
+// 			printf("\n");
+// 			return;
+// 		}
+// 	}
+// 	/* Ending Test Something */
+// }
+
+/* JC
+ * get_fd_index
+ * 	DESCRIPTION:
+ *			Finds an available file descriptor in the table to use.
+ *			Preventing interrupts should be the job of the user.
+ *		INPUT: none
+ *		RETURN VALUE:
+ *			index of available descriptor
+ *			-1 - no available descriptor
+ *
+ */
+int32_t get_fd_index()
+{
+	uint32_t table_loop;
+	// should not consider index 0 and 1
+	for(table_loop = 2; table_loop < MAX_OPEN_FILES; table_loop++)
+	{
+		if((fd_table[table_loop]).flags == 0) // available index
+			return table_loop;
+	}
+
+	return -1; // none available
+}
+/*************************************************************/
 
 /* JC
  * create_char_count
