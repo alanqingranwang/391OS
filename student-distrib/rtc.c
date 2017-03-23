@@ -78,12 +78,12 @@ void rtc_handler(void)
    // save previous state of interrupts, and prevent them
 	cli_and_save(flags);
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
-	interrupt_flag = 1; // Allow read/write to return
 
 	// INSERT HERE FOR THE HANDLER TO DO SOMETHING OR UNCOMMENT
 	// print_time();	// this one looks cooler
 	// test_interrupts();	// this one looks like a rave
 
+	interrupt_flag = 1; // Allow read/write to return
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);
 	inb(CMOS_RTC_PORT);	// throw away data
@@ -144,31 +144,153 @@ void set_frequency(uint32_t frequency)
 /* JC
  * rtc_driver
  * 	DESCRIPTION:
- *
+ *			This driver acts like a jump table for an rtc file descriptor.
+ *			The caller will fill the operation data package with the necessary information
+ *			and also pass in the proper command number to call the correct operation function
  *		INPUT: 
- *
- *		OUTPUT: 
+ *			cmd - signifies which operation we want
+ *					OPEN = 1
+ *					READ = 2
+ *					WRITE = 3
+ *					CLOSE = 4
+ *			operation_data - contains a set of useful data to compelete each operation
+ *					The caller should fill this structure with the necessary information
+ *		OUTPUT: none
  *		RETURN VALUE:
+ *				-1 - failure
+ *				dependent on the operation - look at the operation's interface
  *		SIDE_EFFECTS: none
  */
-int32_t rtc_driver()
+int32_t rtc_driver(uint32_t cmd, op_data_t operation_data)
 {
-	
-
-
-
+	switch(cmd)
+	{
+		case OPEN:
+			return rtc_open(operation_data.filename);
+		case READ:
+			return rtc_read();
+		case WRITE:
+			return rtc_write(operation_data.fd, operation_data.buf);
+		case CLOSE:
+			return rtc_close(operation_data.fd);
+		default:
+			return -1;
+	}
 }
 
+/* JC
+ * rtc_driver
+ * 	DESCRIPTION:
+ *			Allocates a file descriptor for the RTC. Modifies package to have the fd.
+ *		INPUT:
+ *			operation_data - data package that contains filename.
+ *						package's fd should be changed to the new index.
+ *		RETURN VALUE:
+ *			-1 - couldn't find filename, not the rtc, or no avaialable descriptor
+ *			fd - successfully created a file descriptor, return fd index
+ *		SIDE_EFFECTS: opens an fd
+ */
+int32_t rtc_open(const uint8_t* filename)
+{
+	uint32_t flags;
+	cli_and_save(flags);
 
+	// uncomment later
+	// dentry_t my_dentry;
+	// if(read_dentry_by_name(filename, &my_dentry) == -1)
+	// {
+	// 	restore_flags(flags);
+	// 	return -1; // file doesn't exist
+	// }
 
+	// if(my_dentry.file_type != 0)
+	// {
+	// 	restore_flags(flags);
+	// 	return -1; // the filename isn't a user level rtc
+	// }
 
+	int32_t fd_index = get_fd_index();
+	if(fd_index == -1)
+	{
+		restore_flags(flags);
+		return -1; // no available fd
+	}
 
+	// fill in the descriptor
+	(fd_table[fd_index]).file_op_table_ptr = rtc_driver; // give it the function ptr
+	(fd_table[fd_index]).inode_ptr = -1; // not a normal file
+	(fd_table[fd_index]).file_position = 0;
+	(fd_table[fd_index]).flags = 1;	// in use
 
+	restore_flags(flags);
+	printf("RTC opened");
+	return fd_index;
+}
 
+/* JC
+ * rtc_driver
+ * 	DESCRIPTION:
+ *			Returns once the next RTC interrupt occurs.
+ *		INPUT: none
+ *		OUTPUT: none
+ *		RETURN VALUE: 0 - always
+ *		SIDE_EFFECTS: none
+ */
+int32_t rtc_read()
+{
+	interrupt_flag = 0;
+	while(!interrupt_flag){}	// wait for interrupt to happen
+	return 0;
+}
 
+/* JC
+ * rtc_driver
+ * 	DESCRIPTION:
+ *			Given a pointer to a frequency, change the frequency of the RTC driver.
+ *		INPUT: 
+ *			fd - the file descriptor that contains rtc
+ *			buf - a pointer to a 4 byte frequency
+ *		OUTPUT: none
+ *		RETURN VALUE:
+ *			-1 - failure, invalid fd
+ *			 0 - successful change
+ *		SIDE_EFFECTS: modifies RTC frequency
+ */
+int32_t rtc_write(int32_t fd, const void* buf)
+{
+	// check if fd is even valid
+	if((fd_table[fd]).flags == 0)
+		return -1;
 
+	uint32_t* speed = (uint32_t*)buf; // change into meaningful data
+	set_frequency(*speed);
+	return 0;
+}
 
+/* JC
+ * rtc_driver
+ * 	DESCRIPTION:
+ *			Closes the specified fd if it's valid. Simply turns flag into not in use.
+ *		INPUT: 
+ *			fd - the file descriptor to close.
+ *		OUTPUT: none
+ *		RETURN VALUE: 
+ *			-1 - invalid fd
+ *			 0 - successful close
+ *		SIDE_EFFECTS: closes an fd
+ */
+int32_t rtc_close(int32_t fd)
+{
+	if(fd < 2)
+		return -1; // can't close index 0 and index 1
 
+	uint32_t flags;
+	cli_and_save(flags);
+	(fd_table[fd]).flags = 0; // turn it back to not in use
+	restore_flags(flags);
+	printf("RTC closed");
+	return 0;
+}
 
 /* IGNORE STUFF BELOW */
 
