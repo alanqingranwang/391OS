@@ -21,50 +21,158 @@ static int32_t character_count[MAX_ENTRIES];
  * 	DESCRIPTION:
  *			Initializes the file system with the proper data to begin use.
  *			Creates an overlay of structures to make the data more useful.
- *		INPUT: none
+ *		INPUT:
+ *			boot_addr - Passed in from kernel, contains the address to the start of boot block
  *		OUTPUT: none
  *		RETURN VALUE: none
  *		SIDE EFFECTS: initializes the file system's data
  *
  */
-void filesystem_init()
+void filesystem_init(boot_block_t* boot_addr)
 {
 	uint32_t flags;
 	cli_and_save(flags);
 	// initialize boot block pointer, and retreive all information
-	boot_block = (boot_block_t*)BOOT_START_ADDR; 
-
+	boot_block = boot_addr;
 	num_entries = boot_block->num_dir_entries;
 	num_inodes = boot_block->N;
 	num_data_blocks = boot_block->D;
 	// initialize the pointer to first dentry
-	entries = (dentry_t*)(boot_block+DENTRY_OFFSET);
+	entries = (dentry_t*)(&(boot_block->dir_entries));
 	// initialize pointer to first inode
-	inodes = (inode_t*)(boot_block+BLOCK_SIZE); // should be the first block after boot
+	inodes = (inode_t*)(boot_block+INODE_OFFSET); // should be the first block after boot
 	// initialize pointer to first data block
-	data_blocks = (data_block_t*)(inodes+(num_inodes*BLOCK_SIZE));
+	data_blocks = (data_block_t*)(inodes+num_inodes);
 	// initiaize the file_name table
 	create_char_count();
+
+	fd_table_init(); // will be by itself later on?
 
 	restore_flags(flags);
 }
 
+/*************************************************************/
 /* JC
  * Initializes the file descriptor table, will migrate to the execute syscall
  *		When we start creating multiple processes.
  */
 void fd_table_init()
 {
+	uint32_t flags;
+	cli_and_save(flags);
+
 	uint32_t table_loop;
 	for(table_loop = 0; table_loop < MAX_OPEN_FILES; table_loop++)
 	{
-		(fd_table[table_loop]).file_op_table_ptr = NULL;
-		(fd_table[table_loop]).flags = -1; // initialize all not in use.
+		(fd_table[table_loop]).flags = 0; // initialize all not in use.
 	}
 
 	// open stdin
 	// open stdout
+	restore_flags(flags);
 }
+
+/* JC
+ * get_fd_index
+ * 	DESCRIPTION:
+ *			Finds an available file descriptor in the table to use.
+ *			Preventing interrupts should be the job of the user.
+ *		INPUT: none
+ *		RETURN VALUE:
+ *			index of available descriptor
+ *			-1 - no available descriptor
+ *
+ */
+int32_t get_fd_index()
+{
+	uint32_t table_loop;
+	// should not consider index 0 and 1
+	for(table_loop = 2; table_loop < MAX_OPEN_FILES; table_loop++)
+	{
+		if((fd_table[table_loop]).flags == 0) // available index
+			return table_loop;
+	}
+
+	return -1; // none available
+}
+
+/*************************************************************/
+
+/* 
+ * print_file_info
+ *	Prints all the file information.
+ *		file name
+ *		file type
+ *		file size (in bytes)
+ */
+void print_file_info()
+{
+	clear();
+	uint32_t d_loop; // loops through all the dentry loops
+	uint32_t char_loop; // go through all the characters
+	for(d_loop = 0; d_loop < num_entries; d_loop++)
+	{
+		// print out the name
+		printf("file name: "); // can't use %s, if there's no guaranteed '\0'
+		for(char_loop = 0; char_loop < MAX_NAME_CHARACTERS; char_loop++)
+			printf("%c", (entries[d_loop].file_name)[char_loop]);
+
+		for(char_loop = char_loop; char_loop < NUM_SPACES; char_loop++)
+			printf(" "); // add spaces to align the rest		
+
+		printf("file type: %d ", entries[d_loop].file_type);
+		printf("file size: %d\n", inodes[(entries[d_loop].inode_idx)].file_size);
+	}
+}
+
+/*
+ * print_file_text
+ * Prints all the text from a file
+ *
+ */
+void print_file_text(int8_t* name)
+{
+	clear();
+	dentry_t my_dentry;
+	// find the name
+	if(read_dentry_by_name((uint8_t*)name, &my_dentry) == -1)
+	{
+		printf("Invalid Name\n");
+		return;
+	}
+
+	int32_t inodeindex = my_dentry.inode_idx;
+	int32_t retval, counting;
+	int8_t* buffer[5000];
+	uint32_t off = 0;
+	while((retval = read_data(inodeindex, off, (uint8_t*)buffer, 5000)) != 0)
+	{
+		if(retval == -1) // something went wrong
+			return;
+
+		for(counting = 0; counting < retval; counting++)
+			printf("%c", buffer[counting]);
+
+		off += retval;
+	}
+}
+
+// trying to find rtc
+void find_something()
+{
+	/* Testing Something */
+	// print_file_info();
+	printf("\n\n");
+	print_file_text("hello");
+
+	// printf("%s", (entries[0]).file_name);
+	printf("\nWe have %d directory entries.\n", boot_block->num_dir_entries);
+	printf("We have %d inodes.\n", boot_block->N);
+	printf("We have %d data blocks.\n", boot_block->D);
+	/* Ending Test Something */
+}
+
+/*************************************************************/
 
 /* JC
  * create_char_count
@@ -211,7 +319,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	if(inode >= num_inodes)
 		return -1; // inode number too big
 
-	this_file_size = inodes->file_size; // reduce syntax
+	this_file_size = (inodes[inode]).file_size; // reduce syntax
 
 	// offset is greater than file size or no need to read
 	if((offset >= this_file_size) || (length == 0))
@@ -220,8 +328,6 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	/* Find the start location (data block, offset in data block) */
 	start_block = offset/MAX_CHARS_IN_DATA;
 	start_offset = offset%MAX_CHARS_IN_DATA; // offset in start block
-	if(start_offset != 0)
-		start_block++; // because offset starts in next block
 
 	/* Find the end location (data block, offset in data block) */
 	end_search = offset+length;
@@ -232,8 +338,6 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	// last block we need
 	end_block = end_search/MAX_CHARS_IN_DATA;
 	end_offset = end_search%MAX_CHARS_IN_DATA; // offset in end block
-	if(end_offset != 0)
-		end_block++; 
 
 	chars_read = 0;
 	curr_byte = start_offset;
@@ -241,9 +345,14 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	/* Start putting data into the buffer */
 	for(block_loop = start_block; block_loop <= end_block; block_loop++)
 	{
-		curr_data_block = (inodes->datablock_idx)[start_block];
+		curr_data_block = ((inodes[inode]).datablock_idx)[block_loop]; // get the index of current block from inode
 		if(curr_data_block > num_data_blocks)
-			return -1; // invalid data block index
+		{
+			if(chars_read == 0)
+				return -1; // invalid data block index, haven't read anything
+			else
+				return chars_read; // found invalid block, but read some stuff
+		}
 
 		if(block_loop == end_block)
 			end_of_block_byte = end_offset; // last block, change how far to parse
