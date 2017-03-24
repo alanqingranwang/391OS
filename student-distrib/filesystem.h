@@ -10,6 +10,9 @@
 #include "lib.h"
 #include "testcases3_2.h" // uses macros
 
+/* TEMPORARY */
+#define SCREEN_CHAR 79
+
 void find_something();
 
 // need to create a process thingy
