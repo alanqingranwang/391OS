@@ -8,8 +8,9 @@
 #define _FILESYSTEM_H
 
 #include "lib.h"
+#include "testcases3_2.h" // uses macros
 
-// void find_something();
+void find_something();
 
 // need to create a process thingy
 /* should automatically open stdin and stdout, which correspond to the file
@@ -21,10 +22,11 @@
  */
 
 /* All The Macros */
+#define filesys_name "/filesys_img"
+#define filesys_name_length 12
+
 /* Init Offset Macros */
-#define DENTRY_OFFSET 64 // should be after the 64 Bytes in boot block
-#define BLOCK_SIZE 4096 // absolute block size in Bytes
-#define BOOT_START_ADDR 0x00412000 // start addr of module 0
+#define INODE_OFFSET 1
 
 /* Struct Macros */
 #define BOOT_RESERVE_SIZE 13 // the size is in 32bit units
@@ -97,8 +99,9 @@ typedef struct data_block_t {
 	int8_t data[MAX_CHARS_IN_DATA];
 } data_block_t; /* Represents part of a file's set of data */
 
+
 /* Initializes the file system with relevant information */
-void filesystem_init();
+void filesystem_init(boot_block_t* boot_addr);
 
 /* Helpers */
 void create_char_count();
@@ -111,8 +114,11 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry);
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
 /***********File Driver Stuff**************/
-
-
+int32_t file_driver(uint32_t cmd, op_data_t operation_data);
+int32_t file_open(const int32_t* filename);
+int32_t file_read(int32_t fd, void* buf, int32_t nbytes);
+int32_t file_write(int32_t fd, const void* buf, int32_t nbytes);
+int32_t file_close(int32_t fd);
 /******************************************/
 
 #endif /* _FILESYSTEM_H */
