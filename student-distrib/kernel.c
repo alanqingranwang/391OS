@@ -10,6 +10,7 @@
 #include "idt.h"
 #include "paging.h"
 #include "debug.h"
+#include "filesystem.h" // JC
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -62,6 +63,11 @@ entry (unsigned long magic, unsigned long addr)
 			for(i = 0; i<16; i++) {
 				printf("0x%x ", *((char*)(mod->mod_start+i)));
 			}
+
+			/* JC - If the module name is "filesys_img", then init file system with module start addr */
+			if(strncmp((int8_t*)mod->string, filesys_name, filesys_name_length) == 0)
+				filesystem_init((boot_block_t*)mod->mod_start);
+
 			printf("\n");
 			mod_count++;
 			mod++;
@@ -170,6 +176,38 @@ entry (unsigned long magic, unsigned long addr)
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
+
+	/*******************************************************************/
+
+	/* Testing the RTC driver */
+	// op_data_t package; // create the data package, check out filesystem for struct info
+	// int32_t filed = rtc_driver(OPEN, package); // open it
+	// if(filed != -1)
+	// {
+	// 	package.fd = filed;
+
+	// 	/* Test Writing Frequency - to test frequency visually uncomment print time in interrupt handler */
+	// 	// uint32_t frequency = 1024;
+	// 	// package.buf = (void*)(&frequency);
+	// 	// rtc_driver(WRITE, package);
+
+	// 	/* Test Reading */
+	// 	// uint32_t count; // if it prints at the same frequency as interrupt then it works
+	// 	// for(count = 0; count < 10; count ++)
+	// 	// {
+	// 	// 	rtc_driver(READ, package);
+	// 	// 	printf("Finished reading\n");
+	// 	// }
+
+	// 	rtc_driver(CLOSE, package);
+	// }
+	// else
+	// 	printf("couldn't open\n");
+
+	find_something();
+	printf("ended find_something\n");
+
+	/*******************************************************************/
 
 	/* Execute the first program (`shell') ... */
 
