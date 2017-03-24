@@ -142,8 +142,9 @@ void print_file_text(int8_t* name)
 	}
 
 	int32_t inodeindex = my_dentry.inode_idx;
-	int32_t retval, counting;
-	int8_t* buffer[5000];
+	int32_t retval;
+	register int32_t counting;
+	int8_t buffer[5000];
 	uint32_t off = 0;
 	while((retval = read_data(inodeindex, off, (uint8_t*)buffer, 5000)) != 0)
 	{
@@ -151,7 +152,11 @@ void print_file_text(int8_t* name)
 			return;
 
 		for(counting = 0; counting < retval; counting++)
+		{
 			printf("%c", buffer[counting]);
+			if((counting%SCREEN_CHAR) == 0)
+				printf("\n");
+		}
 
 		off += retval;
 	}
@@ -161,14 +166,16 @@ void print_file_text(int8_t* name)
 void find_something()
 {
 	/* Testing Something */
-	// print_file_info();
 	printf("\n\n");
+	// print_file_info();
+	// print_file_text("verylargetextwithverylongname.txt");
 	print_file_text("hello");
 
+
 	// printf("%s", (entries[0]).file_name);
-	printf("\nWe have %d directory entries.\n", boot_block->num_dir_entries);
-	printf("We have %d inodes.\n", boot_block->N);
-	printf("We have %d data blocks.\n", boot_block->D);
+	// printf("\nWe have %d directory entries.\n", boot_block->num_dir_entries);
+	// printf("We have %d inodes.\n", boot_block->N);
+	// printf("We have %d data blocks.\n", boot_block->D);
 	/* Ending Test Something */
 }
 
@@ -227,7 +234,7 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
 	int32_t given_name_len = strlen((int8_t*)fname);
 
 	if(given_name_len > MAX_NAME_CHARACTERS)
-		return -1; // not valid name, too long
+		given_name_len = MAX_NAME_CHARACTERS; // pretend as if it's the same size.
 
 	// go through all the dentries
 	for(dentry_loop = 0; dentry_loop < MAX_ENTRIES; dentry_loop++)
@@ -241,7 +248,7 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
 			// if the strings are the same, copy over data
 			if(strncmp((int8_t*)fname, (entries[dentry_loop]).file_name, entry_name_len) == 0)
 			{
-				strncpy(dentry->file_name, (entries[dentry_loop]).file_name, character_count[dentry_loop]); // (dest, src)
+				strncpy(dentry->file_name, (entries[dentry_loop]).file_name, entry_name_len); // (dest, src)
 				dentry->file_type = (entries[dentry_loop]).file_type;
 				dentry->inode_idx = (entries[dentry_loop]).inode_idx;
 				return 0; // found the entry
@@ -359,7 +366,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
 		while(curr_byte < end_of_block_byte)
 		{
-			buf[chars_read] = ((data_blocks[curr_data_block]).data)[curr_byte]; // get char
+			buf[chars_read] = (int8_t)((data_blocks[curr_data_block]).data)[curr_byte]; // get char
 			chars_read++; // next byte to fill
 			curr_byte++; // next byte in filesys
 		}
