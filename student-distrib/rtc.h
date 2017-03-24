@@ -88,7 +88,7 @@ void rtc_handler(void);
 
 /* Real-Time Clock Driver */
 int32_t rtc_driver(uint32_t cmd, op_data_t operation_data);
-int32_t rtc_open(const uint8_t* filename);
+int32_t rtc_open();
 int32_t rtc_read();
 int32_t rtc_write(int32_t fd, const void* buf);
 int32_t rtc_close(int32_t fd);

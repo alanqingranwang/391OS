@@ -7,6 +7,8 @@
 
 /* Interrupt Happened Flag */
 uint32_t interrupt_flag; // When interrupt happens this changes to 1
+int32_t rtc_fd; // holds the rtc's fd when opened
+// maybe create rtc's own fd struct
 
 /* Keeps track of current time */
 static uint8_t second;
@@ -41,7 +43,6 @@ void rtc_init(void)
 	// Enable Periodic Interrupt, default 1024 Hz rate
 	cli_and_save(flags);
 	
-	// set the IDT table entry for RTC
  	// Map RTC interrupts to IDT
    idt[RTC_VECTOR_NUM].present = 1;
    SET_IDT_ENTRY(idt[RTC_VECTOR_NUM], rtc_handler);
@@ -52,9 +53,12 @@ void rtc_init(void)
 	outb((prev_data | PERIODIC), CMOS_RTC_PORT);	// turn on bit 6 of reg B
 
 	set_frequency(DEFAULT_FREQ); // default should be 2Hz
+	
+	// initialize local variables
 	interrupt_flag = 1; // initialize to 1
-	enable_irq(RTC_IRQ);	// enable PIC to accept interrupts
+	rtc_fd = -1; // initialize to no file descriptor in use
 
+	enable_irq(RTC_IRQ);	// enable PIC to accept interrupts
 	restore_flags(flags);
 }
 
@@ -166,7 +170,7 @@ int32_t rtc_driver(uint32_t cmd, op_data_t operation_data)
 	switch(cmd)
 	{
 		case OPEN:
-			return rtc_open(operation_data.filename);
+			return rtc_open();
 		case READ:
 			return rtc_read();
 		case WRITE:
@@ -181,35 +185,25 @@ int32_t rtc_driver(uint32_t cmd, op_data_t operation_data)
 /* JC
  * rtc_driver
  * 	DESCRIPTION:
- *			Allocates a file descriptor for the RTC. Modifies package to have the fd.
- *		INPUT:
- *			operation_data - data package that contains filename.
- *						package's fd should be changed to the new index.
+ *			Allocates a file descriptor for the RTC.
+ *		INPUT: none
  *		RETURN VALUE:
- *			-1 - couldn't find filename, not the rtc, or no avaialable descriptor
+ *			-1 - couldn't open, no fd available
  *			fd - successfully created a file descriptor, return fd index
  *		SIDE_EFFECTS: opens an fd
+ *
+ *		NOTE TO SELF:
+ *			Figure out what it's suppose to return, should it always be 0?
+ *			If so then fd should be contained somewhere
+ *			unless it doesn't use an fd
  */
-int32_t rtc_open(const uint8_t* filename)
+int32_t rtc_open()
 {
 	uint32_t flags;
 	cli_and_save(flags);
 
-	// uncomment later
-	// dentry_t my_dentry;
-	// if(read_dentry_by_name(filename, &my_dentry) == -1)
-	// {
-	// 	restore_flags(flags);
-	// 	return -1; // file doesn't exist
-	// }
-
-	// if(my_dentry.file_type != 0)
-	// {
-	// 	restore_flags(flags);
-	// 	return -1; // the filename isn't a user level rtc
-	// }
-
-	int32_t fd_index = get_fd_index();
+	// should RTC always be able to open?
+	int32_t fd_index = get_fd_index(); // get an available index
 	if(fd_index == -1)
 	{
 		restore_flags(flags);
