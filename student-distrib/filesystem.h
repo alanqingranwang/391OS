@@ -8,6 +8,9 @@
 #define _FILESYSTEM_H
 
 #include "lib.h"
+#include "testcases3_2.h" // uses macros
+
+void find_something();
 
 // need to create a process thingy
 /* should automatically open stdin and stdout, which correspond to the file
@@ -19,17 +22,11 @@
  */
 
 /* All The Macros */
+#define filesys_name "/filesys_img"
+#define filesys_name_length 12
+
 /* Init Offset Macros */
-#define DENTRY_OFFSET 64 // should be after the 64 Bytes in boot block
-#define BLOCK_SIZE 4096 // absolute block size in Bytes
-
-
-
-
-#define BOOT_START_ADDR 0x4000 // CHANGE THIS WHERE THE ADDRESS ISISISISISISISISISISISISISISISISIS*************************
-
-
-
+#define INODE_OFFSET 1
 
 /* Struct Macros */
 #define BOOT_RESERVE_SIZE 13 // the size is in 32bit units
@@ -43,6 +40,14 @@
 /* File Descriptor Macros */
 #define MAX_OPEN_FILES 8
 
+/*********************File Descriptor Stufff**************/
+/* device driver cmd */
+#define OPEN 1
+#define READ 2
+#define WRITE 3
+#define CLOSE 4
+
+// Fill with what you need, and pass as param to driver
 typedef struct op_data_t {
 	uint8_t *filename; // used in open
 	int32_t fd; // used in read, write, close
@@ -52,14 +57,21 @@ typedef struct op_data_t {
 
 /* File Descriptor Structure Described in 7.2 Documentation */
 typedef struct file_descriptor_t {
-	uint32_t (*file_op_table_ptr)(uint32_t, op_data_t); // points at the file type's driver function
-	uint32_t inode_ptr; // index to the inode for this file, NULL for non_files
+	int32_t (*file_op_table_ptr)(uint32_t, op_data_t); // points at the file type's driver function
+	int32_t inode_ptr; // index to the inode for this file, -1 for non_files
 	uint32_t file_position; // current reading location in file, read system call should update this.
-	int32_t flags; // among other things, marks file descriptor as in-use
+	uint32_t flags; // among other things, marks file descriptor as in-use
+	// flags = 0, not in use, flags = 1, in use
 } fd_t;
 
 /* File Descriptor Table */
 fd_t fd_table[MAX_OPEN_FILES];
+
+void fd_table_init();
+
+/* Helpers */
+int32_t get_fd_index();
+/********************************************************/
 
 /* The structures used to organize the filesys_img data */
 typedef struct dentry_t {
@@ -87,9 +99,9 @@ typedef struct data_block_t {
 	int8_t data[MAX_CHARS_IN_DATA];
 } data_block_t; /* Represents part of a file's set of data */
 
+
 /* Initializes the file system with relevant information */
-void filesystem_init();
-void fd_table_init();
+void filesystem_init(boot_block_t* boot_addr);
 
 /* Helpers */
 void create_char_count();
@@ -101,6 +113,13 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry);
 int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry);
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
+/***********File Driver Stuff**************/
+int32_t file_driver(uint32_t cmd, op_data_t operation_data);
+int32_t file_open(const int32_t* filename);
+int32_t file_read(int32_t fd, void* buf, int32_t nbytes);
+int32_t file_write(int32_t fd, const void* buf, int32_t nbytes);
+int32_t file_close(int32_t fd);
+/******************************************/
 
 #endif /* _FILESYSTEM_H */
 
