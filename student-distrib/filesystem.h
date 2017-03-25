@@ -66,6 +66,8 @@ typedef struct data_block_t {
 
 /* Print File System's Info */
 void print_file_info();
+uint32_t get_num_entries();
+int8_t* get_entry_name(uint32_t index);
 
 /* Initializes the file system with relevant information */
 void filesystem_init(boot_block_t* boot_addr);

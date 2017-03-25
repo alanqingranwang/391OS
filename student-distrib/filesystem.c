@@ -97,7 +97,7 @@ int32_t file_driver(uint32_t cmd, op_data_t operation_data)
 		case CLOSE:
 			return file_close(operation_data.fd);
 		default:
-			printf("Invalid Command");
+			printf("Invalid Command\n");
 			return -1;
 	}
 }
@@ -129,7 +129,7 @@ int32_t file_open(const int8_t* filename)
 	int32_t fd_index = get_fd_index(); // get an available index
 	if(fd_index == -1)
 	{
-		printf("No Available FD");
+		printf("No Available FD\n");
 		restore_flags(flags);
 		return -1; // no available fd
 	}
@@ -320,6 +320,22 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry)
 	dentry->file_type = (entries[index]).file_type;
 	dentry->inode_idx = (entries[index]).inode_idx;
 	return 0;
+}
+
+/* JC
+ * Returns the number of entries in the filesystem.
+ */
+uint32_t get_num_entries()
+{
+	return num_entries;
+}
+
+/* JC
+ * Returns the name of the entry in the filesystem
+ */
+int8_t* get_entry_name(uint32_t index)
+{
+	return (entries[index]).file_name;
 }
 
 /* JC
