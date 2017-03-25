@@ -10,7 +10,9 @@
 
 
 /* Create a dentry_t struct */
+struct {
 
+}
 
 
 /* The three routines provided by the file system module return -1 on failure
@@ -22,4 +24,3 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
 
 #endif /* _FILESYSTEM_H */
-

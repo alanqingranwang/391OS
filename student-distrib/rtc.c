@@ -75,7 +75,7 @@ void rtc_handler(void)
 
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
 
-	print_time();
+	//print_time();
 
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);
@@ -84,15 +84,6 @@ void rtc_handler(void)
 	sti();
 	restore_registers();
 }
-
-// void set_frequency()
-// {
-	// setting frequency
-	// outb((DISABLE_NMI | REG_A), SELECT_REG);
-	// prev_data = inb(CMOS_RTC_PORT);
-	// outb((DISABLE_NMI | REG_A), SELECT_REG);
-	// outb((prev_data & 0xF0) | (0x0F), CMOS_RTC_PORT);
-// }
 
 /* JC
  * get_update_flag
@@ -225,11 +216,7 @@ void update_time(void)
  * read_time
  * 	DESCRIPTION:
  *			Reads all the required info registers and converts
-<<<<<<< HEAD
- *				it to current time.
-=======
  *				binary to real current time.
->>>>>>> 017dc5abc10015d294a8ac3ebbc4afcebcead8eb
  * 	INPUT: none
  *		OUTPUT: none
  *		RETURN VALUE: none
