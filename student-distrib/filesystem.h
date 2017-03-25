@@ -8,9 +8,7 @@
 #define _FILESYSTEM_H
 
 #include "lib.h"
-#include "testcases3_2.h" // uses macros
-
-void find_something();
+#include "fd_table.h"
 
 // need to create a process thingy
 /* should automatically open stdin and stdout, which correspond to the file
@@ -22,6 +20,7 @@ void find_something();
  */
 
 /* All The Macros */
+/* Macro for filesystem init in entry code */
 #define filesys_name "/filesys_img"
 #define filesys_name_length 12
 
@@ -37,41 +36,7 @@ void find_something();
 #define MAX_INODE_DATA_BLOCKS 1023 // this is how many data blocks an inode can have
 #define MAX_CHARS_IN_DATA 4096 // this is how many characters exist in a data block
 
-/* File Descriptor Macros */
-#define MAX_OPEN_FILES 8
-
-/*********************File Descriptor Stufff**************/
-/* device driver cmd */
-#define OPEN 1
-#define READ 2
-#define WRITE 3
-#define CLOSE 4
-
-// Fill with what you need, and pass as param to driver
-typedef struct op_data_t {
-	uint8_t *filename; // used in open
-	int32_t fd; // used in read, write, close
-	void* buf; // used in read and write
-	int32_t nbytes; // used in read, and write
-} op_data_t;
-
-/* File Descriptor Structure Described in 7.2 Documentation */
-typedef struct file_descriptor_t {
-	int32_t (*file_op_table_ptr)(uint32_t, op_data_t); // points at the file type's driver function
-	int32_t inode_ptr; // index to the inode for this file, -1 for non_files
-	uint32_t file_position; // current reading location in file, read system call should update this.
-	uint32_t flags; // among other things, marks file descriptor as in-use
-	// flags = 0, not in use, flags = 1, in use
-} fd_t;
-
-/* File Descriptor Table */
-fd_t fd_table[MAX_OPEN_FILES];
-
-void fd_table_init();
-
-/* Helpers */
-int32_t get_fd_index();
-/********************************************************/
+#define NUM_SPACES 34 // used in formating file info's print
 
 /* The structures used to organize the filesys_img data */
 typedef struct dentry_t {
@@ -99,12 +64,12 @@ typedef struct data_block_t {
 	int8_t data[MAX_CHARS_IN_DATA];
 } data_block_t; /* Represents part of a file's set of data */
 
+/* Print File System's Info */
+void print_file_info();
 
 /* Initializes the file system with relevant information */
 void filesystem_init(boot_block_t* boot_addr);
-
-/* Helpers */
-void create_char_count();
+void create_char_count(); // helper
 
 /* The three routines provided by the file system module return -1 on failure
  * more documentation in MP3.
@@ -115,9 +80,9 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
 /***********File Driver Stuff**************/
 int32_t file_driver(uint32_t cmd, op_data_t operation_data);
-int32_t file_open(const int32_t* filename);
-int32_t file_read(int32_t fd, void* buf, int32_t nbytes);
-int32_t file_write(int32_t fd, const void* buf, int32_t nbytes);
+int32_t file_open(const int8_t* filename);
+int32_t file_read(int32_t fd, uint8_t* buf, uint32_t nbytes);
+int32_t file_write();
 int32_t file_close(int32_t fd);
 /******************************************/
 
