@@ -12,6 +12,8 @@
 #include "debug.h"
 #include "filesystem.h" // JC
 
+#include "testcases3_2.h"
+
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
@@ -177,36 +179,8 @@ entry (unsigned long magic, unsigned long addr)
 	printf("Enabling Interrupts\n");
 	sti();
 
-	/*******************************************************************/
-
-	/* Testing the RTC driver */
-	// op_data_t package; // create the data package, check out filesystem for struct info
-	// int32_t filed = rtc_driver(OPEN, package); // open it
-	// if(filed != -1)
-	// {
-	// 	package.fd = filed;
-
-	// 	/* Test Writing Frequency - to test frequency visually uncomment print time in interrupt handler */
-	// 	// uint32_t frequency = 1024;
-	// 	// package.buf = (void*)(&frequency);
-	// 	// rtc_driver(WRITE, package);
-
-	// 	/* Test Reading */
-	// 	// uint32_t count; // if it prints at the same frequency as interrupt then it works
-	// 	// for(count = 0; count < 10; count ++)
-	// 	// {
-	// 	// 	rtc_driver(READ, package);
-	// 	// 	printf("Finished reading\n");
-	// 	// }
-
-	// 	rtc_driver(CLOSE, package);
-	// }
-	// else
-	// 	printf("couldn't open\n");
-
-	find_something();
-	printf("ended find_something\n");
-
+	/***************************Checkpoint 3.2**************************/
+	collective_test32();
 	/*******************************************************************/
 
 	/* Execute the first program (`shell') ... */
