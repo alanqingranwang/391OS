@@ -178,6 +178,7 @@ int32_t rtc_driver(uint32_t cmd, op_data_t operation_data)
 		case CLOSE:
 			return rtc_close(/*operation_data.fd*/);
 		default:
+			printf("Invalid Command");
 			return -1;
 	}
 }
@@ -208,6 +209,7 @@ int32_t rtc_open()
 	// int32_t fd_index = get_fd_index(); // get an available index
 	// if(fd_index == -1)
 	// {
+	//		printf("No Available FD");
 	// 	restore_flags(flags);
 	// 	return -1; // no available fd
 	// }
@@ -273,9 +275,11 @@ int32_t rtc_write(const void* buf)
  */
 int32_t rtc_close(/*int32_t fd*/)
 {
-	// if(fd < 2)
+	// if(fd < 2 || fd > 8)
+	// {
+	//		printf("Invalid FD");
 	// 	return -1; // can't close index 0 and index 1
-
+	// }
 	// uint32_t flags;
 	// cli_and_save(flags);
 	// (fd_table[fd]).flags = 0; // turn it back to not in use

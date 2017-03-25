@@ -97,6 +97,7 @@ int32_t file_driver(uint32_t cmd, op_data_t operation_data)
 		case CLOSE:
 			return file_close(operation_data.fd);
 		default:
+			printf("Invalid Command");
 			return -1;
 	}
 }
@@ -128,6 +129,7 @@ int32_t file_open(const int8_t* filename)
 	int32_t fd_index = get_fd_index(); // get an available index
 	if(fd_index == -1)
 	{
+		printf("No Available FD");
 		restore_flags(flags);
 		return -1; // no available fd
 	}
@@ -181,6 +183,7 @@ int32_t file_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
  */
 int32_t file_write()
 {
+	printf("READ ONLY FILES");
 	return -1;
 }
 
@@ -198,8 +201,11 @@ int32_t file_write()
  */
 int32_t file_close(int32_t fd)
 {
-	if(fd < 2)
+	if(fd < 2 || fd > 8)
+	{
+		printf("INVALID FD");
 		return -1; // can't close stdin or stdout
+	}
 
 	// lock it
 	uint32_t flags;
