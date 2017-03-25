@@ -7,8 +7,7 @@
 
 /* Interrupt Happened Flag */
 uint32_t interrupt_flag; // When interrupt happens this changes to 1
-int32_t rtc_fd; // holds the rtc's fd when opened
-// maybe create rtc's own fd struct
+// int32_t rtc_fd; // holds the rtc's fd when opened
 
 /* Keeps track of current time */
 static uint8_t second;
@@ -17,6 +16,7 @@ static uint8_t hour;
 static uint8_t day;
 static uint8_t month;
 static uint32_t year;
+static uint8_t curr_rate;
 
 /* Purposely didn't include 2 Hz, it will be a default if an invalid freq is selected */
 static uint32_t frequencies[NUM_FREQ] = {32768, 16384, 8192, 4096, 2048, 1024,
@@ -56,7 +56,7 @@ void rtc_init(void)
 	
 	// initialize local variables
 	interrupt_flag = 1; // initialize to 1
-	rtc_fd = -1; // initialize to no file descriptor in use
+	// rtc_fd = -1; // initialize to no file descriptor in use
 
 	enable_irq(RTC_IRQ);	// enable PIC to accept interrupts
 	restore_flags(flags);
@@ -87,7 +87,7 @@ void rtc_handler(void)
 	// print_time();	// this one looks cooler
 	// test_interrupts();	// this one looks like a rave
 
-	interrupt_flag = 1; // Allow read/write to return
+	interrupt_flag = 1; // Allow read to return
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);
 	inb(CMOS_RTC_PORT);	// throw away data
@@ -118,16 +118,15 @@ void rtc_handler(void)
  */
 void set_frequency(uint32_t frequency)
 {
-	uint8_t rate; // loop counter and rate
-	for(rate = 0; rate < NUM_FREQ; rate++)
-		if(frequency == frequencies[rate]) // find the frequency
+	for(curr_rate = 0; curr_rate < NUM_FREQ; curr_rate++)
+		if(frequency == frequencies[curr_rate]) // find the frequency
 			break;
 
-	rate++; // need to increment for calculations
+	curr_rate++; // need to increment for calculations
 	// check if it's within range
-	rate &= NIBBLE_MASK;	// can't be over 15
-	if(rate < MAX_RATE) // can't be less than 3
-		rate = MAX_RATE; // forced to 1024 Hz
+	curr_rate &= NIBBLE_MASK;	// can't be over 15
+	if(curr_rate < MAX_RATE) // can't be less than 3
+		curr_rate = MAX_RATE; // forced to 1024 Hz
 
 	uint32_t flags;
 	int8_t prev_data;
@@ -139,7 +138,7 @@ void set_frequency(uint32_t frequency)
 	outb((DISABLE_NMI | REG_A), SELECT_REG);	// select register A
 	prev_data = inb(CMOS_RTC_PORT);	// get current data of A
 	outb((DISABLE_NMI | REG_A), SELECT_REG);	// get A again
-	outb(((prev_data & 0xF0) | rate), CMOS_RTC_PORT);	// write new rate
+	outb(((prev_data & 0xF0) | curr_rate), CMOS_RTC_PORT);	// write new rate
 
 	// unlock it
 	restore_flags(flags);
@@ -174,9 +173,10 @@ int32_t rtc_driver(uint32_t cmd, op_data_t operation_data)
 		case READ:
 			return rtc_read();
 		case WRITE:
-			return rtc_write(operation_data.fd, operation_data.buf);
+		// will need to opdate later with an fd, maybe
+			return rtc_write(operation_data.buf);
 		case CLOSE:
-			return rtc_close(operation_data.fd);
+			return rtc_close(/*operation_data.fd*/);
 		default:
 			return -1;
 	}
@@ -199,26 +199,29 @@ int32_t rtc_driver(uint32_t cmd, op_data_t operation_data)
  */
 int32_t rtc_open()
 {
-	uint32_t flags;
-	cli_and_save(flags);
+	return 0; // for Checkpoint 2, just return 0
 
-	// should RTC always be able to open?
-	int32_t fd_index = get_fd_index(); // get an available index
-	if(fd_index == -1)
-	{
-		restore_flags(flags);
-		return -1; // no available fd
-	}
+	// uint32_t flags;
+	// cli_and_save(flags);
 
-	// fill in the descriptor
-	(fd_table[fd_index]).file_op_table_ptr = rtc_driver; // give it the function ptr
-	(fd_table[fd_index]).inode_ptr = -1; // not a normal file
-	(fd_table[fd_index]).file_position = 0;
-	(fd_table[fd_index]).flags = 1;	// in use
+	// // should RTC always be able to open?
+	// int32_t fd_index = get_fd_index(); // get an available index
+	// if(fd_index == -1)
+	// {
+	// 	restore_flags(flags);
+	// 	return -1; // no available fd
+	// }
 
-	restore_flags(flags);
-	printf("RTC opened");
-	return fd_index;
+	// // fill in the descriptor
+	// fd_t rtc_fd_info;
+	// rtc_fd_info.file_op_table_ptr = rtc_driver; // give it the function ptr
+	// rtc_fd_info.inode_ptr = -1; // not a normal file
+	// rtc_fd_info.file_position = 0;
+	// rtc_fd_info.flags = 1;	// in use
+	// set_fd_info(fd_index, rtc_fd_info);
+
+	// restore_flags(flags);
+	// return fd_index;
 }
 
 /* JC
@@ -246,16 +249,11 @@ int32_t rtc_read()
  *			buf - a pointer to a 4 byte frequency
  *		OUTPUT: none
  *		RETURN VALUE:
- *			-1 - failure, invalid fd
  *			 0 - successful change
  *		SIDE_EFFECTS: modifies RTC frequency
  */
-int32_t rtc_write(int32_t fd, const void* buf)
+int32_t rtc_write(const void* buf)
 {
-	// check if fd is even valid
-	if((fd_table[fd]).flags == 0)
-		return -1;
-
 	uint32_t* speed = (uint32_t*)buf; // change into meaningful data
 	set_frequency(*speed);
 	return 0;
@@ -273,17 +271,16 @@ int32_t rtc_write(int32_t fd, const void* buf)
  *			 0 - successful close
  *		SIDE_EFFECTS: closes an fd
  */
-int32_t rtc_close(int32_t fd)
+int32_t rtc_close(/*int32_t fd*/)
 {
-	if(fd < 2)
-		return -1; // can't close index 0 and index 1
+	// if(fd < 2)
+	// 	return -1; // can't close index 0 and index 1
 
-	uint32_t flags;
-	cli_and_save(flags);
-	(fd_table[fd]).flags = 0; // turn it back to not in use
-	restore_flags(flags);
-	printf("RTC closed");
-	return 0;
+	// uint32_t flags;
+	// cli_and_save(flags);
+	// (fd_table[fd]).flags = 0; // turn it back to not in use
+	// restore_flags(flags);
+	return 0; // should only return 0 for checkpoint 2
 }
 
 /* IGNORE STUFF BELOW */
