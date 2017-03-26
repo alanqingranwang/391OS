@@ -347,4 +347,3 @@ void clear_buffer() {
     }
     buffer_index = 0;
     screen_x_pos = 0;
-}
