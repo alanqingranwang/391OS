@@ -9,12 +9,33 @@
 
 #include "lib.h"
 #include "filesystem.h"
+#include "rtc.h"
+
 
 #define SCREEN_CHAR 80
+#define HIGHEST_RATES 10
+
+// X is how long you want to wait in seconds
+// speed is the frequency of the interrupts
+#define WAIT_X_SECONDS(X, speed)				\
+do {													\
+	interrupt_count = 0;							\
+	while(interrupt_count < X*speed);		\
+} while(0)
+
+
+
+
+
+
+
+
+
+
+
 
 void collective_test32();
-
-void find_something();
 void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes);
+void print_freq();
 
 #endif /* _TESTCASES32_H */
