@@ -6,7 +6,7 @@
 #include "rtc.h"
 
 /* Interrupt Happened Flag */
-uint32_t interrupt_flag; // When interrupt happens this changes to 1
+static uint32_t interrupt_flag; // When interrupt happens this changes to 1
 // int32_t rtc_fd; // holds the rtc's fd when opened
 
 /* Keeps track of current time */
@@ -82,11 +82,20 @@ void rtc_handler(void)
    // save previous state of interrupts, and prevent them
 	cli_and_save(flags);
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
+	/* Don't touch anything above */
+
+
 
 	// INSERT HERE FOR THE HANDLER TO DO SOMETHING OR UNCOMMENT
 	// print_time();	// this one looks cooler
 	// test_interrupts();	// this one looks like a rave
+	interrupt_count++; // remove this after checkpoint 2
+	// call terminal's write
+	// putc('1'); // uncomment when testing for freq
 
+
+
+	/* Don't touch anything below */
 	interrupt_flag = 1; // Allow read to return
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);
@@ -143,6 +152,8 @@ void set_frequency(uint32_t frequency)
 	// unlock it
 	restore_flags(flags);
 }
+
+/*********************************************************/
 
 /* JC
  * rtc_driver

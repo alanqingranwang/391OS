@@ -26,6 +26,14 @@
 #include "idt.h"
 #include "fd_table.h"
 
+
+
+// remove this after checkpoint 2, and all it's uses
+uint32_t interrupt_count;
+
+
+
+
 /* port 0x70 is used to specify an index or "register number"
  *		and to disable non-maskable-interrupt (NMI).
  *		High order bit tells the hardware enable/disable NMIs
