@@ -9,13 +9,13 @@
 
 #include "i8259.h"
 #include "lib.h"
+#include "terminal.h"
 
 /* adding the interrupt to the table is the job of the init */
 #include "idt.h"
 
-
-uint32_t CTR4;
-
+#include "testcases3_2.h"
+#include "filesystem.h"
 
 /* Keyboard ports */
 #define KBD_DATA_PORT   0x60
@@ -42,13 +42,21 @@ uint32_t CTR4;
 #define CAPS            0x3A
 #define BKSP            0x0E
 #define ENTER           0x1C
+#define FOUR_SCAN 0x05
+#define THREE_SCAN 0x04
 
 #define BUFFER_SIZE     128
 #define KEY_MODES       4   // nothing, shift, caps, shift and caps
 #define NUM_COLS        80
 
-enum key_mode {NONE, SHIFT, CAPS, SHIFT_CAPS};
-typedef enum key_mode mode;
+/*******************/
+#define NONE_MODE 0
+#define SHIFT_MODE 1
+#define CAPS_MODE 2
+#define SHIFT_CAPS_MODE 3
+
+// enum key_mode {NONE, SHIFT, CAPS, SHIFT_CAPS};
+// typedef enum key_mode mode;
 
 /* Externally-visible functions */
 

@@ -6,13 +6,16 @@
 
 #include "keyboard.h"
 
+static int CTR4 = NUM_FREQ; // remove later
+static int CTR3 = 0;
+
 /*
  * 0 - neither
  * 1 - shift
  * 2 - caps
  * 3 - shift and caps
  */
-static mode caps_shift_flag = NONE;
+static int caps_shift_flag = NONE_MODE;
 static int ctrl_flag = 0;
 static int screen_x_pos = 0;
 static int buffer_index = 0;
@@ -279,14 +282,14 @@ void keyboard_handler()
  *      SIDE EFFECTS: none
  */
 void toggle_caps() {
-    if(caps_shift_flag == NONE)
-        caps_shift_flag = CAPS;
-    else if(caps_shift_flag == SHIFT)
-        caps_shift_flag = SHIFT_CAPS;
-    else if(caps_shift_flag == CAPS)
-        caps_shift_flag = NONE;
+    if(caps_shift_flag == NONE_MODE)
+        caps_shift_flag = CAPS_MODE;
+    else if(caps_shift_flag == SHIFT_MODE)
+        caps_shift_flag = SHIFT_CAPS_MODE;
+    else if(caps_shift_flag == CAPS_MODE)
+        caps_shift_flag = NONE_MODE;
     else
-        caps_shift_flag = SHIFT;
+        caps_shift_flag = SHIFT_MODE;
 }
 
 /* AW
@@ -300,16 +303,16 @@ void toggle_caps() {
  */
 void toggle_shift(int type) {
     if(type == MAKE) {
-        if(caps_shift_flag == NONE)
-            caps_shift_flag = SHIFT;
-        else if(caps_shift_flag == CAPS)
-            caps_shift_flag = SHIFT_CAPS;
+        if(caps_shift_flag == NONE_MODE)
+            caps_shift_flag = SHIFT_MODE;
+        else if(caps_shift_flag == CAPS_MODE)
+            caps_shift_flag = SHIFT_CAPS_MODE;
     }
     else {
-        if(caps_shift_flag == SHIFT)
-            caps_shift_flag = NONE;
-        else if(caps_shift_flag == SHIFT_CAPS)
-            caps_shift_flag = CAPS;
+        if(caps_shift_flag == SHIFT_MODE)
+            caps_shift_flag = NONE_MODE;
+        else if(caps_shift_flag == SHIFT_CAPS_MODE)
+            caps_shift_flag = CAPS_MODE;
     }
 }
 
@@ -346,12 +349,43 @@ void process_key(uint8_t key) {
             clear();
             clear_buffer();
         }
+        /**************************/
+        // if pressed ctrl and 3s
+        else if(key == THREE_SCAN && ctrl_flag){
+            clear();
+            test_file_data(CTR3);
+            CTR3++;
+            CTR3 %= get_num_entries();
+        }
+        // if pressed ctrl and 4s
+        else if(key == FOUR_SCAN && ctrl_flag)
+        {
+            clear();
+            if(CTR4 == MAX_RATE-2)
+            {
+              CTR4 = NUM_FREQ;
+              print_freq(CTR4);
+              set_print_one(0); // turn off
+            }
+            else{               
+              print_freq(CTR4);
+              set_print_one(1); // turn on
+              CTR4--;
+            }
+        }
+        // if pressed ctrl and 1s
+        else if(key == 0x02 && ctrl_flag)
+        {
+            clear();
+            print_file_info();
+        }
+        /**************************/
         else if(screen_x_pos >= NUM_COLS) {
             if(buffer_index + 1 < BUFFER_SIZE) {
                 scroll();
                 screen_x_pos = 0;
                 putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
-                buffer[buffer_index] = key;
+                buffer[buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
                 buffer_index++;
             }
             else
@@ -360,7 +394,7 @@ void process_key(uint8_t key) {
         else {
             if(buffer_index + 1 < BUFFER_SIZE) { // handle buffer overflow
                 putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
-                buffer[buffer_index] = key;
+                buffer[buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
                 buffer_index++;
             }
             else
@@ -400,6 +434,8 @@ void handle_enter() {
     scroll();
     screen_x_pos = 0;
     //call terminal read once implemented
+    // call terminal read, save the buffer
+    terminal_read(STDOUT_FD, (int8_t*)buffer, buffer_index);
     clear_buffer();
 }
 
