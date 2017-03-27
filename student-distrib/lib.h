@@ -42,6 +42,12 @@ void show_blue_screen(void);
  */
 void test_interrupts(void);
 
+void scroll(void);
+
+void backspace(void);
+
+void update_cursor();
+
 /*
  *	save_registers
  *		This is a macro that can be used to save all the registers before an interrupt.
