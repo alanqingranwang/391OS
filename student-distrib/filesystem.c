@@ -70,7 +70,7 @@ void print_file_info()
 	{
 		// print out the name
 		printf("file name: "); // can't use %s, if there's no guaranteed '\0'
-		print_name(entries[d_loop].file_name);
+		char_loop = print_name(entries[d_loop].file_name);
 
 		for(char_loop = char_loop; char_loop < NUM_SPACES; char_loop++)
 			printf(" "); // add spaces to align the rest		
@@ -86,11 +86,11 @@ void print_file_info()
  *			Properly prints the name of the file from dentry.
  *		INPUT:
  *			buf - the name of the file
- *		RETURN VALUE: none
+ *		RETURN VALUE: returns the number of chars written
  *		SIDE EFFECTS: putc to the screen
  *
  */
-void print_name(int8_t* buf)
+int32_t print_name(int8_t* buf)
 {
 	int32_t i = 0;
 	while(buf[i] != '\0' && i < MAX_NAME_CHARACTERS)
@@ -98,6 +98,7 @@ void print_name(int8_t* buf)
 		putc(buf[i]);
 		i++;
 	}
+	return i;
 }
 
 /******************File Driver Stuff*******************************/
