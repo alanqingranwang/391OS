@@ -26,16 +26,16 @@ void collective_test32()
 	int8_t buffer[buffer_size];
 	int8_t* fname;
 	// read all the files in order, wait wait_time seconds between
-	// for(file_loop = 0; file_loop < entry_amt; file_loop++)
-	// {
-	// 	clear();
-	// 	fname = get_entry_name(file_loop);
-	// 	print_file_text(fname, buffer, bytes_to_read);
-	// 	WAIT_X_SECONDS(wait_time, Hz);		
-	// }
+	for(file_loop = 0; file_loop < entry_amt; file_loop++)
+	{
+		clear();
+		fname = get_entry_name(file_loop);
+		print_file_text(fname, buffer, bytes_to_read);
+		WAIT_X_SECONDS(wait_time, Hz);		
+	}
 	clear();
-	print_file_text("verylargetextwithverylongname.txt", buffer, bytes_to_read);
-	WAIT_X_SECONDS(wait_time, Hz);
+	// print_file_text("verylargetextwithverylongname.txt", buffer, bytes_to_read);
+	// WAIT_X_SECONDS(wait_time, Hz);
 	/* Testing the Frequency */
 	// print_freq();
 }
@@ -55,41 +55,46 @@ void collective_test32()
  */
 void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
 {
+	// open file driver
 	op_data_t file_pack;
 	file_pack.filename = name;
 	file_pack.buf = (void*)buffer;
 	file_pack.nbytes = nbytes;
 	int32_t myfd = file_driver(OPEN, file_pack); // open the file
+	// open terminal driver
+	op_data_t term_pack;
+	terminal_driver(OPEN, term_pack);
+
 	if(myfd != -1) // file opened
 	{
 		file_pack.fd = myfd;
 		int32_t retval; // don't take out
-		int32_t char_count; // can be taken out
-		uint32_t offset = 0; // can be taken out
+		
+
 		// the while loop keeps reading until there's nothing to read or there's an error
 		while((retval = file_driver(READ, file_pack)) > 0) // read stuff
 		{
 			// following for loop pritns out the buffer, but should be replaced
 			// with openning terminal driver and calling write
 			// terminal should be doing the writing or reading or what not
-			for(char_count = 0; char_count < retval; char_count++)
-			{
-				// if(offset%SCREEN_CHAR == 0)
-				// 	putc('\n');
-				putc(buffer[char_count]);
-				offset++;
-			}
-
+			term_pack.buf = file_pack.buf;
+			term_pack.nbytes = (uint32_t)retval;
+			terminal_driver(WRITE, term_pack);
 		}
 
+		// close current file
 		file_driver(CLOSE, file_pack); // close it
 
-		printf("file name: %s", file_pack.filename); // this is causing problems
+		printf("\nfile name: "); // this is causing problems
+		printn(file_pack.filename, MAX_CHAR_LENGTH); // wrote our own function to print name
+		// different from terminal write
 	}
 	else
 	{
 		printf("file doesn't exist.\n");
 	}
+	// close terminal driver
+	terminal_driver(CLOSE, term_pack);
 }
 
 
@@ -131,5 +136,16 @@ void print_freq()
 	}
 	else
 		printf("couldn't open\n");
+}
+
+
+void printn(int8_t* buf, int32_t nbytes)
+{
+	int32_t i = 0;
+	while(buf[i] != '\0' && i < nbytes)
+	{
+		putc(buf[i]);
+		i++;
+	}
 }
 
