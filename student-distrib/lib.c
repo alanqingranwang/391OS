@@ -193,20 +193,26 @@ putc(uint8_t c)
 {
     if(c == '\n' || c == '\r') {
         screen_y++;
+
         screen_x = 0;
+                            if(screen_y >= NUM_ROWS)
+            {
+                screen_y--;
+                scroll();
+            }
     }
     else {
         if(screen_x >= NUM_COLS){
             screen_x = 0;
             screen_y++;
             
-            if(screen_y >= NUM_ROWS - 1)
+            if(screen_y >= NUM_ROWS)
             {
                 screen_y--;
                 scroll();
             }
         }
-        
+
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
