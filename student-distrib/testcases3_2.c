@@ -5,7 +5,18 @@
 
 #include "testcases3_2.h"
 
-
+/* JC
+ * collective_tests32
+ *		DESCRITPTION:
+ *			Contains a test to print out all the file info in directory
+ *						a test to print out all the files data one at a time
+ *						a test to test all the frequencies.
+ *		INPUT:
+ *			none
+ *		OUTPUT: dependent on test
+ *		RETURN VALUE: none
+ *
+ */
 void collective_test32()
 {
 	clear();
@@ -16,26 +27,43 @@ void collective_test32()
 	/* Change variables here to test various things. */
 
 	/* Reading all the file info */
+	CTR4 = 0;
 	print_file_info(); // this prints the file info
 
-	WAIT_X_SECONDS(wait_time, Hz); // wait before printing the files
+	while(CTR4 == 0) {} // wait to proceed Press CTRL+4
 
 	// Testing read from functionality. 
-	uint32_t buffer_size = 500;
-	uint32_t bytes_to_read = 500;
+	uint32_t buffer_size = 500;		// modify if necessary
+	uint32_t bytes_to_read = 500;		// modify if necessary
 	int8_t buffer[buffer_size];
 	int8_t* fname;
-	// read all the files in order, wait wait_time seconds between
-	for(file_loop = 0; file_loop < entry_amt; file_loop++)
+	
+	// // read all the files in order, wait wait_time seconds between
+	// for(file_loop = 0; file_loop < entry_amt; file_loop++)
+	// {
+	// 	clear();
+	// 	fname = get_entry_name(file_loop);
+	// 	print_file_text(fname, buffer, bytes_to_read);
+	// 	WAIT_X_SECONDS(wait_time, Hz);		
+	// }
+
+	CTR4 = 0;
+	uint32_t curr_count = 0;
+	while(curr_count < entry_amt)
 	{
 		clear();
-		fname = get_entry_name(file_loop);
+		fname = get_entry_name(curr_count);
 		print_file_text(fname, buffer, bytes_to_read);
-		WAIT_X_SECONDS(wait_time, Hz);		
+		curr_count++;
+
+		while(CTR4 < curr_count) {} // wait to proceed
 	}
 	clear();
+
+	// uncomment the following to test individual files
 	// print_file_text("verylargetextwithverylongname.txt", buffer, bytes_to_read);
-	// WAIT_X_SECONDS(wait_time, Hz);
+
+
 	/* Testing the Frequency */
 	// print_freq();
 }
@@ -49,7 +77,7 @@ void collective_test32()
  *		INPUT:
  *			name - the file's name
  *			buffer - buffer to put info into
- *			nbytes - the max number of bytes to read
+ *			nbytes - the max number of bytes to read at a time
  *		RETURN VALUE: none
  *
  */
@@ -59,7 +87,7 @@ void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
 	op_data_t file_pack;
 	file_pack.filename = name;
 	file_pack.buf = (void*)buffer;
-	file_pack.nbytes = nbytes;
+	file_pack.nbytes = nbytes;	// how many bytes to read at a time
 	int32_t myfd = file_driver(OPEN, file_pack); // open the file
 	// open terminal driver
 	op_data_t term_pack;
@@ -69,7 +97,6 @@ void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
 	{
 		file_pack.fd = myfd;
 		int32_t retval; // don't take out
-		
 
 		// the while loop keeps reading until there's nothing to read or there's an error
 		while((retval = file_driver(READ, file_pack)) > 0) // read stuff
@@ -86,7 +113,7 @@ void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
 		file_driver(CLOSE, file_pack); // close it
 
 		printf("\nfile name: "); // this is causing problems
-		printn(file_pack.filename, MAX_CHAR_LENGTH); // wrote our own function to print name
+		print_name(file_pack.filename, MAX_CHAR_LENGTH); // wrote our own function to print name
 		// different from terminal write
 	}
 	else
@@ -97,7 +124,16 @@ void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
 	terminal_driver(CLOSE, term_pack);
 }
 
-
+/* JC
+ * print_freq
+ *		DESCRIPTION:
+ *			Uses the rtc driver to modify the frequency.
+ *			requires an uncommenting in the rtc interupt handler to
+ *			print out the 1's and visually see the frequency
+ *		INPUT: none
+ *		RETURN VALUE: none
+ *
+ */
 void print_freq()
 {
 	uint32_t freq = 2;
@@ -138,14 +174,4 @@ void print_freq()
 		printf("couldn't open\n");
 }
 
-
-void printn(int8_t* buf, int32_t nbytes)
-{
-	int32_t i = 0;
-	while(buf[i] != '\0' && i < nbytes)
-	{
-		putc(buf[i]);
-		i++;
-	}
-}
 
