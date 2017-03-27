@@ -183,7 +183,7 @@ entry (unsigned long magic, unsigned long addr)
 	/*******************************************************************/
 
 	/***************************Checkpoint 3.2**************************/
-	collective_test32();
+	// all stuff in keyboard ctrls
 	/*******************************************************************/
 
 	/* Execute the first program (`shell') ... */
