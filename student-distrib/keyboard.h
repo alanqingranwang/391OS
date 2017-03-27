@@ -39,7 +39,6 @@
 #define BKSP            0x0E
 #define ENTER           0x1C
 
-static unsigned char buffer[128];
 /* Externally-visible functions */
 
 /* Initialize the Keyboard */
