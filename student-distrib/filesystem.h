@@ -66,7 +66,7 @@ typedef struct data_block_t {
 
 /* Print File System's Info */
 void print_file_info();
-int32_t print_name(int8_t* buf);
+int32_t print_name(int8_t* buf, int32_t max_char);
 uint32_t get_num_entries();
 int8_t* get_entry_name(uint32_t index);
 

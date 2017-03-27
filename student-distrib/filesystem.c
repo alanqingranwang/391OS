@@ -66,17 +66,20 @@ void print_file_info()
 	clear();
 	uint32_t d_loop; // loops through all the dentry loops
 	uint32_t char_loop; // go through all the characters
+	dentry_t file_dent;
 	for(d_loop = 0; d_loop < num_entries; d_loop++)
 	{
+		read_dentry_by_index(d_loop, &file_dent); // get the dentry
+		
 		// print out the name
 		printf("file name: "); // can't use %s, if there's no guaranteed '\0'
-		char_loop = print_name(entries[d_loop].file_name);
+		char_loop = print_name(file_dent.file_name, character_count[d_loop]);
 
 		for(char_loop = char_loop; char_loop < NUM_SPACES; char_loop++)
 			printf(" "); // add spaces to align the rest		
 
-		printf("file type: %d ", entries[d_loop].file_type);
-		printf("file size: %d\n", inodes[(entries[d_loop].inode_idx)].file_size);
+		printf("file type: %d ", file_dent.file_type);
+		printf("file size: %d\n", inodes[file_dent.inode_idx].file_size);
 	}
 }
 
@@ -90,10 +93,10 @@ void print_file_info()
  *		SIDE EFFECTS: putc to the screen
  *
  */
-int32_t print_name(int8_t* buf)
+int32_t print_name(int8_t* buf, int32_t max_char)
 {
 	int32_t i = 0;
-	while(buf[i] != '\0' && i < MAX_NAME_CHARACTERS)
+	while(buf[i] != '\0' && i < max_char)
 	{
 		putc(buf[i]);
 		i++;
