@@ -9,6 +9,13 @@
 
 #define VIDEO 0xB8000
 
+/*******************************/
+#define LOW_VGA 0x0F
+#define HIGH_VGA 0x0E
+#define VGA_SELECT 0x3D4
+#define VGA_DATA 0x3D5
+/*******************************/
+
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
 int32_t puts(int8_t *s);

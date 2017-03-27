@@ -199,9 +199,18 @@ putc(uint8_t c)
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
-        screen_x %= NUM_COLS;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        if(screen_x >= NUM_COLS){
+            screen_x = 0;
+            screen_y++;
+            
+            if(screen_y >= NUM_ROWS - 1)
+            {
+                screen_y--;
+                scroll();
+            }
+        }
     }
+
     update_cursor();
 }
 
@@ -252,14 +261,20 @@ void backspace(void)
 
 void update_cursor()
 {
-    unsigned short position = (screen_y*80) + screen_x;
+    // changing ports, should lock it
+    uint32_t flags;
+    cli_and_save(flags);
+
+    unsigned short position = (screen_y*NUM_COLS) + screen_x;
 
     // cursor LOW port to vga INDEX register
-    outb(0x0F, 0x3D4);
-    outb((unsigned char)(position&0xFF), 0x3D5);
+    outb(LOW_VGA, VGA_SELECT);
+    outb((unsigned char)(position&0xFF), VGA_DATA);
     // cursor HIGH port to vga INDEX register
-    outb(0x0E, 0x3D4);
-    outb((unsigned char )((position>>8)&0xFF), 0x3D5);
+    outb(HIGH_VGA, VGA_SELECT);
+    outb((unsigned char )((position>>8)&0xFF), VGA_DATA);
+
+    restore_flags(flags);
 }
 
 
