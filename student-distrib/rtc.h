@@ -27,10 +27,7 @@
 #include "fd_table.h"
 
 
-
-// remove this after checkpoint 2, and all it's uses
-uint32_t interrupt_count;
-
+#include "testcases3_2.h"
 
 
 

@@ -89,9 +89,10 @@ void rtc_handler(void)
 	// INSERT HERE FOR THE HANDLER TO DO SOMETHING OR UNCOMMENT
 	// print_time();	// this one looks cooler
 	// test_interrupts();	// this one looks like a rave
-	interrupt_count++; // remove this after checkpoint 2
 	// call terminal's write
-	// putc('1'); // uncomment when testing for freq
+	
+	if(get_print_one())
+		putc('1'); // uncomment when testing for freq
 
 
 
