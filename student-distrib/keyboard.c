@@ -342,6 +342,7 @@ void handle_backspace() {
 void handle_enter() {
     scroll();
     screen_x_pos = 0;
+    //call terminal read once implemented
     clear_buffer();
 }
 
