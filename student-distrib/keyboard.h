@@ -39,6 +39,13 @@
 #define BKSP            0x0E
 #define ENTER           0x1C
 
+#define BUFFER_SIZE     128
+#define KEY_MODES       4   // nothing, shift, caps, shift and caps
+#define NUM_COLS        80
+
+enum key_mode {NONE, SHIFT, CAPS, SHIFT_CAPS};
+typedef enum key_mode mode;
+
 /* Externally-visible functions */
 
 /* Initialize the Keyboard */
