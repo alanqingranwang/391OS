@@ -16,7 +16,8 @@ static char* video_mem = (char *)VIDEO;
 * void clear(void);
 *   Inputs: void
 *   Return Value: none
-*   Function: Clears video memory
+*   Function: Clears video memory and resets the cursor and location of screen
+*       to coordinates (0,0)
 */
 
 void
@@ -191,21 +192,23 @@ puts(int8_t* s)
 void
 putc(uint8_t c)
 {
+    // forced next line chracter
     if(c == '\n' || c == '\r') {
         screen_y++;
-
         screen_x = 0;
-                            if(screen_y >= NUM_ROWS)
-            {
-                screen_y--;
-                scroll();
-            }
+        // Check to keep screen_y in bounds upon a '\n'
+        if(screen_y >= NUM_ROWS)
+        {
+            screen_y--;
+            scroll();
+        }
     }
     else {
+        // next line by default (wrapping)
         if(screen_x >= NUM_COLS){
             screen_x = 0;
             screen_y++;
-
+            // check to keep screen_y in bounds naturally
             if(screen_y >= NUM_ROWS)
             {
                 screen_y--;
