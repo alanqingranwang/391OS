@@ -290,7 +290,7 @@ int32_t rtc_write(const void* buf)
  */
 int32_t rtc_close(/*int32_t fd*/)
 {
-	// if(fd < 2 || fd > 8)
+	// if(fd < FIRST_VALID_INDEX || fd > MAX_OPEN_FILES)
 	// {
 	//		printf("Invalid FD");
 	// 	return -1; // can't close index 0 and index 1
