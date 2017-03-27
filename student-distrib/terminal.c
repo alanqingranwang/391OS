@@ -64,6 +64,7 @@ int32_t terminal_close(int32_t fd){
  *			Reads the buffer passed in for nbytes. Then interprets the information
  *			if meaningful. For example, keyboard types ls, presses enter and calls this.
  *			Terminal read interprets it to print out file info.
+ *			Saves the buffer locally.
  *		INPUT:
  *			fd - should be 1 (stdout)
  *			buf - the buffer we are trying to interpret

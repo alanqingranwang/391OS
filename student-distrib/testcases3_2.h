@@ -17,23 +17,6 @@
 #define HIGHEST_RATES 10
 #define HIGHEST_FREQ 32768
 
-// X is how long you want to wait in seconds
-// speed is the frequency of the interrupts
-#define WAIT_X_SECONDS(X, speed)				\
-do {													\
-	interrupt_count = 0;							\
-	while(interrupt_count < X*speed);		\
-} while(0)
-
-
-
-
-
-
-
-
-
-
 int get_print_one();
 void set_print_one(int change);
 void test_file_data(int index);

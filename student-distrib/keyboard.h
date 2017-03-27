@@ -14,8 +14,10 @@
 /* adding the interrupt to the table is the job of the init */
 #include "idt.h"
 
+/*** remove later ***/
 #include "testcases3_2.h"
 #include "filesystem.h"
+/**** **************/
 
 /* Keyboard ports */
 #define KBD_DATA_PORT   0x60

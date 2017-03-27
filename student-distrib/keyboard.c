@@ -349,26 +349,26 @@ void process_key(uint8_t key) {
             clear();
             clear_buffer();
         }
-        /**************************/
+        /********Remove later************/
         // if pressed ctrl and 3s
         else if(key == THREE_SCAN && ctrl_flag){
             clear();
-            test_file_data(CTR3);
-            CTR3++;
-            CTR3 %= get_num_entries();
+            test_file_data(CTR3); // print the next file in dentry
+            CTR3++; 
+            CTR3 %= get_num_entries(); // wrap around
         }
         // if pressed ctrl and 4s
         else if(key == FOUR_SCAN && ctrl_flag)
         {
             clear();
-            if(CTR4 == MAX_RATE-2)
+            if(CTR4 == MAX_RATE-2) // keep it within the freq test
             {
               CTR4 = NUM_FREQ;
               print_freq(CTR4);
               set_print_one(0); // turn off
             }
             else{               
-              print_freq(CTR4);
+              print_freq(CTR4); // show next freq
               set_print_one(1); // turn on
               CTR4--;
             }
@@ -376,7 +376,7 @@ void process_key(uint8_t key) {
         // if pressed ctrl and 1s
         else if(key == 0x02 && ctrl_flag)
         {
-            clear();
+            clear(); // print file
             print_file_info();
         }
         /**************************/

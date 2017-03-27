@@ -13,11 +13,19 @@ int get_print_one()
 	return print_one;
 }
 
+// set the variable to make rtc print during interrupt
 void set_print_one(int change)
 {
 	print_one = change;
 }
 
+/* JC
+ * test_file_data
+ *	DESCRIPTION: prints out the given index's file data
+ *	Called by keyboard.c - naturally wraps around the number of dentries.
+ * 
+ *
+ */
 void test_file_data(int index)
 {
 	// Testing read from functionality. 
@@ -31,7 +39,7 @@ void test_file_data(int index)
 }
 
 /* JC
- *	print_file_text - NOT FULLY FUNCTIONAL I NEED TERMINAL CODE
+ *	print_file_text
  *		DESCRIPTION:
  *			Given a name, buffer, and number of bytes to read. The function
  *			will find the name, if it exists, in the filesystem and prints the text
