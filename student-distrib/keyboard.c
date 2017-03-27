@@ -17,8 +17,6 @@ static int ctrl_flag = 0;
 static int screen_x_pos = 0;
 static int buffer_index = 0;
 
-static unsigned char buffer[128];
-
 /* AW
  * This table contains the character associated with the scan number from
  *  the kbd_scan_code.
@@ -304,12 +302,11 @@ void toggle_ctrl(int type) {
 void process_key(uint8_t key) {
     // if it's within the given range, search the table for char
     if(key >= ABC_LOW_SCANS && key <= ABC_HIGH_SCANS) {
-        screen_x_pos++;
         if(key == L_MAKE && ctrl_flag) {
             clear();
             clear_buffer();
         }
-        else if(screen_x_pos >= 80) {
+        else if((screen_x_pos++) >= 80) {
             if(buffer_index + 1 < 128) {
                 scroll();
                 screen_x_pos = 0;
@@ -317,8 +314,6 @@ void process_key(uint8_t key) {
                 buffer[buffer_index] = key;
                 buffer_index++;
             }
-            else
-                screen_x_pos--;
         }
         else {
             if(buffer_index + 1 < 128) { // handle buffer overflow
@@ -326,8 +321,6 @@ void process_key(uint8_t key) {
                 buffer[buffer_index] = key;
                 buffer_index++;
             }
-            else
-                screen_x_pos--;
         }
     }
 }
@@ -354,4 +347,3 @@ void clear_buffer() {
     }
     buffer_index = 0;
     screen_x_pos = 0;
-}
