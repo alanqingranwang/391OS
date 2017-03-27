@@ -196,9 +196,6 @@ putc(uint8_t c)
         screen_x = 0;
     }
     else {
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
-        screen_x++;
         if(screen_x >= NUM_COLS){
             screen_x = 0;
             screen_y++;
@@ -209,6 +206,10 @@ putc(uint8_t c)
                 scroll();
             }
         }
+        
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
+        screen_x++;
     }
 
     update_cursor();
