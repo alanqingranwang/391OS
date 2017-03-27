@@ -35,7 +35,7 @@ void collective_test32()
 	// }
 	
 	/* Testing the Frequency */
-	// print_freq();
+	print_freq();
 }
 
 /* JC

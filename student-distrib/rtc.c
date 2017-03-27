@@ -91,7 +91,7 @@ void rtc_handler(void)
 	// test_interrupts();	// this one looks like a rave
 	interrupt_count++; // remove this after checkpoint 2
 	// call terminal's write
-	// putc('1'); // uncomment when testing for freq
+	putc('1'); // uncomment when testing for freq
 
 
 
@@ -211,6 +211,8 @@ int32_t rtc_driver(uint32_t cmd, op_data_t operation_data)
  */
 int32_t rtc_open()
 {
+	// Upon open it should be frequency 2Hz
+	set_frequency(2);
 	return 0; // for Checkpoint 2, just return 0
 
 	// uint32_t flags;
