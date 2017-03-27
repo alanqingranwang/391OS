@@ -9,23 +9,23 @@
 void collective_test32()
 {
 	clear();
-	// uint32_t entry_amt = get_num_entries(); // used to print all the files
-	// uint32_t Hz = 2; // default is 2
-	// uint32_t wait_time = 5; // how many seconds are you willing to wait
-	// uint32_t file_loop;
-	// /* Change variables here to test various things. */
+	uint32_t entry_amt = get_num_entries(); // used to print all the files
+	uint32_t Hz = 2; // default is 2
+	uint32_t wait_time = 5; // how many seconds are you willing to wait
+	uint32_t file_loop;
+	/* Change variables here to test various things. */
 
-	// /* Reading all the file info */
-	// print_file_info(); // this prints the file info
+	/* Reading all the file info */
+	print_file_info(); // this prints the file info
 
-	// WAIT_X_SECONDS(wait_time, Hz); // wait before printing the files
+	WAIT_X_SECONDS(wait_time, Hz); // wait before printing the files
 
-	// // Testing read from functionality. 
-	// uint32_t buffer_size = 500;
-	// uint32_t bytes_to_read = 500;
-	// int8_t buffer[buffer_size];
-	// int8_t* fname;
-	// // read all the files in order, wait wait_time seconds between
+	// Testing read from functionality. 
+	uint32_t buffer_size = 500;
+	uint32_t bytes_to_read = 500;
+	int8_t buffer[buffer_size];
+	int8_t* fname;
+	// read all the files in order, wait wait_time seconds between
 	// for(file_loop = 0; file_loop < entry_amt; file_loop++)
 	// {
 	// 	clear();
@@ -33,9 +33,11 @@ void collective_test32()
 	// 	print_file_text(fname, buffer, bytes_to_read);
 	// 	WAIT_X_SECONDS(wait_time, Hz);		
 	// }
-	
+	clear();
+	print_file_text("verylargetextwithverylongname.txt", buffer, bytes_to_read);
+	WAIT_X_SECONDS(wait_time, Hz);
 	/* Testing the Frequency */
-	print_freq();
+	// print_freq();
 }
 
 /* JC
@@ -72,8 +74,8 @@ void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
 			// terminal should be doing the writing or reading or what not
 			for(char_count = 0; char_count < retval; char_count++)
 			{
-				if(offset%SCREEN_CHAR == 0)
-					putc('\n');
+				// if(offset%SCREEN_CHAR == 0)
+				// 	putc('\n');
 				putc(buffer[char_count]);
 				offset++;
 			}

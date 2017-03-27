@@ -91,7 +91,7 @@ void rtc_handler(void)
 	// test_interrupts();	// this one looks like a rave
 	interrupt_count++; // remove this after checkpoint 2
 	// call terminal's write
-	putc('1'); // uncomment when testing for freq
+	// putc('1'); // uncomment when testing for freq
 
 
 
