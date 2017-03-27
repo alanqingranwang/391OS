@@ -221,7 +221,7 @@ int32_t file_write()
  */
 int32_t file_close(int32_t fd)
 {
-	if(fd < 2 || fd > 8)
+	if(fd < FIRST_VALID_INDEX || fd > MAX_OPEN_FILES)
 	{
 		printf("INVALID FD");
 		return -1; // can't close stdin or stdout
