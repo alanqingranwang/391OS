@@ -1,11 +1,18 @@
+/* JC
+ * terminal.h - declarations for the terminal driver
+ */
+
 #ifndef _TERMINAL_H
 #define _TERMINAL_H
 
 #include "lib.h"
 #include "fd_table.h"
 
+#define STDOUT_FD 1 // the fd for STDOUT
+
+
 /* handles the data passed in by calling correct handler function */
-int32_t terminal_dipatcher(int cmd, op_data_t input);
+int32_t terminal_driver(int cmd, op_data_t input);
 /* opens the terminal file */
 int32_t terminal_open();
 /* closes the terminal file */
