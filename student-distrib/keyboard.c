@@ -12,18 +12,18 @@
  * 2 - caps
  * 3 - shift and caps
  */
-static int caps_shift_flag = 0;
+static mode caps_shift_flag = NONE;
 static int ctrl_flag = 0;
 static int screen_x_pos = 0;
 static int buffer_index = 0;
 
-static unsigned char buffer[128];
+static unsigned char buffer[BUFFER_SIZE];
 
 /* AW
  * This table contains the character associated with the scan number from
  *  the kbd_scan_code.
  */
-static unsigned char kbd_ascii_key_map[4][TOTAL_SCANCODES] =
+static unsigned char kbd_ascii_key_map[KEY_MODES][TOTAL_SCANCODES] =
 {
   {
    '\0',  '\0', '1', '2', '3', '4', '5', '6', '7', '8', /* 9 */
@@ -230,6 +230,7 @@ void keyboard_handler()
     uint8_t key;
     key = inb(KBD_DATA_PORT);
 
+    // handle all keystrokes
     switch(key) {
         case CAPS:
             toggle_caps();
@@ -268,32 +269,59 @@ void keyboard_handler()
     restore_registers();
 }
 
+/* AW
+ * toggle_caps
+ *      DESCRIPTION:
+ *          Toggles the caps flag
+ *      INPUT: none
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void toggle_caps() {
-    if(caps_shift_flag == 0)
-        caps_shift_flag = 2;
-    else if(caps_shift_flag == 1)
-        caps_shift_flag = 3;
-    else if(caps_shift_flag == 2)
-        caps_shift_flag = 0;
+    if(caps_shift_flag == NONE)
+        caps_shift_flag = CAPS;
+    else if(caps_shift_flag == SHIFT)
+        caps_shift_flag = SHIFT_CAPS;
+    else if(caps_shift_flag == CAPS)
+        caps_shift_flag = NONE;
     else
-        caps_shift_flag = 1;
+        caps_shift_flag = SHIFT;
 }
 
+/* AW
+ * toggle_shift
+ *      DESCRIPTION:
+ *          Toggles the shift flag
+ *      INPUT: type -- whether its a make or break stroke
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void toggle_shift(int type) {
     if(type == MAKE) {
-        if(caps_shift_flag == 0)
-            caps_shift_flag = 1;
-        else if(caps_shift_flag == 2)
-            caps_shift_flag = 3;
+        if(caps_shift_flag == NONE)
+            caps_shift_flag = SHIFT;
+        else if(caps_shift_flag == CAPS)
+            caps_shift_flag = SHIFT_CAPS;
     }
     else {
-        if(caps_shift_flag == 1)
-            caps_shift_flag = 0;
-        else if(caps_shift_flag == 3)
-            caps_shift_flag = 2;
+        if(caps_shift_flag == SHIFT)
+            caps_shift_flag = NONE;
+        else if(caps_shift_flag == SHIFT_CAPS)
+            caps_shift_flag = CAPS;
     }
 }
 
+/* AW
+ * toggle_ctrl(int type)
+ *      DESCRIPTION:
+ *          Toggles the ctrl flag
+ *      INPUT: type -- whether it's a make or break stroke
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void toggle_ctrl(int type) {
     if(type == MAKE)
         ctrl_flag = 1;
@@ -301,6 +329,15 @@ void toggle_ctrl(int type) {
         ctrl_flag = 0;
 }
 
+/* AW
+ * process_key(uint8_t key)
+ *      DESCRIPTION:
+ *          Processes which key to display, manages buffer
+ *      INPUT: key -- key to display
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void process_key(uint8_t key) {
     // if it's within the given range, search the table for char
     if(key >= ABC_LOW_SCANS && key <= ABC_HIGH_SCANS) {
@@ -309,8 +346,8 @@ void process_key(uint8_t key) {
             clear();
             clear_buffer();
         }
-        else if(screen_x_pos >= 80) {
-            if(buffer_index + 1 < 128) {
+        else if(screen_x_pos >= NUM_COLS) {
+            if(buffer_index + 1 < BUFFER_SIZE) {
                 scroll();
                 screen_x_pos = 0;
                 putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
@@ -318,20 +355,29 @@ void process_key(uint8_t key) {
                 buffer_index++;
             }
             else
-            screen_x_pos--;
+                screen_x_pos--;
         }
         else {
-            if(buffer_index + 1 < 128) { // handle buffer overflow
+            if(buffer_index + 1 < BUFFER_SIZE) { // handle buffer overflow
                 putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
                 buffer[buffer_index] = key;
                 buffer_index++;
             }
             else
-            screen_x_pos--;
+                screen_x_pos--;
         }
     }
 }
 
+/* AW
+ * handle_backspace()
+ *      DESCRIPTION:
+ *          Manages backspace by calling helper function in lib.c
+ *      INPUT: none
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void handle_backspace() {
     if(buffer_index - 1 >= 0) {
         backspace();
@@ -341,6 +387,15 @@ void handle_backspace() {
     }
 }
 
+/* AW
+ * handle_enter()
+ *      DESCRIPTION:
+ *          Manages enter keystroke
+ *      INPUT: none
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void handle_enter() {
     scroll();
     screen_x_pos = 0;
@@ -348,9 +403,18 @@ void handle_enter() {
     clear_buffer();
 }
 
+/* AW
+ * clear_buffer()
+ *      DESCRIPTION:
+ *          clears the buffer
+ *      INPUT: none
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void clear_buffer() {
     int i;
-    for(i = 0; i < 128; i++) {
+    for(i = 0; i < BUFFER_SIZE; i++) {
         buffer[i] = ' ';
     }
     buffer_index = 0;

@@ -49,10 +49,22 @@ void show_blue_screen(void);
  */
 void test_interrupts(void);
 
+/*
+ *	scroll
+ *		Shifts video memory to simulate scrolling
+ */
 void scroll(void);
 
+/*
+ *	backspace
+ *		Implement backspace by manipulating video memory
+ */
 void backspace(void);
 
+/*
+ *	update_cursor
+ *		Change position of blinking cursor
+ */
 void update_cursor();
 
 /*

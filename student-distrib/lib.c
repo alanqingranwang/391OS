@@ -205,7 +205,7 @@ putc(uint8_t c)
         if(screen_x >= NUM_COLS){
             screen_x = 0;
             screen_y++;
-            
+
             if(screen_y >= NUM_ROWS)
             {
                 screen_y--;
@@ -221,12 +221,19 @@ putc(uint8_t c)
     update_cursor();
 }
 
+/*
+* void scroll()
+*   Inputs: none
+*   Return Value: void
+*   Function: Manipulate video memory by shifting everything up
+*/
 void scroll() {
     int i, j;
 
-    if(screen_y >= NUM_ROWS - 1) {
+    if(screen_y >= NUM_ROWS - 1) { // if we are writing to the last row...
         for(i = 0; i < NUM_COLS; i++) {
             for(j = 0; j < NUM_ROWS - 1; j++) {
+                // Set the value of a given row to the row below it
                 *(uint8_t *)(video_mem + ((NUM_COLS*j + i) << 1)) =
                     *(uint8_t *)(video_mem + ((NUM_COLS*(j+1) + i) << 1));
                 *(uint8_t *)(video_mem + ((NUM_COLS*j + i) << 1) + 1) =
@@ -234,6 +241,7 @@ void scroll() {
             }
         }
 
+        // Put spaces on the last row
         for(i = 0; i < NUM_COLS; i++){
             *(uint8_t *)(video_mem + ((NUM_COLS*(NUM_ROWS-1) + i) << 1)) = ' ';
             *(uint8_t *)(video_mem + ((NUM_COLS*(NUM_ROWS-1) + i) << 1) + 1) = ATTRIB;
@@ -242,30 +250,42 @@ void scroll() {
         screen_x = 0;
         update_cursor();
     }
-    else {
+    else { // otherwise print a newline
         putc('\n');
         update_cursor();
     }
 }
 
-
-/* move cursor back a character display length and print a space character, then reposition the
- cursor back to before the space character */
+/*
+* void backspace()
+*   Inputs: none
+*   Return Value: void
+*   Function: move cursor back a character display length and print a
+*             space character, then reposition the cursor back to before
+*             the space character
+*/
 void backspace(void)
 {
-    if((screen_x == 0) && (screen_y > 0) ) {
+    if((screen_x == 0) && (screen_y > 0) ) { // check for left edge
         screen_y--;
         screen_x = NUM_COLS - 1;
     }
-    else if( (screen_x == 0) && (screen_y == 0) ) return;
+    else if( (screen_x == 0) && (screen_y == 0) ) return; // check for first spot
     else screen_x--;
 
+    // Fill with space character
     *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = ' ';
     *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
 
     update_cursor();
 }
 
+/*
+* void update_cursor()
+*   Inputs: none
+*   Return Value: void
+*   Function: move the blinking cursor to match the current writing position.
+*/
 void update_cursor()
 {
     // changing ports, should lock it
