@@ -83,7 +83,7 @@ void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
 		file_driver(CLOSE, file_pack); // close it
 
 		printf("\nfile name: "); // this is causing problems
-		print_name(file_pack.filename); // wrote our own function to print name
+		print_name(file_pack.filename, MAX_NAME_CHARACTERS); // wrote our own function to print name
 		// different from terminal write
 	}
 	else
