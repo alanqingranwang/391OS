@@ -29,6 +29,7 @@ void paging_init() {
     }
 
 	/* assign video memory a page */
+    /* Shifting 12 to get the most significant bits */
     page_table[VIDEO >> 12]  = VIDEO;
     page_table[VIDEO >> 12] |= RW_P_SET;
 

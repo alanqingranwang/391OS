@@ -9,6 +9,13 @@
 
 #define VIDEO 0xB8000
 
+/*******************************/
+#define LOW_VGA 0x0F
+#define HIGH_VGA 0x0E
+#define VGA_SELECT 0x3D4
+#define VGA_DATA 0x3D5
+/*******************************/
+
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
 int32_t puts(int8_t *s);
@@ -42,6 +49,12 @@ void show_blue_screen(void);
  */
 void test_interrupts(void);
 
+void scroll(void);
+
+void backspace(void);
+
+void update_cursor();
+
 /*
  *	save_registers
  *		This is a macro that can be used to save all the registers before an interrupt.
@@ -51,8 +64,7 @@ void test_interrupts(void);
  */
 #define save_registers()				\
 do {											\
-	asm volatile("pushal\n"				\
-				);		\
+	asm volatile("pushal");				\
 } while(0)
 
 /*
@@ -66,7 +78,7 @@ do {											\
  */
 #define restore_registers()		\
 do {										\
-	asm volatile( "popal\n"				\
+	asm volatile( "popal\n"			\
 					"leave \n"			\
 					"iret  \n");		\
 } while(0)
