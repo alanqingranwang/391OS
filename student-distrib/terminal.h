@@ -9,7 +9,7 @@
 #include "fd_table.h"
 
 #define STDOUT_FD 1 // the fd for STDOUT
-
+#define TERM_BUFF_SIZE 128
 
 /* handles the data passed in by calling correct handler function */
 int32_t terminal_driver(int cmd, op_data_t input);

@@ -4,6 +4,8 @@
 
 #include "terminal.h"
 
+static int8_t save_buff[TERM_BUFF_SIZE];
+
 /* JC
  * terminal_driver
  *		DESCRIPTION:
@@ -67,11 +69,18 @@ int32_t terminal_close(int32_t fd){
  *			buf - the buffer we are trying to interpret
  *			nbytes - number of bytes we are interpreting
  *		RETURN VALUE:
- *			-1 - failure
  *			 0 - sucess
  */
 int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes){
-	return -1;
+	int32_t success = 0;
+
+	int32_t i;
+	for(i = 0; (i < TERM_BUFF_SIZE) && (i < nbytes); i++){
+		save_buff[i] = buf[i];
+		success++;
+	}
+
+	return success;
 }
 
 /* JC
@@ -83,7 +92,6 @@ int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes){
  *			buf - the buffer we are trying to write to screen
  *			nbytes - the number of bytes we are trying to write to screen
  *		RETURN VALUE:
- *			-1 failure
  *			otherwise number of bytes written
  */
 int32_t terminal_write(int32_t fd, int8_t* buf, int32_t nbytes){
@@ -94,7 +102,6 @@ int32_t terminal_write(int32_t fd, int8_t* buf, int32_t nbytes){
 		putc(buf[i]);
 		success++;
 	}
-	return success;
 
-	return -1;
+	return success;
 }
