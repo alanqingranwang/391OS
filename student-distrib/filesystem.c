@@ -70,14 +70,33 @@ void print_file_info()
 	{
 		// print out the name
 		printf("file name: "); // can't use %s, if there's no guaranteed '\0'
-		for(char_loop = 0; char_loop < MAX_NAME_CHARACTERS; char_loop++)
-			printf("%c", (entries[d_loop].file_name)[char_loop]);
+		print_name(entries[d_loop].file_name);
 
 		for(char_loop = char_loop; char_loop < NUM_SPACES; char_loop++)
 			printf(" "); // add spaces to align the rest		
 
 		printf("file type: %d ", entries[d_loop].file_type);
 		printf("file size: %d\n", inodes[(entries[d_loop].inode_idx)].file_size);
+	}
+}
+
+/* JC
+ * print_name
+ *		DESCRIPTION:
+ *			Properly prints the name of the file from dentry.
+ *		INPUT:
+ *			buf - the name of the file
+ *		RETURN VALUE: none
+ *		SIDE EFFECTS: putc to the screen
+ *
+ */
+void print_name(int8_t* buf)
+{
+	int32_t i = 0;
+	while(buf[i] != '\0' && i < MAX_NAME_CHARACTERS)
+	{
+		putc(buf[i]);
+		i++;
 	}
 }
 
