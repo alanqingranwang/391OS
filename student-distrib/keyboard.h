@@ -13,6 +13,10 @@
 /* adding the interrupt to the table is the job of the init */
 #include "idt.h"
 
+
+uint32_t CTR4;
+
+
 /* Keyboard ports */
 #define KBD_DATA_PORT   0x60
 #define KBD_STATUS_PORT 0x64
