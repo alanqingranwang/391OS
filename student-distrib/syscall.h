@@ -49,8 +49,6 @@
 do {													\
 	asm volatile( "popal\n"						\
 					"movl %0, %%eax \n"			\
-					"leave \n"						\
-					"iret  \n"						\
 					: 									\
 					: "r" (retval)					\
 					: "%eax" ); 					\
@@ -72,4 +70,3 @@ int32_t set_handler();
 int32_t sigreturn();
 
 #endif /* _SYSCALL_H */
-

@@ -1,48 +1,8 @@
-<<<<<<< HEAD
-// #include "terminal.h"
-//
-// int terminal_dipatcher(op_data_t input, int cmd){
-// 	switch(cmd){
-// 		case OPEN: return terminal_open(input.filename);
-// 		case CLOSE: return terminal_close(input.fd);
-// 		case READ: return terminal_read(input.fd, input.buf, input.nbytes);
-// 		case WRITE: return terminal_write(input.fd, input.buf, input.nbytes);
-// 		default: return -1;
-// 	}
-// }
-//
-// int terminal_open(uint8_t *filename){
-// 	return 0;
-// }
-//
-// int terminal_close(int32_t fd){
-// 	return 0;
-// }
-//
-// int terminal_read(int32_t fd, void* buf, int32_t nbytes){
-// 	return -1;
-// }
-//
-// int terminal_write(int32_t fd, void* buf, int32_t nbytes){
-// 	int success = 0;
-//
-// 	for(i = 0; i < nbytes; i++){
-// 		putc(buf[i]);
-// 		success++;
-// 	}
-// 	return success;
-//
-// 	return -1;
-// }
-=======
 /* JC
  * terminal.c - Contains the terminal driver.
  */
-
 #include "terminal.h"
-
 static int8_t save_buff[TERM_BUFF_SIZE];
-
 /* JC
  * terminal_driver
  *		DESCRIPTION:
@@ -67,7 +27,6 @@ int32_t terminal_driver(int cmd, op_data_t input){
 			return -1;
 	}
 }
-
 /* JC
  * terminal_open
  *		DESCRIPTION:
@@ -81,7 +40,6 @@ int32_t terminal_driver(int cmd, op_data_t input){
 int32_t terminal_open(){
 	return 0;
 }
-
 /* JC
  * terminal_close
  *		DESCRIPTION:
@@ -94,7 +52,6 @@ int32_t terminal_open(){
 int32_t terminal_close(int32_t fd){
 	return 0;
 }
-
 /* JC
  * terminal_read
  *		DESCRIPTION:
@@ -111,16 +68,13 @@ int32_t terminal_close(int32_t fd){
  */
 int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes){
 	int32_t success = 0;
-
 	int32_t i;
 	for(i = 0; (i < TERM_BUFF_SIZE) && (i < nbytes); i++){
 		save_buff[i] = buf[i];
 		success++;
 	}
-
 	return success;
 }
-
 /* JC
  * terminal_write
  *		DESCRIPTION:
@@ -134,13 +88,10 @@ int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes){
  */
 int32_t terminal_write(int32_t fd, int8_t* buf, int32_t nbytes){
 	int32_t success = 0;
-
 	int32_t i;
 	for(i = 0; i < nbytes; i++){
 		putc(buf[i]);
 		success++;
 	}
-
 	return success;
 }
->>>>>>> master

@@ -1,6 +1,6 @@
 /* JC
  * syscall.c - Contains functions for system calls.
- *		
+ *
  * tab size = 3, no space
  */
 
@@ -47,14 +47,14 @@ static uint32_t param3;
 void syscall_handler()
 {
 	// do I need to do this?
-	save_registers();
+	//save_registers();
 
-	uint32_t flags;
-	cli_and_save(flags); // lock it
+	//uint32_t flags;
+	//cli_and_save(flags); // lock it
 	// get the parameters from registers, and place into variables
 	asm volatile(
 		"movl %%eax, %0 \n"
-		"movl %%ebx, %1 \n"	
+		"movl %%ebx, %1 \n"
 		"movl %%ecx, %2 \n"
 		"movl %%edx, %3 \n"
 		: "=r"(num), "=r"(param1), "=r"(param2), "=r"(param3)
@@ -66,70 +66,70 @@ void syscall_handler()
 	{
 		case SYS_HALT:
 			retval = halt();
-			restore_flags(flags); // unlock before returning
+			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_EXECUTE:
 			retval = execute();
-			restore_flags(flags); // unlock before returning
+			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_READ:
 			retval = read();
-			restore_flags(flags); // unlock before returning
+			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_WRITE:
 			retval = write();
-			restore_flags(flags); // unlock before returning
+			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_OPEN:
 			retval = open();
-			restore_flags(flags); // unlock before returning
+			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_CLOSE:
 			retval = close();
-			restore_flags(flags); // unlock before returning
+			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_GETARGS:
 			retval = getargs();
-			restore_flags(flags); // unlock before returning
+			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_VIDMAP:
 			retval = vidmap();
-			restore_flags(flags); // unlock before returning
+			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_SET_HANDLER:
 			retval = set_handler();
-			restore_flags(flags); // unlock before returning
+			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_SIGRETURN:
 			retval = sigreturn();
-			restore_flags(flags); // unlock before returning
+			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		default:
-			syscall_return(-1); // places -1 into eax, invalud number
+			syscall_return(-1); // places -1 into eax, invalid number
 
 	}
 }
 
 /* JC
- * int32_t halt(uint8_t status) 
+ * int32_t halt(uint8_t status)
  * 	DESCRIPTION:
  *			Terminates a process, returning the specified value to its parent process
  *			The system call handler itself is responsible for expanding the 8-bit argument
  *			from BL into the 32-bit return value to the parent program's execute system call.
  *			Be careful not to return all 32 bits from EBX. This call should never return to
  *			the caller.
- * 	INPUT: status - 
- *		OUTPUT: 
+ * 	INPUT: status -
+ *		OUTPUT:
  *		RETURN VALUE:
  *		SIDE EFFECTS:
  *
@@ -151,12 +151,12 @@ int32_t halt()
  *							First word is the file name of the program to be executed
  *							:Rest of the command (without leading spaces) is provided for
  *								the new program on request via the getargs system call.
- *		OUTPUT: 
+ *		OUTPUT:
  *		RETURN VALUE: -1 - if the command cannot be executed
  *			(ex. program doesn't exist or filename not an executable)
  *						 256 - if program dies by an exception
  *				  0 to 255 - if program executes a halt system call. value returned is given by the
- *								 program's call to halt.  		
+ *								 program's call to halt.
  *		SIDE EFFECTS:
  *
  */
@@ -185,8 +185,8 @@ int32_t execute()
  *			call into a file-type-specific function. This jump table should be inserted into the file array on the
  *			open system call (see below).
  * 	INPUT: fd - file descriptor
- *				 buf - 
- *				 nbytes - 
+ *				 buf -
+ *				 nbytes -
  *		OUTPUT:
  *		RETURN VALUE: 	in general - return number of bytes read
  *							0 - if the initial file position is at or beyond the end of file (for normal files
@@ -195,7 +195,7 @@ int32_t execute()
  *										or as much as fits in the buffer from one such line. The line should include
  *										line feed character.
  *							RTC - always return 0
- *								
+ *
  *		SIDE EFFECTS:
  *
  */
@@ -216,8 +216,8 @@ int32_t read()
  *			displayed to the screen immediately. In the case of the RTC, the system call should always accept only
  *			a 4-byte integer specifying the interrupt rate in Hz, and should set the rate of periodic interrupts
  *			accordingly. set_frequency function in rtc.h
- * 	INPUT: fd - 
- *				 buf - 
+ * 	INPUT: fd -
+ *				 buf -
  *				 nbytes -
  *		OUTPUT:
  *		RETURN VALUE: Writes to regular files should always return -1 to indicate failure since the file system
@@ -242,7 +242,7 @@ int32_t write()
  *			Provides access to file system. The call should find the directory entry corresponding to the named file,
  *			allocate an unused file descriptor, and set up any data necessary to handle the given type of file (directory,
  *			RTC device, or regular file).
- * 	INPUT: filename - 
+ * 	INPUT: filename -
  *		OUTPUT:
  *		RETURN VALUE: -1 - if the named file doesn't exist or no desciptors are free.
  *		SIDE EFFECTS:
@@ -271,7 +271,7 @@ int32_t open()
  * 	DESCRIPTION:
  *			Closes the specified file descriptor and makes it available for return from later calls to open. You should now
  *			allow the user to close the default descriptors (0 for input and 1 for output).
- * 	INPUT: fd - 
+ * 	INPUT: fd -
  *		OUTPUT:
  *		RETURN VALUE: -1 - trying to close an invalid descriptor
  *							0 - successful closes
@@ -291,10 +291,10 @@ int32_t close()
  * 	DESCRIPTION:
  *			Reads the program's command line arguments into a user-level buffer. Obviously these arguments must be stored
  *			as a part of the task data when a new program is loaded. Here they were merely copied into user space. The shell
- *			does not request arguments, but you should probably still initialize the shell task's argument data to the 
+ *			does not request arguments, but you should probably still initialize the shell task's argument data to the
  *			empty string.
- * 	INPUT: buf - 
- *				 nbytes -  
+ * 	INPUT: buf -
+ *				 nbytes -
  *		OUTPUT:
  *		RETURN VALUE: -1 - if the arguments and a terminal NULL (0-byte) do not fit in the buffer
  *		SIDE EFFECTS:
@@ -319,7 +319,7 @@ int32_t getargs()
  *			falls within the address range covered by the single user-level page. Note that the video memory will require
  *			you to add another page mapping from the program, in this case a 4kB page. It is NOT ok to simply change
  *			the permissions of the video page located < 4MB and pass that address.
- * 	INPUT: screen_start - 
+ * 	INPUT: screen_start -
  *		OUTPUT:
  *		RETURN VALUE: -1 - if the location provided is invalid
  *		SIDE EFFECTS:
@@ -336,8 +336,8 @@ int32_t vidmap()
 /* JC
  * int32_t set_handler(int32_t signum, void* handler_address)
  * 	DESCRIPTION:
- * 	INPUT: signum - 
- *				 handler_address - 
+ * 	INPUT: signum -
+ *				 handler_address -
  *		OUTPUT:
  *		RETURN VALUE:
  *		SIDE EFFECTS:
@@ -365,4 +365,3 @@ int32_t sigreturn(void)
 {
 	return -1;
 }
-

@@ -202,7 +202,7 @@ void keyboard_init()
     // set the IDT table entry for KBD
     // Map keyboard interrupts to IDT
     idt[KBD_VECTOR_NUM].present = 1;
-    SET_IDT_ENTRY(idt[KBD_VECTOR_NUM], keyboard_handler);
+    SET_IDT_ENTRY(idt[KBD_VECTOR_NUM], keyboard_handler_wrapper);
 
     enable_irq(KBD_IRQ);    // enable IRQ 1
     restore_flags(flags);
@@ -223,10 +223,10 @@ void keyboard_init()
 void keyboard_handler()
 {
     // save registers, assembly wrapping
-    save_registers();
-    uint32_t flags;
+    //save_registers();
+    //uint32_t flags;
     // save previous state of interrupts, and prevent them
-    cli_and_save(flags);
+    //cli_and_save(flags);
     send_eoi(KBD_IRQ);  // tell PIC to continue with its work
 
     // get input key
@@ -268,8 +268,8 @@ void keyboard_handler()
     }
 
     // restore and return
-    restore_flags(flags);
-    restore_registers();
+    //restore_flags(flags);
+    //restore_registers();
 }
 
 /* AW
@@ -354,7 +354,7 @@ void process_key(uint8_t key) {
         else if(key == THREE_SCAN && ctrl_flag){
             clear();
             test_file_data(CTR3); // print the next file in dentry
-            CTR3++; 
+            CTR3++;
             CTR3 %= get_num_entries(); // wrap around
         }
         // if pressed ctrl and 4s
@@ -367,7 +367,7 @@ void process_key(uint8_t key) {
               print_freq(CTR4);
               set_print_one(0); // turn off
             }
-            else{               
+            else{
               print_freq(CTR4); // show next freq
               set_print_one(1); // turn on
               CTR4--;

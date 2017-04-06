@@ -1,6 +1,6 @@
 #include "idt.h"
 
-/* 
+/*
  *  idt_init
  *      DESCRIPTION:
  *          Initializes the Interrupt Descriptor Table (IDT)
@@ -82,8 +82,8 @@ void idt_init() {
 
     /* Turn on system call interrupt 0x80 */
     // uncomment when done with system call
-    // idt[SYSCALL_VECTOR_NUM].present = 1;
-    // SET_IDT_ENTRY(idt[SYSCALL_VECTOR_NUM], syscall_handler);
+    idt[SYSCALL_VECTOR_NUM].present = 1;
+    SET_IDT_ENTRY(idt[SYSCALL_VECTOR_NUM], syscall_handler_wrapper);
 
     // mapped keyboard in keyboard init
     // mapped RTC in RTC init
