@@ -10,6 +10,7 @@
 #include "idt.h"
 #include "paging.h"
 #include "debug.h"
+#include "filesystem.h" // JC
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -62,6 +63,11 @@ entry (unsigned long magic, unsigned long addr)
 			for(i = 0; i<16; i++) {
 				printf("0x%x ", *((char*)(mod->mod_start+i)));
 			}
+
+			/* JC - If the module name is "filesys_img", then init file system with module start addr */
+			if(strncmp((int8_t*)mod->string, filesys_name, filesys_name_length) == 0)
+				filesystem_init((boot_block_t*)mod->mod_start);
+
 			printf("\n");
 			mod_count++;
 			mod++;
@@ -147,23 +153,35 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 
+	/* Initialize devices, memory, filesystem, enable device interrupts on the
+	 * PIC, any other initialization stuff... */
+
+	/* ALL THE INITS! */
 	idt_init();	// initialize the IDT
 	i8259_init();	// initialize the PIC
 	keyboard_init();	// initialize the keyboard
 	rtc_init();	// initialize the RTC
 	paging_init();	// initialize Paging
 
-	clear();
-
-	/* Initialize devices, memory, filesystem, enable device interrupts on the
-	 * PIC, any other initialization stuff... */
-
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
-	//printf("Enabling Interrupts\n");
+	printf("Enabling Interrupts\n");
 	sti();
+
+	/***************************Checkpoint 3.1**************************/
+	// testing exception 0
+	// int32_t p = 1/0;
+
+	// testing page fault (paging exists)
+	// int32_t *k = NULL;
+	// int32_t j = *k;
+	/*******************************************************************/
+
+	/***************************Checkpoint 3.2**************************/
+	// all stuff in keyboard ctrls
+	/*******************************************************************/
 
 	/* Execute the first program (`shell') ... */
 

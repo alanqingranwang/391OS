@@ -20,6 +20,14 @@
  * 	RTC flag, turn flag off after change, turn flag on after interrupt.
  */
 
+/* These variables will be overwritten each time a syscall happens.
+ * They will be used in each system call.
+ */
+static uint32_t num;
+static uint32_t param1;
+static uint32_t param2;
+static uint32_t param3;
+
 /* JC
  * syscall_handler
  * 	DESCRIPTION:
@@ -41,7 +49,8 @@ void syscall_handler()
 	// do I need to do this?
 	save_registers();
 
-	uint32_t num, param1, param2, param3; // more descriptive names later
+	uint32_t flags;
+	cli_and_save(flags); // lock it
 	// get the parameters from registers, and place into variables
 	asm volatile(
 		"movl %%eax, %0 \n"
@@ -51,11 +60,68 @@ void syscall_handler()
 		: "=r"(num), "=r"(param1), "=r"(param2), "=r"(param3)
 	);
 
+	uint32_t retval; // holds the return value that needs to be put into EAX upon return
+
 	switch(num)
 	{
+		case SYS_HALT:
+			retval = halt();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
+
+		case SYS_EXECUTE:
+			retval = execute();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
+
+		case SYS_READ:
+			retval = read();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
+
+		case SYS_WRITE:
+			retval = write();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
+
+		case SYS_OPEN:
+			retval = open();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
+
+		case SYS_CLOSE:
+			retval = close();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
+
+		case SYS_GETARGS:
+			retval = getargs();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
+
+		case SYS_VIDMAP:
+			retval = vidmap();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
+
+		case SYS_SET_HANDLER:
+			retval = set_handler();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
+
+		case SYS_SIGRETURN:
+			retval = sigreturn();
+			restore_flags(flags); // unlock before returning
+			syscall_return(retval);
+
+		default:
+			syscall_return(-1); // places -1 into eax, invalud number
+
+	}
+}
 
 /* JC
- * int32_t halt(uint8_t status)
+ * int32_t halt(uint8_t status) 
  * 	DESCRIPTION:
  *			Terminates a process, returning the specified value to its parent process
  *			The system call handler itself is responsible for expanding the 8-bit argument
@@ -68,10 +134,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_HALT:
+int32_t halt()
+{
+	/* uncomment when ready */
+	// uint8_t status = param1 & BYTE_MASK; // just retrieve the lower byte, safe way vs typecast
 
-
-			syscall_return(-1); // change if necessary
+	return -1;
+}
 
 /* JC
  * int32_t execute(const uint8_t* command)
@@ -91,10 +160,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_EXECUTE:
+int32_t execute()
+{
+	/* uncomment when ready */
+	// uint8_t* command = (uint8_t*)param1; // type cast into the proper parameter
 
-
-			syscall_return(-1); // change if necessary
+	return -1;
+}
 
 /* JC
  * int32_t read(int32_t fd, void* buf, int32_t nbytes)
@@ -127,10 +199,15 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_READ:
+int32_t read()
+{
+	/* uncomment when ready */
+	// int32_t fd = (int32_t)param1;
+	// void* buf = (void*)param2;
+	// int32_t nbytes = (int32_t)param3;
 
-
-			syscall_return(-1); // change if necessary
+	return -1;
+}
 
 /* JC
  * int32_t write(int32_t fd, const void* buf, int32_t nbytes)
@@ -149,10 +226,15 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_WRITE:
+int32_t write()
+{
+	/* uncomment when ready */
+	// int32_t fd = (int32_t)param1;
+	// const void* buf = (void*)param2;
+	// int32_t nbytes = (int32_t)param3;
 
-
-			syscall_return(-1); // change if necessary
+	return -1;
+}
 
 /* JC
  * int32_t open(const uint8_t* filename)
@@ -166,10 +248,23 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_OPEN:
+int32_t open()
+{
+	/* uncomment when ready */
+	// const uint8_t* filename = (uint8_t*)param1;
+
+	// dentry_t dentry; // looking for this dentry
+	// read_dentry_by_name(filename, &dentry); // find the dentry
+
+	// if(dentry.file_type == 0) // it's the rtc
+	// {
+	// 	// add rtc to the file descriptor thing
+	// }
 
 
-			syscall_return(-1); // change if necessary
+
+	return -1;
+}
 
 /* JC
  * int32_t close(int32_t fd)
@@ -183,10 +278,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_CLOSE:
+int32_t close()
+{
+	/* uncomment when ready */
+	// int32_t fd = (int32_t)param1;
 
-
-			syscall_return(-1); // change if necessary
+	return -1;
+}
 
 /* JC
  * int32_t getargs(uint8_t* buf, int32_t nbytes)
@@ -202,10 +300,14 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_GETARGS:
+int32_t getargs()
+{
+	/* uncomment when ready */
+	// uint8_t* buf = (uint8_t*)param1;
+	// int32_t nbytes = (int32_t)param2;
 
-
-			syscall_return(-1); // change if necessary
+	return -1;
+}
 
 /* JC
  * int32_t vidmap(uint8_t** screen_start)
@@ -223,10 +325,13 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_VIDMAP:
+int32_t vidmap()
+{
+	/* uncomment when ready */
+	// uint8_t** screen_start = (uint8_t**)param1;
 
-
-			syscall_return(-1); // change if necessary
+	return -1;
+}
 
 /* JC
  * int32_t set_handler(int32_t signum, void* handler_address)
@@ -238,9 +343,14 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_SET_HANDLER:
+int32_t set_handler()
+{
+	/* uncomment when ready */
+	// int32_t signum = (int32_t)param1;
+	// void* handler_address = (void*)handler_address;
 
-			syscall_return(-1); // change if necessary
+	return -1;
+}
 
 /* JC
  * int32_t sigreturn(void)
@@ -251,13 +361,8 @@ void syscall_handler()
  *		SIDE EFFECTS:
  *
  */
-		case SYS_SIGRETURN:
-
-			syscall_return(-1); // change if necessary
-
-		default:
-			syscall_return(-1); // places -1 into eax, invalud number
-
-	}
+int32_t sigreturn(void)
+{
+	return -1;
 }
 

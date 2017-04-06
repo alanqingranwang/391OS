@@ -6,177 +6,182 @@
 
 #include "keyboard.h"
 
+static int CTR4 = NUM_FREQ; // remove later
+static int CTR3 = 0;
+
 /*
  * 0 - neither
  * 1 - shift
  * 2 - caps
  * 3 - shift and caps
  */
-static int caps_shift_flag = 0;
+static int caps_shift_flag = NONE_MODE;
 static int ctrl_flag = 0;
 static int screen_x_pos = 0;
 static int buffer_index = 0;
+
+static unsigned char buffer[BUFFER_SIZE];
 
 /* AW
  * This table contains the character associated with the scan number from
  *  the kbd_scan_code.
  */
-static unsigned char kbd_ascii_key_map[4][TOTAL_SCANCODES] =
+static unsigned char kbd_ascii_key_map[KEY_MODES][TOTAL_SCANCODES] =
 {
   {
-   '\0',  '\0', '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
-   '9', '0', '-', '=', '\0',	/* Backspace */
-   '\0',			/* Tab */
-   'q', 'w', 'e', 'r',	/* 19 */
-   't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',	/* Enter key */
-   '\0',			/* 29   - Control */
-   'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',	/* 39 */
-   '\'', '`', '\0',		/* Left shift */
-   '\\', 'z', 'x', 'c', 'v', 'b', 'n',			/* 49 */
-   'm', ',', '.', '/', '\0',				/* Right shift */
+   '\0',  '\0', '1', '2', '3', '4', '5', '6', '7', '8', /* 9 */
+   '9', '0', '-', '=', '\0',  /* Backspace */
+   '\0',      /* Tab */
+   'q', 'w', 'e', 'r',  /* 19 */
+   't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',  /* Enter key */
+   '\0',      /* 29   - Control */
+   'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',  /* 39 */
+   '\'', '`', '\0',   /* Left shift */
+   '\\', 'z', 'x', 'c', 'v', 'b', 'n',      /* 49 */
+   'm', ',', '.', '/', '\0',        /* Right shift */
    '*',
-    '\0',	/* Alt */
-  ' ',	/* Space bar */
-    '\0',	/* Caps lock */
-    '\0',	/* 59 - F1 key ... > */
+    '\0', /* Alt */
+  ' ',  /* Space bar */
+    '\0', /* Caps lock */
+    '\0', /* 59 - F1 key ... > */
     '\0',   '\0',   '\0',   '\0',   '\0',   '\0',   '\0',   '\0',
-    '\0',	/* < ... F10 */
-    '\0',	/* 69 - Num lock*/
-    '\0',	/* Scroll Lock */
-    '\0',	/* Home key */
-    '\0',	/* Up Arrow */
-    '\0',	/* Page Up */
+    '\0', /* < ... F10 */
+    '\0', /* 69 - Num lock*/
+    '\0', /* Scroll Lock */
+    '\0', /* Home key */
+    '\0', /* Up Arrow */
+    '\0', /* Page Up */
   '-',
-    '\0',	/* Left Arrow */
+    '\0', /* Left Arrow */
     '\0',
-    '\0',	/* Right Arrow */
+    '\0', /* Right Arrow */
   '+',
-    '\0',	/* 79 - End key*/
-    '\0',	/* Down Arrow */
-    '\0',	/* Page Down */
-    '\0',	/* Insert Key */
-    '\0',	/* Delete Key */
+    '\0', /* 79 - End key*/
+    '\0', /* Down Arrow */
+    '\0', /* Page Down */
+    '\0', /* Insert Key */
+    '\0', /* Delete Key */
     '\0',   '\0',   '\0',
-    '\0',	/* F11 Key */
-    '\0',	/* F12 Key */
-    '\0'	/* All other keys are undefined */
+    '\0', /* F11 Key */
+    '\0', /* F12 Key */
+    '\0'  /* All other keys are undefined */
   },
 // shift
   {
-   '\0',  '\0', '!', '@', '#', '$', '%', '^', '&', '*',	/* 9 */
-   '(', ')', '_', '+', '\0',	/* Backspace */
-   '\0',			/* Tab */
-   'Q', 'W', 'E', 'R',	/* 19 */
-   'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',	/* Enter key */
-   '\0',			/* 29   - Control */
-   'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',	/* 39 */
-   '"', '~', '\0',		/* Left shift */
-   '|', 'Z', 'X', 'C', 'V', 'B', 'N',			/* 49 */
-   'M', '<', '>', '?', '\0',				/* Right shift */
+   '\0',  '\0', '!', '@', '#', '$', '%', '^', '&', '*', /* 9 */
+   '(', ')', '_', '+', '\0',  /* Backspace */
+   '\0',      /* Tab */
+   'Q', 'W', 'E', 'R',  /* 19 */
+   'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',  /* Enter key */
+   '\0',      /* 29   - Control */
+   'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',  /* 39 */
+   '"', '~', '\0',    /* Left shift */
+   '|', 'Z', 'X', 'C', 'V', 'B', 'N',     /* 49 */
+   'M', '<', '>', '?', '\0',        /* Right shift */
    '*',
-    '\0',	/* Alt */
-  ' ',	/* Space bar */
-    '\0',	/* Caps lock */
-    '\0',	/* 59 - F1 key ... > */
+    '\0', /* Alt */
+  ' ',  /* Space bar */
+    '\0', /* Caps lock */
+    '\0', /* 59 - F1 key ... > */
     '\0',   '\0',   '\0',   '\0',   '\0',   '\0',   '\0',   '\0',
-    '\0',	/* < ... F1'\0' */
-    '\0',	/* 69 - Num lock*/
-    '\0',	/* Scroll Lock */
-    '\0',	/* Home key */
-    '\0',	/* Up Arrow */
-    '\0',	/* Page Up */
+    '\0', /* < ... F1'\0' */
+    '\0', /* 69 - Num lock*/
+    '\0', /* Scroll Lock */
+    '\0', /* Home key */
+    '\0', /* Up Arrow */
+    '\0', /* Page Up */
   '-',
-    '\0',	/* Left Arrow */
+    '\0', /* Left Arrow */
     '\0',
-    '\0',	/* Right Arrow */
+    '\0', /* Right Arrow */
   '+',
-    '\0',	/* 79 - End key*/
-    '\0',	/* Down Arrow */
-    '\0',	/* Page Down */
-    '\0',	/* Insert Key */
-    '\0',	/* Delete Key */
+    '\0', /* 79 - End key*/
+    '\0', /* Down Arrow */
+    '\0', /* Page Down */
+    '\0', /* Insert Key */
+    '\0', /* Delete Key */
     '\0',   '\0',   '\0',
-    '\0',	/* F11 Key */
-    '\0',	/* F12 Key */
-    '\0'	/* All other keys are undefined */
+    '\0', /* F11 Key */
+    '\0', /* F12 Key */
+    '\0'  /* All other keys are undefined */
   },
 // caps
   {
-   '\0',  '\0', '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
-   '9', '0', '-', '=', '\0',	/* Backspace */
-   '\0',			/* Tab */
-   'Q', 'W', 'E', 'R',	/* 19 */
-   'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\n',	/* Enter key */
-   '\0',			/* 29   - Control */
-   'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';',	/* 39 */
-   '\'', '`', '\0',		/* Left shift */
-   '\\', 'Z', 'X', 'C', 'V', 'B', 'N',			/* 49 */
-   'M', ',', '.', '/', '\0',				/* Right shift */
+   '\0',  '\0', '1', '2', '3', '4', '5', '6', '7', '8', /* 9 */
+   '9', '0', '-', '=', '\0',  /* Backspace */
+   '\0',      /* Tab */
+   'Q', 'W', 'E', 'R',  /* 19 */
+   'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\n',  /* Enter key */
+   '\0',      /* 29   - Control */
+   'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';',  /* 39 */
+   '\'', '`', '\0',   /* Left shift */
+   '\\', 'Z', 'X', 'C', 'V', 'B', 'N',      /* 49 */
+   'M', ',', '.', '/', '\0',        /* Right shift */
    '*',
-    '\0',	/* Alt */
-  ' ',	/* Space bar */
-    '\0',	/* Caps lock */
-    '\0',	/* 59 - F1 key ... > */
+    '\0', /* Alt */
+  ' ',  /* Space bar */
+    '\0', /* Caps lock */
+    '\0', /* 59 - F1 key ... > */
     '\0',   '\0',   '\0',   '\0',   '\0',   '\0',   '\0',   '\0',
-    '\0',	/* < ... F1'\0' */
-    '\0',	/* 69 - Num lock*/
-    '\0',	/* Scroll Lock */
-    '\0',	/* Home key */
-    '\0',	/* Up Arrow */
-    '\0',	/* Page Up */
+    '\0', /* < ... F1'\0' */
+    '\0', /* 69 - Num lock*/
+    '\0', /* Scroll Lock */
+    '\0', /* Home key */
+    '\0', /* Up Arrow */
+    '\0', /* Page Up */
   '-',
-    '\0',	/* Left Arrow */
+    '\0', /* Left Arrow */
     '\0',
-    '\0',	/* Right Arrow */
+    '\0', /* Right Arrow */
   '+',
-    '\0',	/* 79 - End key*/
-    '\0',	/* Down Arrow */
-    '\0',	/* Page Down */
-    '\0',	/* Insert Key */
-    '\0',	/* Delete Key */
+    '\0', /* 79 - End key*/
+    '\0', /* Down Arrow */
+    '\0', /* Page Down */
+    '\0', /* Insert Key */
+    '\0', /* Delete Key */
     '\0',   '\0',   '\0',
-    '\0',	/* F11 Key */
-    '\0',	/* F12 Key */
-    '\0'	/* All other keys are undefined */
+    '\0', /* F11 Key */
+    '\0', /* F12 Key */
+    '\0'  /* All other keys are undefined */
   },
 // shift and caps
   {
-   '\0',  '\0', '!', '@', '#', '$', '%', '^', '&', '*',	/* 9 */
-   '(', ')', '_', '+', '\0',	/* Backspace */
-   '\0',			/* Tab */
-   'q', 'w', 'e', 'r',	/* 19 */
-   't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',	/* Enter key */
-   '\0',			/* 29   - Control */
-   'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ':',	/* 39 */
-   '"', '~', '\0',		/* Left shift */
-   '|', 'z', 'x', 'c', 'v', 'b', 'n',			/* 49 */
-   'm', '<', '>', '?', '\0',				/* Right shift */
+   '\0',  '\0', '!', '@', '#', '$', '%', '^', '&', '*', /* 9 */
+   '(', ')', '_', '+', '\0',  /* Backspace */
+   '\0',      /* Tab */
+   'q', 'w', 'e', 'r',  /* 19 */
+   't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',  /* Enter key */
+   '\0',      /* 29   - Control */
+   'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ':',  /* 39 */
+   '"', '~', '\0',    /* Left shift */
+   '|', 'z', 'x', 'c', 'v', 'b', 'n',     /* 49 */
+   'm', '<', '>', '?', '\0',        /* Right shift */
    '*',
-    '\0',	/* Alt */
-  ' ',	/* Space bar */
-    '\0',	/* Caps lock */
-    '\0',	/* 59 - F1 key ... > */
+    '\0', /* Alt */
+  ' ',  /* Space bar */
+    '\0', /* Caps lock */
+    '\0', /* 59 - F1 key ... > */
     '\0',   '\0',   '\0',   '\0',   '\0',   '\0',   '\0',   '\0',
-    '\0',	/* < ... F1'\0' */
-    '\0',	/* 69 - Num lock*/
-    '\0',	/* Scroll Lock */
-    '\0',	/* Home key */
-    '\0',	/* Up Arrow */
-    '\0',	/* Page Up */
+    '\0', /* < ... F1'\0' */
+    '\0', /* 69 - Num lock*/
+    '\0', /* Scroll Lock */
+    '\0', /* Home key */
+    '\0', /* Up Arrow */
+    '\0', /* Page Up */
   '-',
-    '\0',	/* Left Arrow */
+    '\0', /* Left Arrow */
     '\0',
-    '\0',	/* Right Arrow */
+    '\0', /* Right Arrow */
   '+',
-    '\0',	/* 79 - End key*/
-    '\0',	/* Down Arrow */
-    '\0',	/* Page Down */
-    '\0',	/* Insert Key */
-    '\0',	/* Delete Key */
+    '\0', /* 79 - End key*/
+    '\0', /* Down Arrow */
+    '\0', /* Page Down */
+    '\0', /* Insert Key */
+    '\0', /* Delete Key */
     '\0',   '\0',   '\0',
-    '\0',	/* F11 Key */
-    '\0',	/* F12 Key */
-    '\0'	/* All other keys are undefined */
+    '\0', /* F11 Key */
+    '\0', /* F12 Key */
+    '\0'  /* All other keys are undefined */
   }
 };
 
@@ -228,6 +233,7 @@ void keyboard_handler()
     uint8_t key;
     key = inb(KBD_DATA_PORT);
 
+    // handle all keystrokes
     switch(key) {
         case CAPS:
             toggle_caps();
@@ -266,32 +272,59 @@ void keyboard_handler()
     restore_registers();
 }
 
+/* AW
+ * toggle_caps
+ *      DESCRIPTION:
+ *          Toggles the caps flag
+ *      INPUT: none
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void toggle_caps() {
-    if(caps_shift_flag == 0)
-        caps_shift_flag = 2;
-    else if(caps_shift_flag == 1)
-        caps_shift_flag = 3;
-    else if(caps_shift_flag == 2)
-        caps_shift_flag = 0;
+    if(caps_shift_flag == NONE_MODE)
+        caps_shift_flag = CAPS_MODE;
+    else if(caps_shift_flag == SHIFT_MODE)
+        caps_shift_flag = SHIFT_CAPS_MODE;
+    else if(caps_shift_flag == CAPS_MODE)
+        caps_shift_flag = NONE_MODE;
     else
-        caps_shift_flag = 1;
+        caps_shift_flag = SHIFT_MODE;
 }
 
+/* AW
+ * toggle_shift
+ *      DESCRIPTION:
+ *          Toggles the shift flag
+ *      INPUT: type -- whether its a make or break stroke
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void toggle_shift(int type) {
     if(type == MAKE) {
-        if(caps_shift_flag == 0)
-            caps_shift_flag = 1;
-        else if(caps_shift_flag == 2)
-            caps_shift_flag = 3;
+        if(caps_shift_flag == NONE_MODE)
+            caps_shift_flag = SHIFT_MODE;
+        else if(caps_shift_flag == CAPS_MODE)
+            caps_shift_flag = SHIFT_CAPS_MODE;
     }
     else {
-        if(caps_shift_flag == 1)
-            caps_shift_flag = 0;
-        else if(caps_shift_flag == 3)
-            caps_shift_flag = 2;
+        if(caps_shift_flag == SHIFT_MODE)
+            caps_shift_flag = NONE_MODE;
+        else if(caps_shift_flag == SHIFT_CAPS_MODE)
+            caps_shift_flag = CAPS_MODE;
     }
 }
 
+/* AW
+ * toggle_ctrl(int type)
+ *      DESCRIPTION:
+ *          Toggles the ctrl flag
+ *      INPUT: type -- whether it's a make or break stroke
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void toggle_ctrl(int type) {
     if(type == MAKE)
         ctrl_flag = 1;
@@ -299,6 +332,15 @@ void toggle_ctrl(int type) {
         ctrl_flag = 0;
 }
 
+/* AW
+ * process_key(uint8_t key)
+ *      DESCRIPTION:
+ *          Processes which key to display, manages buffer
+ *      INPUT: key -- key to display
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void process_key(uint8_t key) {
     // if it's within the given range, search the table for char
     if(key >= ABC_LOW_SCANS && key <= ABC_HIGH_SCANS) {
@@ -307,29 +349,69 @@ void process_key(uint8_t key) {
             clear();
             clear_buffer();
         }
-        else if(screen_x_pos >= 80) {
-            if(buffer_index + 1 < 128) {
+        /********Remove later************/
+        // if pressed ctrl and 3s
+        else if(key == THREE_SCAN && ctrl_flag){
+            clear();
+            test_file_data(CTR3); // print the next file in dentry
+            CTR3++; 
+            CTR3 %= get_num_entries(); // wrap around
+        }
+        // if pressed ctrl and 4s
+        else if(key == FOUR_SCAN && ctrl_flag)
+        {
+            clear();
+            if(CTR4 == MAX_RATE-2) // keep it within the freq test
+            {
+              CTR4 = NUM_FREQ;
+              print_freq(CTR4);
+              set_print_one(0); // turn off
+            }
+            else{               
+              print_freq(CTR4); // show next freq
+              set_print_one(1); // turn on
+              CTR4--;
+            }
+        }
+        // if pressed ctrl and 1s
+        else if(key == 0x02 && ctrl_flag)
+        {
+            clear(); // print file
+            print_file_info();
+        }
+        /**************************/
+        else if(screen_x_pos >= NUM_COLS) {
+            if(buffer_index + 1 < BUFFER_SIZE) {
                 scroll();
                 screen_x_pos = 0;
                 putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
-                buffer[buffer_index] = key;
+                buffer[buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
                 buffer_index++;
             }
             else
-            screen_x_pos--;
+                screen_x_pos--;
         }
         else {
-            if(buffer_index + 1 < 128) { // handle buffer overflow
+            if(buffer_index + 1 < BUFFER_SIZE) { // handle buffer overflow
                 putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
-                buffer[buffer_index] = key;
+                buffer[buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
                 buffer_index++;
             }
             else
-            screen_x_pos--;
+                screen_x_pos--;
         }
     }
 }
 
+/* AW
+ * handle_backspace()
+ *      DESCRIPTION:
+ *          Manages backspace by calling helper function in lib.c
+ *      INPUT: none
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void handle_backspace() {
     if(buffer_index - 1 >= 0) {
         backspace();
@@ -339,16 +421,36 @@ void handle_backspace() {
     }
 }
 
+/* AW
+ * handle_enter()
+ *      DESCRIPTION:
+ *          Manages enter keystroke
+ *      INPUT: none
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void handle_enter() {
     scroll();
     screen_x_pos = 0;
     //call terminal read once implemented
+    // call terminal read, save the buffer
+    terminal_read(STDOUT_FD, (int8_t*)buffer, buffer_index);
     clear_buffer();
 }
 
+/* AW
+ * clear_buffer()
+ *      DESCRIPTION:
+ *          clears the buffer
+ *      INPUT: none
+ *      OUTPUT: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: none
+ */
 void clear_buffer() {
     int i;
-    for(i = 0; i < 128; i++) {
+    for(i = 0; i < BUFFER_SIZE; i++) {
         buffer[i] = ' ';
     }
     buffer_index = 0;

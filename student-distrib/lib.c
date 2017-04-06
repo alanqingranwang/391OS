@@ -16,7 +16,8 @@ static char* video_mem = (char *)VIDEO;
 * void clear(void);
 *   Inputs: void
 *   Return Value: none
-*   Function: Clears video memory
+*   Function: Clears video memory and resets the cursor and location of screen
+*       to coordinates (0,0)
 */
 
 void
@@ -191,20 +192,33 @@ puts(int8_t* s)
 void
 putc(uint8_t c)
 {
+    // forced next line chracter
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
+        // Check to keep screen_y in bounds upon a '\n'
+        if(screen_y >= NUM_ROWS)
+        {
+            screen_y--;
+            scroll();
+        }
     }
     else {
+        // next line by default (wrapping)
+        if(screen_x >= NUM_COLS){
+            screen_x = 0;
+            screen_y++;
+            // check to keep screen_y in bounds naturally
+            if(screen_y >= NUM_ROWS)
+            {
+                screen_y--;
+                scroll();
+            }
+        }
+
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
-        if(screen_x >= NUM_COLS){
-        screen_x = 0;
-        screen_y++;
-            if(screen_y >= NUM_ROWS - 1)
-                scroll();
-        }
     }
 
     update_cursor();
@@ -265,6 +279,90 @@ void update_cursor()
     // cursor HIGH port to vga INDEX register
     outb(0x0E, 0x3D4);
     outb((unsigned char )((position>>8)&0xFF), 0x3D5);
+}
+
+
+/*
+* void scroll()
+*   Inputs: none
+*   Return Value: void
+*   Function: Manipulate video memory by shifting everything up
+*/
+void scroll() {
+    int i, j;
+
+    if(screen_y >= NUM_ROWS - 1) { // if we are writing to the last row...
+        for(i = 0; i < NUM_COLS; i++) {
+            for(j = 0; j < NUM_ROWS - 1; j++) {
+                // Set the value of a given row to the row below it
+                *(uint8_t *)(video_mem + ((NUM_COLS*j + i) << 1)) =
+                    *(uint8_t *)(video_mem + ((NUM_COLS*(j+1) + i) << 1));
+                *(uint8_t *)(video_mem + ((NUM_COLS*j + i) << 1) + 1) =
+                    *(uint8_t *)(video_mem + ((NUM_COLS*(j+1) + i) << 1) + 1);
+            }
+        }
+
+        // Put spaces on the last row
+        for(i = 0; i < NUM_COLS; i++){
+            *(uint8_t *)(video_mem + ((NUM_COLS*(NUM_ROWS-1) + i) << 1)) = ' ';
+            *(uint8_t *)(video_mem + ((NUM_COLS*(NUM_ROWS-1) + i) << 1) + 1) = ATTRIB;
+        }
+
+        screen_x = 0;
+        update_cursor();
+    }
+    else { // otherwise print a newline
+        putc('\n');
+        update_cursor();
+    }
+}
+
+/*
+* void backspace()
+*   Inputs: none
+*   Return Value: void
+*   Function: move cursor back a character display length and print a
+*             space character, then reposition the cursor back to before
+*             the space character
+*/
+void backspace(void)
+{
+    if((screen_x == 0) && (screen_y > 0) ) { // check for left edge
+        screen_y--;
+        screen_x = NUM_COLS - 1;
+    }
+    else if( (screen_x == 0) && (screen_y == 0) ) return; // check for first spot
+    else screen_x--;
+
+    // Fill with space character
+    *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = ' ';
+    *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
+
+    update_cursor();
+}
+
+/*
+* void update_cursor()
+*   Inputs: none
+*   Return Value: void
+*   Function: move the blinking cursor to match the current writing position.
+*/
+void update_cursor()
+{
+    // changing ports, should lock it
+    uint32_t flags;
+    cli_and_save(flags);
+
+    unsigned short position = (screen_y*NUM_COLS) + screen_x;
+
+    // cursor LOW port to vga INDEX register
+    outb(LOW_VGA, VGA_SELECT);
+    outb((unsigned char)(position&0xFF), VGA_DATA);
+    // cursor HIGH port to vga INDEX register
+    outb(HIGH_VGA, VGA_SELECT);
+    outb((unsigned char )((position>>8)&0xFF), VGA_DATA);
+
+    restore_flags(flags);
 }
 
 

@@ -9,6 +9,13 @@
 
 #define VIDEO 0xB8000
 
+/*******************************/
+#define LOW_VGA 0x0F
+#define HIGH_VGA 0x0E
+#define VGA_SELECT 0x3D4
+#define VGA_DATA 0x3D5
+/*******************************/
+
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
 int32_t puts(int8_t *s);
@@ -46,6 +53,24 @@ void scroll(void);
 
 void backspace(void);
 
+void update_cursor();
+
+/*
+ *	scroll
+ *		Shifts video memory to simulate scrolling
+ */
+void scroll(void);
+
+/*
+ *	backspace
+ *		Implement backspace by manipulating video memory
+ */
+void backspace(void);
+
+/*
+ *	update_cursor
+ *		Change position of blinking cursor
+ */
 void update_cursor();
 
 /*

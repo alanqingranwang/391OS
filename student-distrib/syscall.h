@@ -18,6 +18,9 @@
 #define _SYSCALL_H
 
 #include "lib.h"
+// #include "rtc.h" // need to call it's stuff
+// #include "filesystem.h" // need dentry and shit
+
 
 /* Migrated from "../syscalls/ece391sysnum.h" */
 #define SYS_HALT    1
@@ -31,6 +34,10 @@
 // extra credit syscalls
 #define SYS_SET_HANDLER  9
 #define SYS_SIGRETURN  10
+
+/* Additional Macros */
+#define BYTE_MASK	0xFF
+
 
 /*
  * syscall_return
@@ -52,4 +59,17 @@ do {													\
 /* Called when an INT 0x80 is raised */
 void syscall_handler();
 
+/* System Call Prototypes */
+int32_t halt();
+int32_t execute();
+int32_t read();
+int32_t write();
+int32_t open();
+int32_t close();
+int32_t getargs();
+int32_t vidmap();
+int32_t set_handler();
+int32_t sigreturn();
+
 #endif /* _SYSCALL_H */
+
