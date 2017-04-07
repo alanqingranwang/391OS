@@ -61,7 +61,6 @@ void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
 	int32_t myfd = file_driver(OPEN, file_pack); // open the file
 	// open terminal driver
 	op_data_t term_pack;
-	terminal_driver(OPEN, term_pack);
 
 	if(myfd != -1) // file opened
 	{
@@ -90,8 +89,6 @@ void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
 	{
 		printf("file doesn't exist.\n");
 	}
-	// close terminal driver
-	terminal_driver(CLOSE, term_pack);
 }
 
 /* JC
