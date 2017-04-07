@@ -9,6 +9,7 @@
 
 #include "lib.h"
 #include "fd_table.h"
+#include "terminal.h"
 
 // need to create a process thingy
 /* should automatically open stdin and stdout, which correspond to the file
@@ -81,6 +82,12 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry);
 int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry);
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
+/************Dir Driver Stuff**************/
+int32_t dir_driver(uint32_t cmd, op_data_t operation_data);
+int32_t dir_open(const int8_t* filename);
+int32_t dir_read(int32_t fd, uint8_t* buf, uint32_t nbytes);
+int32_t dir_write();
+int32_t dir_close(uint32_t fd);
 /***********File Driver Stuff**************/
 int32_t file_driver(uint32_t cmd, op_data_t operation_data);
 int32_t file_open(const int8_t* filename);
