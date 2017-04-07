@@ -6,6 +6,7 @@
 #include "lib.h"
 #include "rtc.h"
 #include "keyboard.h"
+#include "wrapper.h"
 //#include "syscall.h"
 
 #define NUM_EXCEPTIONS 32
