@@ -10,7 +10,7 @@
 #define RW_SET_ONLY   0x00000002  // Set bit 1, enables r/w
 #define RW_P_SET      RW_SET_ONLY | 0x00000001 // Set bit 0, enables present bit
 #define RW_P_SIZE_SET RW_P_SET    | 0x00000080; // Set bit 7, enables larger page size
-
+#define PROCESS_SET   0x00000087 // Set size, user, r/w, present
 
 /* page directory */
 uint32_t page_directory[PAGE_SIZE] __attribute__((aligned(PAGE_ALIGN)));
@@ -23,5 +23,7 @@ void paging_init();
 
 /* helper function to enable paging (in-line-assembly) */
 void enablePaging();
+
+void add_process(uint32_t phys_addr, uint32_t virt_addr);
 
 #endif

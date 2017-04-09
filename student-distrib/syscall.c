@@ -160,12 +160,71 @@ int32_t halt()
  *		SIDE EFFECTS:
  *
  */
-int32_t execute()
+int32_t execute(const uint8_t* command)
 {
-	/* uncomment when ready */
-	// uint8_t* command = (uint8_t*)param1; // type cast into the proper parameter
+	if(command == NULL) {
+		return -1;
+	}
 
+	// get the file name and arguments
+	int i;
+	int file_name_length;
+	uint8_t file_name[32];
+	uint8_t args[1024];
+
+	for(i = 0; command[i] != ' '; i++) {
+		if(i >= 31) return -1;
+		file_name[i] = command[i];
+	}
+	file_name[i] = '\0';
+	file_name_length = i;
+
+	for(; command[i] != '\0'; i++) {
+		args[i-1 - file_name_length] = command[i];
+	}
+	args[i-1 - file_name_length] = '\0';
+
+	// Read first 4 bytes to see if its an executable
+	uint8_t buf[28];
+	op_data_t file_pack;
+	file_pack.filename = file_name;
+	file_pack.buf = buf;
+	file_pack.nbytes = 28;
+	int32_t myfd = file_driver(OPEN, file_pack);
+
+	if(myfd == -1) { // is file opened?
+		return -1;
+	}
+
+	file_pack.fd = myfd;
+	if(file_driver(READ, file_pack) == -1) {
+		return -1;
+	}
+	file_driver(CLOSE, file_pack);
+
+	int j;
+	for(int j = 0; j < 4; j++) {
+		if(buf[j] != magic_numbers[j]) {
+			return -1; // not executable
+		}
+	}
+
+	// Extract entry point of task
+	uint32_t entry_point;
+	for(j = 24; j < 28; j++) {
+		entry_point |= (buf[i] << (8*(i-24)));
+	}
 	return -1;
+
+	// map virtual address 0x08000000 to physical address 0x00800000 for first program
+	add_process(0x00800000, 0x08000000);
+
+	// load the program
+	op_data_t file_load;
+	file_load.filename = file_name;
+	file_load.address =
+
+	file_driver(LOAD, 0x08048000);
 }
 
 /* JC

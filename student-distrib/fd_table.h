@@ -20,13 +20,15 @@
 #define READ 2
 #define WRITE 3
 #define CLOSE 4
+#define LOAD 5
 
 // Fill with what you need, and pass as param to driver
 typedef struct op_data_t {
 	int8_t *filename; // used in open
 	int32_t fd; // used in read, write, close
 	void* buf; // used in read and write
-	uint32_t nbytes; // used in read, and write
+	uint32_t nbytes; // used in read, and
+	uint32_t address; // used in load
 } op_data_t;
 
 /* File Descriptor Structure Described in 7.2 Documentation */

@@ -19,7 +19,8 @@
 
 #include "lib.h"
 // #include "rtc.h" // need to call it's stuff
-// #include "filesystem.h" // need dentry and shit
+#include "filesystem.h" // need dentry and shit
+#include "paging.h"
 
 
 /* Migrated from "../syscalls/ece391sysnum.h" */
@@ -38,6 +39,7 @@
 /* Additional Macros */
 #define BYTE_MASK	0xFF
 
+static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
 
 /*
  * syscall_return
