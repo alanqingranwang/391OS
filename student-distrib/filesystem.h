@@ -32,7 +32,7 @@
 #define MAX_NAME_CHARACTERS 32 // maximum number of characters
 #define MAX_ENTRIES 63 // maximum possible dentries
 #define DENTRY_SIZE 64 // size of dentry in bytes
-#define DENTRY_RESERVE_SIZE 6 
+#define DENTRY_RESERVE_SIZE 6
 #define MAX_INODE_DATA_BLOCKS 1023 // this is how many data blocks an inode can have
 #define MAX_CHARS_IN_DATA 4096 // this is how many characters exist in a data block
 
@@ -87,7 +87,7 @@ int32_t file_open(const int8_t* filename);
 int32_t file_read(int32_t fd, uint8_t* buf, uint32_t nbytes);
 int32_t file_write();
 int32_t file_close(int32_t fd);
+int32_t file_load(int8_t *fname, uint32_t address);
 /******************************************/
 
 #endif /* _FILESYSTEM_H */
-

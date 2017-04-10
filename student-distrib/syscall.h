@@ -21,7 +21,7 @@
 // #include "rtc.h" // need to call it's stuff
 #include "filesystem.h" // need dentry and shit
 #include "paging.h"
-
+#include "x86_desc.h"
 
 /* Migrated from "../syscalls/ece391sysnum.h" */
 #define SYS_HALT    1
@@ -38,8 +38,6 @@
 
 /* Additional Macros */
 #define BYTE_MASK	0xFF
-
-static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
 
 /*
  * syscall_return
@@ -71,4 +69,5 @@ int32_t vidmap();
 int32_t set_handler();
 int32_t sigreturn();
 
+void user_context_switch(uint32_t entry_point);
 #endif /* _SYSCALL_H */

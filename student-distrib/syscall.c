@@ -28,6 +28,8 @@ static uint32_t param1;
 static uint32_t param2;
 static uint32_t param3;
 
+static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
+
 /* JC
  * syscall_handler
  * 	DESCRIPTION:
@@ -169,8 +171,8 @@ int32_t execute(const uint8_t* command)
 	// get the file name and arguments
 	int i;
 	int file_name_length;
-	uint8_t file_name[32];
-	uint8_t args[1024];
+	int8_t file_name[32];
+	int8_t args[1024];
 
 	for(i = 0; command[i] != ' '; i++) {
 		if(i >= 31) return -1;
@@ -203,18 +205,22 @@ int32_t execute(const uint8_t* command)
 	file_driver(CLOSE, file_pack);
 
 	int j;
-	for(int j = 0; j < 4; j++) {
+
+	for(j = 0; j < 28; j++) {
+		printf("%x ", buf[j]);
+	}
+	for(j = 0; j < 4; j++) {
 		if(buf[j] != magic_numbers[j]) {
 			return -1; // not executable
 		}
 	}
 
 	// Extract entry point of task
-	uint32_t entry_point;
+	uint32_t entry_point = 0;
 	for(j = 24; j < 28; j++) {
-		entry_point |= (buf[i] << (8*(i-24)));
+		entry_point |= (buf[j] << (8*(j-24)));
 	}
-	return -1;
+	printf("\n");
 
 	// map virtual address 0x08000000 to physical address 0x00800000 for first program
 	add_process(0x00800000, 0x08000000);
@@ -222,9 +228,14 @@ int32_t execute(const uint8_t* command)
 	// load the program
 	op_data_t file_load;
 	file_load.filename = file_name;
-	file_load.address =
+	file_load.address = 0x08048000;
 
-	file_driver(LOAD, 0x08048000);
+	file_driver(LOAD, file_load);
+
+	//printf("%x", entry_point);
+	user_context_switch(entry_point);
+
+	return 0;
 }
 
 /* JC
@@ -423,4 +434,29 @@ int32_t set_handler()
 int32_t sigreturn(void)
 {
 	return -1;
+}
+
+void user_context_switch(uint32_t entry_point) {
+	asm volatile(
+		"cli              \n"
+		"mov $0x2B, %%ax  \n"
+		"mov %%ax, %%ds   \n"
+		"mov %%ax, %%es   \n"
+		"mov %%ax, %%fs   \n"
+		"mov %%ax, %%gs   \n"
+		"mov %%esp, %%eax \n"
+
+		"pushl $0x2B         \n"  // USER_DS
+		"pushl $0x83FFFF0    \n"  // esp
+		"pushf               \n"  // flags
+		"popl %%ecx          \n"
+		"orl  $0x200, %%ecx \n"
+		"pushl %%ecx         \n"
+		"pushl $0x23         \n"  // USER_CS
+		"movl %0, %%edx      \n"  // eip
+		"pushl %%edx            \n"
+		"iret                \n"
+		:
+		: "r" (entry_point)
+	);
 }

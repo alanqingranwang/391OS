@@ -39,8 +39,7 @@ void paging_init() {
 
 void add_process(uint32_t phys_addr, uint32_t virt_addr) {
     uint32_t index = virt_addr / 0x00400000; // divide by 4MB because each task gets 4MB
-    page_directory[index] = phys_addr;
-    page_directory[index] |= PROCESS_SET;
+    page_directory[index] = phys_addr | PROCESS_SET;
 }
 
 /*

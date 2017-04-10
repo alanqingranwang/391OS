@@ -68,7 +68,7 @@ void rtc_handler(void)
 {
 	// save registers, assembly wrapping
 	//save_registers();
-	uint32_t flags;
+	//uint32_t flags;
    // save previous state of interrupts, and prevent them
 	//cli_and_save(flags);
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work

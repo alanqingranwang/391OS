@@ -216,14 +216,14 @@ int32_t file_close(int32_t fd)
 	return 0;
 }
 
-int32_t file_load(int8_t *filename, uint32_t address)
+int32_t file_load(int8_t *fname, uint32_t address) {
 	dentry_t dentry;
 
-	if(read_dentry_by_name(fname, &dentry) == -1) {
+	if(read_dentry_by_name((uint8_t*) fname, &dentry) == -1) {
 		return -1;
 	}
 
-	if(read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode].size)) {
+	if(read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size)) {
 		return -1;
 	}
 
