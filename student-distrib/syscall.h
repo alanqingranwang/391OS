@@ -22,6 +22,7 @@
 #include "filesystem.h" // need dentry and shit
 #include "paging.h"
 #include "x86_desc.h"
+#include "fd_table.h"
 
 /* Migrated from "../syscalls/ece391sysnum.h" */
 #define SYS_HALT    1
@@ -54,6 +55,18 @@ do {													\
 					: "%eax" ); 					\
 } while(0)
 
+/* per process data structure */
+typedef struct pcb{
+	uint16_t	p_id;
+	uint8_t *	parent;
+	fd_t 		fd_table[8];
+	uint32_t    process_stack_base;
+	uint32_t	process_stack_last;
+} pcb;
+
+
+static int	no_processes = 0;
+
 /* Called when an INT 0x80 is raised */
 void syscall_handler();
 
@@ -69,5 +82,5 @@ int32_t vidmap();
 int32_t set_handler();
 int32_t sigreturn();
 
-void user_context_switch(uint32_t entry_point);
+//void user_context_switch(uint32_t entry_point);
 #endif /* _SYSCALL_H */
