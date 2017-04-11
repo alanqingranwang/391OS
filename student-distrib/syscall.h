@@ -47,16 +47,17 @@
  *		Then does proper interrupt return.
  */
 #define syscall_return(retval)				\
-do {													\
-	asm volatile( "popal\n"						\
-					"movl %0, %%eax \n"			\
-					: 									\
-					: "r" (retval)					\
-					: "%eax" ); 					\
+do {										\
+	asm volatile( "popal		  \n"		\
+				  "movl %0, %%eax \n"		\
+				  "iret			  \n"       \
+					: 						\
+					: "r" (retval)			\
+					: "%eax" ); 			\
 } while(0)
 
 /* per process data structure */
-typedef struct pcb{
+typedef struct process_control_block{
 	uint16_t	p_id;
 	uint8_t *	parent;
 	fd_t 		fd_table[8];
@@ -64,7 +65,7 @@ typedef struct pcb{
 	uint32_t	process_stack_last;
 } pcb;
 
-
+// number of processes ?
 static int	no_processes = 0;
 
 /* Called when an INT 0x80 is raised */

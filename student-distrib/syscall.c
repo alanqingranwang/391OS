@@ -8,8 +8,8 @@
 #include "wrapper.h"
 
 #define K_STACK_BOTTOM		0x007FFFFF
-#define PROGRAM_PAGE		0x00800000
-#define PROGRAM_START		0x00804800
+#define PROGRAM_PAGE		0x08000000
+#define PROGRAM_START		0x08004800
 #define PROCESS_SIZE     	0x00008000
 
 // note to self, I need something that's the opposite of their
@@ -54,13 +54,9 @@ static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
  */
 void syscall_handler()
 {
-	// do I need to do this? YES!!!!!!!!!!
-	//save_registers();
-
-	//uint32_t flags;
-	//cli_and_save(flags); // lock it
 	// get the parameters from registers, and place into variables
 	asm volatile(
+		"pusha			\n"
 		"movl %%eax, %0 \n"
 		"movl %%ebx, %1 \n"
 		"movl %%ecx, %2 \n"
@@ -74,58 +70,47 @@ void syscall_handler()
 	{
 		case SYS_HALT:
 			retval = halt();
-			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
-
+			
 		case SYS_EXECUTE:
 			retval = execute();
-			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_READ:
 			retval = read();
-			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_WRITE:
 			retval = write();
-			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_OPEN:
 			retval = open();
-			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_CLOSE:
 			retval = close();
-			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_GETARGS:
 			retval = getargs();
-			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_VIDMAP:
 			retval = vidmap();
-			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_SET_HANDLER:
 			retval = set_handler();
-			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		case SYS_SIGRETURN:
 			retval = sigreturn();
-			//restore_flags(flags); // unlock before returning
 			syscall_return(retval);
 
 		default:
-			syscall_return(-1); // places -1 into eax, invalid number
-
-	}
+			syscall_return(-1);
+	};
 }
 
 /* JC
@@ -223,7 +208,7 @@ int32_t execute(const uint8_t* command)
 	}
 	
 	// check if we can run another process
-	if(no_processes >= 7) return -1;
+	//if(no_processes >= 7) return -1;
 	
 	// Extract entry point of task
 	uint32_t entry_point = 0;
