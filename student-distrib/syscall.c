@@ -37,83 +37,6 @@ static uint32_t param3;
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
 
 /* JC
- * syscall_handler
- * 	DESCRIPTION:
- *			Called when an interrupt 0x80.
- *			Takes in a system call number and does the proper task.
- *		INPUT: Parameters for each case is passed in via registers.
- *				EAX - system number, described in header file.
- *				EBX - first argument
- *				ECX - second argument
- *				EDX - third argument
- *		OUTPUT:
- *		RETURN VALUE: 0 if successful
- *						 -1 failed.
- *		SIDE EFFECTS:
- *
- */
-void syscall_handler()
-{
-	// get the parameters from registers, and place into variables
-	asm volatile(
-		"pusha			\n"
-		"movl %%eax, %0 \n"
-		"movl %%ebx, %1 \n"
-		"movl %%ecx, %2 \n"
-		"movl %%edx, %3 \n"
-		: "=r"(num), "=r"(param1), "=r"(param2), "=r"(param3)
-	);
-
-	uint32_t retval; // holds the return value that needs to be put into EAX upon return
-
-	switch(num)
-	{
-		case SYS_HALT:
-			retval = halt();
-			syscall_return(retval);
-
-		case SYS_EXECUTE:
-			retval = execute();
-			syscall_return(retval);
-
-		case SYS_READ:
-			retval = read();
-			syscall_return(retval);
-
-		case SYS_WRITE:
-			retval = write();
-			syscall_return(retval);
-
-		case SYS_OPEN:
-			retval = open();
-			syscall_return(retval);
-
-		case SYS_CLOSE:
-			retval = close();
-			syscall_return(retval);
-
-		case SYS_GETARGS:
-			retval = getargs();
-			syscall_return(retval);
-
-		case SYS_VIDMAP:
-			retval = vidmap();
-			syscall_return(retval);
-
-		case SYS_SET_HANDLER:
-			retval = set_handler();
-			syscall_return(retval);
-
-		case SYS_SIGRETURN:
-			retval = sigreturn();
-			syscall_return(retval);
-
-		default:
-			syscall_return(-1);
-	};
-}
-
-/* JC
  * int32_t halt(uint8_t status)
  * 	DESCRIPTION:
  *			Terminates a process, returning the specified value to its parent process
@@ -156,7 +79,7 @@ int32_t halt()
 int32_t execute(const uint8_t* command)
 {
 	if(p_c.no_processes >= 7) {
-		return -1;  // too many processes
+		syscall_return_failure();  // too many processes
 	}
 	else {
 		p_c.no_processes++;
@@ -164,7 +87,7 @@ int32_t execute(const uint8_t* command)
 
 	/** Parse args and check file validity */
 	//check command validity
-	if(command == NULL) return -1;
+	if(command == NULL) syscall_return_failure();
 
 	// get the file name and arguments
 	int i;
@@ -193,12 +116,12 @@ int32_t execute(const uint8_t* command)
 	int32_t myfd = file_driver(OPEN, file_pack);
 
 	if(myfd == -1) { // is file opened?
-		return -1;
+		syscall_return_failure();
 	}
 
 	file_pack.fd = myfd;
 	if(file_driver(READ, file_pack) == -1) {
-		return -1;
+		syscall_return_failure();
 	}
 	file_driver(CLOSE, file_pack);
 
@@ -209,7 +132,7 @@ int32_t execute(const uint8_t* command)
 	}
 	for(j = 0; j < 4; j++) {
 		if(buf[j] != magic_numbers[j]) {
-			return -1; // not executable
+			syscall_return_failure(); // not executable
 		}
 	}
 
@@ -231,11 +154,11 @@ int32_t execute(const uint8_t* command)
 	dentry_t dentry;
 	uint32_t address = 0x08048000;
 	if(read_dentry_by_name((uint8_t*) file_name, &dentry) == -1) {
-		return -1;
+		syscall_return_failure();
 	}
 
 	if(read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size) == -1) {
-		return -1;
+		syscall_return_failure();
 	}
 
 	/** Create PCB/ open FDs */
@@ -273,7 +196,7 @@ int32_t execute(const uint8_t* command)
 	);
 
 	/** prepare for context switch */
-	write tss esp0 and ebp0 for new k_stack process (not yet implemented)
+	// write tss esp0 and ebp0 for new k_stack process (not yet implemented)
 	tss.esp0 = esp;
 	tss.ebp0 = ebp;
 
@@ -281,7 +204,7 @@ int32_t execute(const uint8_t* command)
 	user_context_switch(entry_point);
 
 	/** return */
-	return 0;
+	syscall_return_success();
 }
 
 /* JC
@@ -315,14 +238,14 @@ int32_t execute(const uint8_t* command)
  *		SIDE EFFECTS:
  *
  */
-int32_t read()
+void read()
 {
 	/* uncomment when ready */
 	// int32_t fd = (int32_t)param1;
 	// void* buf = (void*)param2;
 	// int32_t nbytes = (int32_t)param3;
 
-	return -1;
+	syscall_return_failure();
 }
 
 /* JC
@@ -342,14 +265,14 @@ int32_t read()
  *		SIDE EFFECTS:
  *
  */
-int32_t write()
+void write()
 {
 	/* uncomment when ready */
 	// int32_t fd = (int32_t)param1;
 	// const void* buf = (void*)param2;
 	// int32_t nbytes = (int32_t)param3;
 
-	return -1;
+	syscall_return_failure();
 }
 
 /* JC
@@ -364,7 +287,7 @@ int32_t write()
  *		SIDE EFFECTS:
  *
  */
-int32_t open()
+void open()
 {
 	/* uncomment when ready */
 	// const uint8_t* filename = (uint8_t*)param1;
@@ -379,7 +302,7 @@ int32_t open()
 
 
 
-	return -1;
+	syscall_return_failure();
 }
 
 /* JC
@@ -394,12 +317,12 @@ int32_t open()
  *		SIDE EFFECTS:
  *
  */
-int32_t close()
+void close()
 {
 	/* uncomment when ready */
 	// int32_t fd = (int32_t)param1;
 
-	return -1;
+	syscall_return_failure();
 }
 
 /* JC
@@ -416,13 +339,13 @@ int32_t close()
  *		SIDE EFFECTS:
  *
  */
-int32_t getargs()
+void getargs()
 {
 	/* uncomment when ready */
 	// uint8_t* buf = (uint8_t*)param1;
 	// int32_t nbytes = (int32_t)param2;
 
-	return -1;
+	syscall_return_failure();
 }
 
 /* JC
@@ -441,12 +364,12 @@ int32_t getargs()
  *		SIDE EFFECTS:
  *
  */
-int32_t vidmap()
+void vidmap()
 {
 	/* uncomment when ready */
 	// uint8_t** screen_start = (uint8_t**)param1;
 
-	return -1;
+	syscall_return_failure();
 }
 
 /* JC
@@ -459,13 +382,13 @@ int32_t vidmap()
  *		SIDE EFFECTS:
  *
  */
-int32_t set_handler()
+void set_handler()
 {
 	/* uncomment when ready */
 	// int32_t signum = (int32_t)param1;
 	// void* handler_address = (void*)handler_address;
 
-	return -1;
+	syscall_return_failure();
 }
 
 /* JC
@@ -477,9 +400,13 @@ int32_t set_handler()
  *		SIDE EFFECTS:
  *
  */
-int32_t sigreturn(void)
+void sigreturn(void)
 {
-	return -1;
+	syscall_return_failure();
+}
+
+void default() {
+	syscall_return_failure();
 }
 
 /* NOTE:: OBSOLETE BECAUSE WE USE WRAPPER.S NOW

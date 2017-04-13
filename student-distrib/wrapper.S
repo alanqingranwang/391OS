@@ -15,10 +15,42 @@ rtc_handler_wrapper:
   popa
   iret
 
+  # JC
+   # syscall_handler
+   # 	DESCRIPTION:
+   #			Called when an interrupt 0x80.
+   #			Takes in a system call number and does the proper task.
+   #		INPUT: Parameters for each case is passed in via registers.
+   #				EAX - system number, described in header file.
+   #				EBX - first argument
+   #				ECX - second argument
+   #				EDX - third argument
+   #		OUTPUT:
+   #		RETURN VALUE: 0 if successful
+   #						 -1 failed.
+   #		SIDE EFFECTS:
+   #
+   #
 syscall_handler_wrapper:
   pusha
-  call syscall_handler
+
+  pushl %edx
+  pushl %ecx
+  pushl %ebx
+  jmp *dispatcher(, %eax, 4)
+
+syscall_return_success:
+  popa
+  movl $0, %eax
   iret
+
+syscall_return_failure:
+  popa
+  movl $-1, %eax
+  iret
+
+dispatcher:
+  .long halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn, default
 
 user_context_switch:
   cli
