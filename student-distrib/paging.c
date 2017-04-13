@@ -37,9 +37,9 @@ void paging_init() {
     enablePaging();
 }
 
-void add_process(uint32_t phys_addr, uint32_t virt_addr) {
-    uint32_t index = virt_addr / 0x004000000; // divide by 4MB because each task gets 4MB
-    page_directory[index] = phys_addr | PROCESS_SET;
+void add_process(uint32_t process_id) {
+    page_directory[32] = (0x00800000 + process_id * 0x00400000) | PROCESS_SET;
+    flush_tlb();
 }
 
 /*
@@ -80,4 +80,14 @@ void enablePaging() {
     :	/* No inputs */
     : "%eax" /* clobbers eax */
     );
+}
+
+void flush_tlb() {
+	asm volatile(
+         "mov %%cr3, %%eax;"
+         "mov %%eax, %%cr3;"
+         :
+         :
+         :"%eax"                /* clobbered register */
+         );
 }

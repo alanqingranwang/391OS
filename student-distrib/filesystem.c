@@ -6,11 +6,7 @@
 static uint32_t num_entries;
 static uint32_t num_inodes;
 static uint32_t num_data_blocks;
-/* pointers to the beginning of their respective blocks */
-static boot_block_t* boot_block;
-static dentry_t* entries; // points to the very first entry
-static inode_t* inodes; // start of all the inodes
-static data_block_t* data_blocks; // where the data blocks start
+
 /* holds the file_name size for all the dentries, maxes at 32 chars */
 static int32_t character_count[MAX_ENTRIES];
 /* JC

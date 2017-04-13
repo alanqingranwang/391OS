@@ -24,6 +24,7 @@ void paging_init();
 /* helper function to enable paging (in-line-assembly) */
 void enablePaging();
 
-void add_process(uint32_t phys_addr, uint32_t virt_addr);
+void add_process(uint32_t process_id);
+void flush_tlb();
 
 #endif

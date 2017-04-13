@@ -71,7 +71,7 @@ void syscall_handler()
 		case SYS_HALT:
 			retval = halt();
 			syscall_return(retval);
-			
+
 		case SYS_EXECUTE:
 			retval = execute();
 			syscall_return(retval);
@@ -155,7 +155,13 @@ int32_t halt()
  */
 int32_t execute(const uint8_t* command)
 {
-	
+	if(p_c.no_processes >= 7) {
+		return -1;  // too many processes
+	}
+	else {
+		p_c.no_processes++;
+	}
+
 	/** Parse args and check file validity */
 	//check command validity
 	if(command == NULL) return -1;
@@ -206,10 +212,10 @@ int32_t execute(const uint8_t* command)
 			return -1; // not executable
 		}
 	}
-	
+
 	// check if we can run another process
 	//if(no_processes >= 7) return -1;
-	
+
 	// Extract entry point of task
 	uint32_t entry_point = 0;
 	for(j = 24; j < 28; j++) {
@@ -217,51 +223,60 @@ int32_t execute(const uint8_t* command)
 	}
 	printf("\n");
 
-	/** set up paging */
-	add_process(PROGRAM_PAGE, PROGRAM_PAGE);
+	/* set up paging */
+	pcb * process_pcb = (pcb *)(K_STACK_BOTTOM - PROCESS_SIZE*(1+no_processes));
+	process_pcb->process_id = no_processes;
+	add_process(process_pcb->process_id);
 
-	/** load the program into memory */
-	op_data_t file_load;
-	file_load.filename = file_name;
-	file_load.address = PROGRAM_START;
-	file_driver(LOAD, file_load);
+	dentry_t dentry;
+	uint32_t address = 0x08048000;
+	if(read_dentry_by_name((uint8_t*) file_name, &dentry) == -1) {
+		return -1;
+	}
+
+	if(read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size) == -1) {
+		return -1;
+	}
 
 	/** Create PCB/ open FDs */
-	pcb * process_pcb = (pcb *)(K_STACK_BOTTOM - PROCESS_SIZE*(1+no_processes));
-	process_pcb->p_id = no_processes;
-	if(no_processes == 0)
-	process_pcb->parent = NULL;
-	else
-	process_pcb->parent = (uint8_t *)(process_pcb + PROCESS_SIZE);
-	no_processes++;
-	
+	if(no_processes == 0){}
+		process_pcb->parent = NULL;
+		process_pcb->parent_base_ptr = NULL;
+		process_pcb->parent_stack_ptr = NULL;
+	}
+	else{
+		process_pcb->parent = (uint8_t *)(process_pcb + PROCESS_SIZE);
+		process_pcb->parent_stack_ptr = tss.esp0
+		process_pcb->parent_base_ptr = tss.ebp0
+	}
+
+
 	//open fds into file_descriptor table portion of pcb
 	//(JERRY LOOK HERE !!!!)
 	//we have a pcb->fd_table that needs to be initialized
 	//pcb->fd_table[0] holds std_in: keyboard r/w/o/c
 	//pcb->fd_table[1] holds std_out: terminal r/w/o/c
-	
 
-	/** prepare for context switch */
-	//write tss esp0 and ebp0 for new k_stack process (not yet implemented)
-	//tss.esp0 = process_pcb - 1;
-	//tss.ebp0 = process_pcb - 1;
-	
+
+
 	//store esp and ebp into the PCB
 	uint32_t esp;
 	asm volatile(
 		"movl %%esp, %0 \n"
 		: "=g"(esp)
 	);
-	process_pcb->process_stack_last = esp;
-	
+
 	uint32_t ebp;
 	asm volatile(
 		"movl %%ebp, %0 \n"
 		: "=g"(ebp)
 	);
-	process_pcb->process_stack_base = ebp;
-	
+
+	/** prepare for context switch */
+	write tss esp0 and ebp0 for new k_stack process (not yet implemented)
+	tss.esp0 = esp;
+	tss.ebp0 = ebp;
+
 	/** push IRET context to stack and IRET */
 	user_context_switch(entry_point);
 

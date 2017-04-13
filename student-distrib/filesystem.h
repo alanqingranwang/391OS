@@ -90,4 +90,10 @@ int32_t file_close(int32_t fd);
 int32_t file_load(int8_t *fname, uint32_t address);
 /******************************************/
 
+/* pointers to the beginning of their respective blocks */
+boot_block_t* boot_block;
+dentry_t* entries; // points to the very first entry
+inode_t* inodes; // start of all the inodes
+data_block_t* data_blocks; // where the data blocks start
+
 #endif /* _FILESYSTEM_H */

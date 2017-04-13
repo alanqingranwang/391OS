@@ -185,7 +185,7 @@ entry (unsigned long magic, unsigned long addr)
 	/*******************************************************************/
 
 	/* Execute the first program (`shell') ... */
-	int32_t retval = execute("shell");
+	int32_t retval = execute("testprint");
 	if(retval == -1) {
 		printf("Fail to execute shell, %d", retval);
 		while(1);
