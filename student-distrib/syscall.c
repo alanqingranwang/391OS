@@ -7,9 +7,9 @@
 #include "syscall.h"
 #include "wrapper.h"
 
-#define K_STACK_BOTTOM		0x007FFFFF
+#define K_STACK_BOTTOM		0x007FFFFC
 #define PROGRAM_PAGE		0x08000000
-#define PROGRAM_START		0x08004800
+#define PROGRAM_START		0x08048000
 #define PROCESS_SIZE     	0x00008000
 
 // note to self, I need something that's the opposite of their
@@ -89,6 +89,31 @@ int32_t execute(const uint8_t* command)
 	//check command validity
 	if(command == NULL) syscall_return_failure();
 
+	/** Create PCB/ open FDs */
+	for(int i = 0; i < 8; i++) {
+		if(in_use[i] == 0) {
+			in_use[i] = 1;
+			break;
+		}
+	}
+	int32_t current_process = i;
+
+	pcb * process_pcb = (pcb *)(K_STACK_BOTTOM - PROCESS_SIZE*(1+current_process));
+	process_pcb->process_id = current_process;
+
+	if(current_process == 0) { // is this the first program?
+		process_pcb->parent = NULL;
+		process_pcb->parent_stack_ptr = NULL;
+		process_pcb->parent_ss_ptr = NULL;
+	}
+	else{
+		process_pcb->parent = process_array[p_c.current_process]
+		process_pcb->parent_stack_ptr = tss.esp0;
+		process_pcb->parent_ss_ptr = tss.ss0;
+	}
+
+	p_c.current_process = current_process;
+
 	// get the file name and arguments
 	int i;
 	int file_name_length;
@@ -126,29 +151,19 @@ int32_t execute(const uint8_t* command)
 	file_driver(CLOSE, file_pack);
 
 	int j;
-
-	for(j = 0; j < 28; j++) {
-		printf("%x ", buf[j]);
-	}
 	for(j = 0; j < 4; j++) {
 		if(buf[j] != magic_numbers[j]) {
 			syscall_return_failure(); // not executable
 		}
 	}
 
-	// check if we can run another process
-	//if(no_processes >= 7) return -1;
-
 	// Extract entry point of task
 	uint32_t entry_point = 0;
 	for(j = 24; j < 28; j++) {
 		entry_point |= (buf[j] << (8*(j-24)));
 	}
-	printf("\n");
 
 	/* set up paging */
-	pcb * process_pcb = (pcb *)(K_STACK_BOTTOM - PROCESS_SIZE*(1+no_processes));
-	process_pcb->process_id = no_processes;
 	add_process(process_pcb->process_id);
 
 	dentry_t dentry;
@@ -161,18 +176,6 @@ int32_t execute(const uint8_t* command)
 		syscall_return_failure();
 	}
 
-	/** Create PCB/ open FDs */
-	if(no_processes == 0){}
-		process_pcb->parent = NULL;
-		process_pcb->parent_base_ptr = NULL;
-		process_pcb->parent_stack_ptr = NULL;
-	}
-	else{
-		process_pcb->parent = (uint8_t *)(process_pcb + PROCESS_SIZE);
-		process_pcb->parent_stack_ptr = tss.esp0
-		process_pcb->parent_base_ptr = tss.ebp0
-	}
-
 
 	//open fds into file_descriptor table portion of pcb
 	//(JERRY LOOK HERE !!!!)
@@ -182,23 +185,23 @@ int32_t execute(const uint8_t* command)
 
 
 
-	//store esp and ebp into the PCB
+	//store esp and ss into the Tss
 	uint32_t esp;
 	asm volatile(
 		"movl %%esp, %0 \n"
 		: "=g"(esp)
 	);
 
-	uint32_t ebp;
+	uint32_t ss;
 	asm volatile(
-		"movl %%ebp, %0 \n"
-		: "=g"(ebp)
+		"movl %%ss, %0 \n"
+		: "=g"(ss)
 	);
 
 	/** prepare for context switch */
 	// write tss esp0 and ebp0 for new k_stack process (not yet implemented)
 	tss.esp0 = esp;
-	tss.ebp0 = ebp;
+	tss.ss0 = ss;
 
 	/** push IRET context to stack and IRET */
 	user_context_switch(entry_point);

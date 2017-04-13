@@ -57,16 +57,16 @@ do {										\
 } while(0)
 
 /* per process data structure */
-typedef struct process_control_block{
+typedef struct process_control_block {
 	uint8_t		process_id;
-	uint8_t		parent_id;
 	fd_t 		fd_table[8];
 	uint32_t    parent_stack_ptr;
-	uint32_t	parent_base_ptr;
+	uint32_t	parent_ss_ptr;
 } pcb;
 
-struct process_control{
+extern struct process_control{
 	int no_processes = -1;
+	int current_process; // index into process_array for which process is currently running
 	pcb * process_array[8];
 	int in_use[8] = {0,0,0,0,0,0,0,0};
 } p_c;
