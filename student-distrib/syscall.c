@@ -12,6 +12,12 @@
 #define PROGRAM_START		0x08048000
 #define PROCESS_SIZE     	0x00008000
 
+    process_control p_c;
+	p_c.no_processes = -1;
+	p_c.current_process = -1; // index into process_array for which process is currently running
+	p_c.process_array[8];
+	p_c.in_use[8] = {0,0,0,0,0,0,0,0};
+
 // note to self, I need something that's the opposite of their
 // do call, in piazza.
 
@@ -55,6 +61,31 @@ int32_t halt()
 	/* uncomment when ready */
 	// uint8_t status = param1 & BYTE_MASK; // just retrieve the lower byte, safe way vs typecast
 
+	uint32_t esp = (p_c.process_array[p_c.current_process]).parent_stack_ptr;
+	asm volatile(
+		"movl %0, %%esp \n"
+		:
+		: "r"(esp)
+	);
+
+	uint32_t ss = (p_c.process_array[p_c.current_process]).parent_ss_ptr;
+	asm volatile(
+		"movl %0, %%ss \n"
+		:
+		: "r"(ss)
+	);
+
+	/** prepare for context switch */
+	// write tss esp0 and ebp0 for new k_stack process (not yet implemented)
+	p_c.in_use[p_c.current_process] = 0;
+	p_c.current_process = p_c.process_array[p_c.current_process].parent_id;
+	p_c.no_processes--;
+
+	add_process(p_c.current_process);
+
+	// CLOSE FD'S
+
+	// CALL RETURN WRAPPER HERE!
 	return -1;
 }
 
@@ -105,14 +136,17 @@ int32_t execute(const uint8_t* command)
 		process_pcb->parent = NULL;
 		process_pcb->parent_stack_ptr = NULL;
 		process_pcb->parent_ss_ptr = NULL;
+		process_pcb->parent_id = -1;
 	}
 	else{
 		process_pcb->parent = process_array[p_c.current_process]
 		process_pcb->parent_stack_ptr = tss.esp0;
 		process_pcb->parent_ss_ptr = tss.ss0;
+		process_pcb->parent_id = p_c.current_process;
 	}
-
 	p_c.current_process = current_process;
+
+	//fd_init(process_pcb.fd_table);
 
 	// get the file name and arguments
 	int i;

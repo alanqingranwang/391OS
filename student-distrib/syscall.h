@@ -59,17 +59,18 @@ do {										\
 /* per process data structure */
 typedef struct process_control_block {
 	uint8_t		process_id;
+	uint32_t    parent_id;
 	fd_t 		fd_table[8];
 	uint32_t    parent_stack_ptr;
 	uint32_t	parent_ss_ptr;
 } pcb;
 
-extern struct process_control{
-	int no_processes = -1;
+typedef struct process_control {
+	int no_processes;
 	int current_process; // index into process_array for which process is currently running
 	pcb * process_array[8];
-	int in_use[8] = {0,0,0,0,0,0,0,0};
-} p_c;
+	int in_use[8];
+} process_control;
 
 /* Called when an INT 0x80 is raised */
 void syscall_handler();
