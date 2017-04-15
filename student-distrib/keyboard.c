@@ -17,6 +17,7 @@ static int ctrl_flag = 0;
 static int screen_x_pos = 0;
 static int buffer_index = 0;
 static unsigned char buffer[BUFFER_SIZE];
+static volatile int kbdr_flag = 0;
 
 /***********************Keyboard Driver****************************/
 
@@ -54,7 +55,16 @@ int32_t keyboard_close() {
 }
 
 int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
-
+	int i = 0;
+	while(1){
+		if(kbdr_flag == 1){
+			kbdr_flag = 0;
+			for(i = 0; i<nbytes || i<BUFFER_SIZE; i++)
+					buf[i] = buffer[i];
+			break;
+		}
+	}
+	return i;
 }
 
 int32_t keyboard_write() {
@@ -459,6 +469,7 @@ void handle_backspace() {
  *      SIDE EFFECTS: none
  */
 void handle_enter() {
+	kbdr_flag = 0;
     scroll();
     screen_x_pos = 0;
     //call terminal read once implemented
