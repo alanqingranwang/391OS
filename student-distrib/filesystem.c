@@ -38,7 +38,14 @@ void filesystem_init(boot_block_t* boot_addr)
 	data_blocks = (data_block_t*)(inodes+num_inodes);
 	// initiaize the file_name table
 	create_char_count();
-	fd_table_init(); // will be by itself later on?
+
+ 	// initialize the process
+	p_c.no_processes = -1;
+	p_c.current_process = -1; // index into process_array for which process is currently running
+	uint32_t pc_count;
+	for(pc_count = 0; pc_count < MAX_PROCESSES; pc_count++)
+		p_c.in_use[pc_count] = 0;
+
 	restore_flags(flags);
 }
 /************************CHECKPOINT 3.2****************************/
@@ -49,27 +56,65 @@ void filesystem_init(boot_block_t* boot_addr)
  *		file type
  *		file size (in bytes)
  */
-void print_file_info()
-{
-	clear();
-	uint32_t d_loop; // loops through all the dentry loops
-	uint32_t char_loop; // go through all the characters
-	dentry_t file_dent;
-	for(d_loop = 0; d_loop < num_entries; d_loop++)
-	{
-		read_dentry_by_index(d_loop, &file_dent); // get the dentry
+ void print_file_info()
+ {
+ 	clear();
+ 	// uint32_t d_loop; // loops through all the dentry loops
+ 	// uint32_t char_loop; // go through all the characters
+ 	// dentry_t file_dent;
 
-		// print out the name
-		printf("file name: "); // can't use %s, if there's no guaranteed '\0'
-		char_loop = print_name(file_dent.file_name, character_count[d_loop]);
-		for(char_loop = char_loop; char_loop < NUM_SPACES; char_loop++)
-			printf(" "); // add spaces to align the rest
-		printf("file type: %d ", file_dent.file_type);
-		printf("file size: %d\n", inodes[file_dent.inode_idx].file_size);
-	}
-}
+ 	// for(d_loop = 0; d_loop < num_entries; d_loop++)
+ 	// {
+ 	// 	read_dentry_by_index(d_loop, &file_dent); // get the dentry
+
+ 	// 	// print out the name
+ 	// 	printf("file name: "); // can't use %s, if there's no guaranteed '\0'
+ 	// 	char_loop = print_name(file_dent.file_name, character_count[d_loop]);
+
+ 	// 	for(char_loop = char_loop; char_loop < NUM_SPACES; char_loop++)
+ 	// 		printf(" "); // add spaces to align the rest
+
+ 	// 	printf("file type: %d ", file_dent.file_type);
+ 	// 	printf("file size: %d\n", inodes[file_dent.inode_idx].file_size);
+ 	// }
+
+ 	op_data_t dir_pack;
+ 	dir_pack.filename = ".";
+ 	int32_t dir_fd = dir_driver(OPEN, dir_pack);
+ 	dir_pack.fd = dir_fd;
+
+ 	uint8_t buffer[33];
+ 	dir_pack.nbytes = 32;
+ 	dir_pack.buf = (void*)buffer;
+
+ 	op_data_t term_pack;
+
+ 	int32_t cnt;
+ 	while(0 != (cnt = dir_driver(READ, dir_pack)))
+ 	{
+ 		if(cnt == -1)
+ 		{
+ 			dir_driver(CLOSE, dir_pack);
+ 			printf("directory entry read failed\n");
+ 			return;
+ 		}
+ 		term_pack.buf = dir_pack.buf;
+ 		term_pack.nbytes = (uint32_t)(cnt);
+
+ 		if(-1 == terminal_driver(WRITE,term_pack))
+ 		{
+ 			dir_driver(CLOSE, dir_pack);
+ 			printf("terminal write failed\n");
+ 			return;
+ 		}
+ 		putc('\n');
+ 	}
+
+ 	dir_driver(CLOSE, dir_pack);
+ }
+
 /* JC
- * print_name
+ * print_name - helper
  *		DESCRIPTION:
  *			Properly prints the name of the file from dentry.
  *		INPUT:
@@ -88,7 +133,178 @@ int32_t print_name(int8_t* buf, int32_t max_char)
 	}
 	return i;
 }
-/******************File Driver Stuff*******************************/
+
+/**********************Directory Driver****************************/
+
+/* JC
+ *	dir_driver
+ *	DESCRIPTION:
+ *		The driver for directory r/w/o/c
+ *	INPUT:
+ *		cmd - holds a value to signify open, read, write, close
+ *		operation_data - holds a package of information depending on the given function call
+ *	OUTPUT:
+ *		Invalid Command if cmd isn't valid
+ *	RETURN VALUE:
+ *		-1 for invalid command
+ *		dependent on operation, check other related functions
+ */
+int32_t dir_driver(uint32_t cmd, op_data_t operation_data)
+{
+	switch(cmd)
+	{
+		case OPEN:
+			return dir_open(operation_data.filename);
+		case READ:
+			return dir_read(operation_data.fd,
+						(uint8_t*)operation_data.buf, operation_data.nbytes);
+		case WRITE:
+			return dir_write();
+		case CLOSE:
+			return dir_close(operation_data.fd);
+		default:
+			printf("Invalid Command\n");
+			return -1;
+	}
+}
+
+/* JC
+ *	dir_open
+ *	DESCRIPTION:
+ *		Allocates a pointer on the file descriptor table for the given process.
+ *	INPUT:
+ *		filename - should be the name of the directory
+ *	OUTPUT:
+ *		Only possible error checking
+ *	RETURN VALUE:
+ *		-1 - invalid, or unable to open
+ *		fd_index - the index holding the file descriptor.
+ */
+int32_t dir_open(const int8_t* filename)
+{
+	// check if the file name exists
+	dentry_t my_dentry;
+	if(!(filename == "." && read_dentry_by_name((uint8_t*)filename, &my_dentry) != -1))
+	{
+		printf("Invalid Name\n");
+		return -1;
+	}
+
+	// name is valid
+	uint32_t flags;
+	cli_and_save(flags);
+
+	int32_t fd_index = get_fd_index(); // get an available index
+	if(fd_index == -1)
+	{
+		printf("No Available FD\n");
+		restore_flags(flags);
+		return -1;
+	}
+
+	// fill in the descriptor
+	fd_t dir_fd_info;
+	dir_fd_info.file_op_table_ptr = dir_driver; // give it the function ptr
+	dir_fd_info.inode_ptr = my_dentry.inode_idx;
+	dir_fd_info.file_position = 0; // start offset at 0
+	dir_fd_info.flags = FD_ON;	// in use
+	set_fd_info(fd_index, dir_fd_info);
+
+	restore_flags(flags);
+	return fd_index;
+}
+
+/* JC
+ *	dir_read
+ *	DESCRIPTION:
+ *		The FD offset represents which file we are at in dentry.
+ *	INPUT:
+ *		Read nbytes number of characters or the file name and place them into the buf.
+ *	OUTPUT:
+ *		none
+ *	RETURN VALUE:
+ *		bytes_read - 0 if there's nothing left to read, specifically when the index
+ *							of dentry is greater than the number of entries we have.
+ */
+int32_t dir_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
+{
+	int32_t bytes_read = 0; // 0 bytes read
+	int32_t dent_index = get_file_position(fd); // get the current file index
+
+	if(dent_index >= num_entries)
+		return bytes_read; // no more files
+
+	// read the whole name, or up to nbytes
+	while((entries[dent_index].file_name)[bytes_read] != '\0' && bytes_read < nbytes)
+	{
+		buf[bytes_read] = (entries[dent_index].file_name)[bytes_read];
+		bytes_read++;
+	}
+
+	add_offset(fd, 1); // increment offset to next file
+
+	return bytes_read;
+}
+
+/* JC
+ *	dir_write
+ *	DESCRIPTION:
+ *		The directory is read only, do nothing
+ *	INPUT:
+ *		none
+ *	OUTPUT:
+ *		Error message
+ *	RETURN VALUE:
+ *		-1 - can't write to directory
+ */
+int32_t dir_write()
+{
+	printf("READ ONLY DIRECTORY");
+	return -1;
+}
+
+/* JC
+ *	dir_close
+ *	DESCRIPTION:
+ *		Close the given fd index
+ *	INPUT:
+ *		fd - the index the directory was opened in
+ *	OUTPUT:
+ *		error message
+ *	RETURN VALUE:
+ *		0 - successful close
+ *		-1 - can't close the given fd, invalid
+ */
+int32_t dir_close(uint32_t fd)
+{
+	if(fd < FIRST_VALID_INDEX || fd > MAX_OPEN_FILES)
+	{
+		printf("INVALID FD");
+		return -1; // can't close stdin or stdout
+	}
+
+	// lock it
+	uint32_t flags;
+	cli_and_save(flags);
+	close_fd(fd);	// close the portal
+	restore_flags(flags);
+
+	return 0;
+}
+
+/***********************File Driver*******************************/
+
+/* JC
+ *	file_driver
+ *	DESCRIPTION:
+ *
+ *	INPUT:
+ *
+ *	OUTPUT:
+ *
+ *	RETURN VALUE:
+ *
+ */
 int32_t file_driver(uint32_t cmd, op_data_t operation_data)
 {
 	switch(cmd)
@@ -109,6 +325,7 @@ int32_t file_driver(uint32_t cmd, op_data_t operation_data)
 			return -1;
 	}
 }
+
 /* JC
  * file_open
  * 	DESCRIPTION:

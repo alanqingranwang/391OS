@@ -6,17 +6,14 @@
 
 #include "syscall.h"
 #include "wrapper.h"
+#include "filesystem.h" // need dentry and shit
 
 #define K_STACK_BOTTOM		0x007FFFFC
 #define PROGRAM_PAGE		0x08000000
 #define PROGRAM_START		0x08048000
 #define PROCESS_SIZE     	0x00008000
 
-    process_control p_c;
-	p_c.no_processes = -1;
-	p_c.current_process = -1; // index into process_array for which process is currently running
-	p_c.process_array[8];
-	p_c.in_use[8] = {0,0,0,0,0,0,0,0};
+
 
 // note to self, I need something that's the opposite of their
 // do call, in piazza.
@@ -31,14 +28,6 @@
  *
  * 	RTC flag, turn flag off after change, turn flag on after interrupt.
  */
-
-/* These variables will be overwritten each time a syscall happens.
- * They will be used in each system call.
- */
-static uint32_t num;
-static uint32_t param1;
-static uint32_t param2;
-static uint32_t param3;
 
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
 
@@ -56,19 +45,19 @@ static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
  *		SIDE EFFECTS:
  *
  */
-int32_t halt()
+int32_t halt(uint8_t status)
 {
 	/* uncomment when ready */
 	// uint8_t status = param1 & BYTE_MASK; // just retrieve the lower byte, safe way vs typecast
 
-	uint32_t esp = (p_c.process_array[p_c.current_process]).parent_stack_ptr;
+	uint32_t esp = (p_c.process_array[p_c.current_process])->parent_stack_ptr;
 	asm volatile(
 		"movl %0, %%esp \n"
 		:
 		: "r"(esp)
 	);
 
-	uint32_t ss = (p_c.process_array[p_c.current_process]).parent_ss_ptr;
+	uint32_t ss = (p_c.process_array[p_c.current_process])->parent_ss_ptr;
 	asm volatile(
 		"movl %0, %%ss \n"
 		:
@@ -78,7 +67,7 @@ int32_t halt()
 	/** prepare for context switch */
 	// write tss esp0 and ebp0 for new k_stack process (not yet implemented)
 	p_c.in_use[p_c.current_process] = 0;
-	p_c.current_process = p_c.process_array[p_c.current_process].parent_id;
+	p_c.current_process = p_c.process_array[p_c.current_process]->parent_id;
 	p_c.no_processes--;
 
 	add_process(p_c.current_process);
@@ -110,7 +99,7 @@ int32_t halt()
 int32_t execute(const uint8_t* command)
 {
 	if(p_c.no_processes >= 7) {
-		syscall_return_failure();  // too many processes
+		return -1;  // too many processes
 	}
 	else {
 		p_c.no_processes++;
@@ -118,12 +107,13 @@ int32_t execute(const uint8_t* command)
 
 	/** Parse args and check file validity */
 	//check command validity
-	if(command == NULL) syscall_return_failure();
+	if(command == NULL) return -1;
 
 	/** Create PCB/ open FDs */
-	for(int i = 0; i < 8; i++) {
-		if(in_use[i] == 0) {
-			in_use[i] = 1;
+	int i;
+	for(i = 0; i < 8; i++) {
+		if(p_c.in_use[i] == 0) {
+			p_c.in_use[i] = 1;
 			break;
 		}
 	}
@@ -133,13 +123,13 @@ int32_t execute(const uint8_t* command)
 	process_pcb->process_id = current_process;
 
 	if(current_process == 0) { // is this the first program?
-		process_pcb->parent = NULL;
+		// process_pcb->parent = NULL;
 		process_pcb->parent_stack_ptr = NULL;
 		process_pcb->parent_ss_ptr = NULL;
 		process_pcb->parent_id = -1;
 	}
 	else{
-		process_pcb->parent = process_array[p_c.current_process]
+		// process_pcb->parent = process_array[p_c.current_process]
 		process_pcb->parent_stack_ptr = tss.esp0;
 		process_pcb->parent_ss_ptr = tss.ss0;
 		process_pcb->parent_id = p_c.current_process;
@@ -149,7 +139,6 @@ int32_t execute(const uint8_t* command)
 	//fd_init(process_pcb.fd_table);
 
 	// get the file name and arguments
-	int i;
 	int file_name_length;
 	int8_t file_name[32];
 	int8_t args[1024];
@@ -175,19 +164,19 @@ int32_t execute(const uint8_t* command)
 	int32_t myfd = file_driver(OPEN, file_pack);
 
 	if(myfd == -1) { // is file opened?
-		syscall_return_failure();
+		return -1;
 	}
 
 	file_pack.fd = myfd;
 	if(file_driver(READ, file_pack) == -1) {
-		syscall_return_failure();
+		return -1;
 	}
 	file_driver(CLOSE, file_pack);
 
 	int j;
 	for(j = 0; j < 4; j++) {
 		if(buf[j] != magic_numbers[j]) {
-			syscall_return_failure(); // not executable
+			return -1; // not executable
 		}
 	}
 
@@ -203,11 +192,11 @@ int32_t execute(const uint8_t* command)
 	dentry_t dentry;
 	uint32_t address = 0x08048000;
 	if(read_dentry_by_name((uint8_t*) file_name, &dentry) == -1) {
-		syscall_return_failure();
+		return -1;
 	}
 
 	if(read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size) == -1) {
-		syscall_return_failure();
+		return -1;;
 	}
 
 
@@ -223,13 +212,13 @@ int32_t execute(const uint8_t* command)
 	uint32_t esp;
 	asm volatile(
 		"movl %%esp, %0 \n"
-		: "=g"(esp)
+		: "=r"(esp)
 	);
 
 	uint32_t ss;
 	asm volatile(
 		"movl %%ss, %0 \n"
-		: "=g"(ss)
+		: "=r"(ss)
 	);
 
 	/** prepare for context switch */
@@ -241,7 +230,7 @@ int32_t execute(const uint8_t* command)
 	user_context_switch(entry_point);
 
 	/** return */
-	syscall_return_success();
+	return 0;
 }
 
 /* JC
@@ -275,14 +264,22 @@ int32_t execute(const uint8_t* command)
  *		SIDE EFFECTS:
  *
  */
-void read()
+int32_t read(int32_t fd, void* buf, int32_t nbytes)
 {
-	/* uncomment when ready */
-	// int32_t fd = (int32_t)param1;
-	// void* buf = (void*)param2;
-	// int32_t nbytes = (int32_t)param3;
+ 	/* uncomment when ready */
+ 	// int32_t fd = (int32_t)param1;
+ 	// void* buf = (void*)param2;
+ 	// int32_t nbytes = (int32_t)param3;
 
-	syscall_return_failure();
+ 	op_data_t unknown_pack;
+ 	unknown_pack.fd = fd;
+ 	unknown_pack.buf = buf;
+ 	unknown_pack.nbytes = nbytes;
+
+ 	int32_t (*func_ptr)(uint32_t, op_data_t);
+ 	func_ptr = ((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).file_op_table_ptr;
+
+ 	return func_ptr(READ, unknown_pack);
 }
 
 /* JC
@@ -302,14 +299,22 @@ void read()
  *		SIDE EFFECTS:
  *
  */
-void write()
+int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 {
-	/* uncomment when ready */
-	// int32_t fd = (int32_t)param1;
-	// const void* buf = (void*)param2;
-	// int32_t nbytes = (int32_t)param3;
+ 	/* uncomment when ready */
+ 	// int32_t fd = (int32_t)param1;
+ 	// const void* buf = (void*)param2;
+ 	// int32_t nbytes = (int32_t)param3;
 
-	syscall_return_failure();
+ 	op_data_t unknown_pack;
+ 	unknown_pack.fd = fd;
+ 	unknown_pack.buf = (void*)buf;
+ 	unknown_pack.nbytes = nbytes;
+
+ 	int32_t (*func_ptr)(uint32_t, op_data_t);
+ 	func_ptr = ((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).file_op_table_ptr;
+
+ 	return func_ptr(WRITE, unknown_pack);
 }
 
 /* JC
@@ -324,22 +329,32 @@ void write()
  *		SIDE EFFECTS:
  *
  */
-void open()
+int32_t open(const uint8_t* filename)
 {
-	/* uncomment when ready */
-	// const uint8_t* filename = (uint8_t*)param1;
+ 	/* uncomment when ready */
+ 	// const uint8_t* filename = (uint8_t*)param1;
 
-	// dentry_t dentry; // looking for this dentry
-	// read_dentry_by_name(filename, &dentry); // find the dentry
+ 	dentry_t dentry; // looking for this dentry
+ 	if(read_dentry_by_name(filename, &dentry) == -1) // find the dentry
+ 		return -1; // doesn't exist
 
-	// if(dentry.file_type == 0) // it's the rtc
-	// {
-	// 	// add rtc to the file descriptor thing
-	// }
-
-
-
-	syscall_return_failure();
+ 	if(dentry.file_type == 0) // it's the rtc
+ 	{
+ 		op_data_t rtc_pack; // empty param
+ 		return rtc_driver(OPEN, rtc_pack);
+ 	}
+ 	else if(dentry.file_type == 1) // it's the dir
+ 	{
+ 		op_data_t dir_pack;
+ 		dir_pack.filename = (int8_t*)filename;
+ 		return dir_driver(OPEN, dir_pack);
+ 	}
+ 	else // assuming it's a file
+ 	{
+ 		op_data_t file_pack;
+ 		file_pack.filename = (int8_t*)filename;
+ 		return file_driver(OPEN, file_pack);
+ 	}
 }
 
 /* JC
@@ -354,12 +369,18 @@ void open()
  *		SIDE EFFECTS:
  *
  */
-void close()
+int32_t close(int32_t fd)
 {
-	/* uncomment when ready */
-	// int32_t fd = (int32_t)param1;
+ 	/* uncomment when ready */
+ 	// int32_t fd = (int32_t)param1;
 
-	syscall_return_failure();
+ 	op_data_t unknown_pack;
+ 	unknown_pack.fd = fd;
+
+ 	int32_t (*func_ptr)(uint32_t, op_data_t);
+ 	func_ptr = ((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).file_op_table_ptr;
+
+ 	return func_ptr(CLOSE, unknown_pack);
 }
 
 /* JC
@@ -376,13 +397,14 @@ void close()
  *		SIDE EFFECTS:
  *
  */
-void getargs()
+int32_t getargs(uint8_t* buf, int32_t nbytes)
 {
-	/* uncomment when ready */
-	// uint8_t* buf = (uint8_t*)param1;
-	// int32_t nbytes = (int32_t)param2;
+ 	/* uncomment when ready */
+ 	// uint8_t* buf = (uint8_t*)param1;
+ 	// int32_t nbytes = (int32_t)param2;
 
-	syscall_return_failure();
+ 	// syscall_return_failure();
+ 	return -1;
 }
 
 /* JC
@@ -401,12 +423,13 @@ void getargs()
  *		SIDE EFFECTS:
  *
  */
-void vidmap()
+int32_t vidmap(uint8_t** screen_start)
 {
-	/* uncomment when ready */
-	// uint8_t** screen_start = (uint8_t**)param1;
+ 	/* uncomment when ready */
+ 	// uint8_t** screen_start = (uint8_t**)param1;
 
-	syscall_return_failure();
+ 	// syscall_return_failure();
+ 	return -1;
 }
 
 /* JC
@@ -419,13 +442,14 @@ void vidmap()
  *		SIDE EFFECTS:
  *
  */
-void set_handler()
+int32_t set_handler(int32_t signum, void* handler_address)
 {
-	/* uncomment when ready */
-	// int32_t signum = (int32_t)param1;
-	// void* handler_address = (void*)handler_address;
+ 	/* uncomment when ready */
+ 	// int32_t signum = (int32_t)param1;
+ 	// void* handler_address = (void*)handler_address;
 
-	syscall_return_failure();
+ 	// syscall_return_failure();
+ 	return -1;
 }
 
 /* JC
@@ -437,38 +461,13 @@ void set_handler()
  *		SIDE EFFECTS:
  *
  */
-void sigreturn(void)
+int32_t sigreturn(void)
 {
-	syscall_return_failure();
+ 	// syscall_return_failure();
+ 	return -1;
 }
 
-void default() {
-	syscall_return_failure();
+int32_t def_cmd(void)
+{
+	return -1;
 }
-
-/* NOTE:: OBSOLETE BECAUSE WE USE WRAPPER.S NOW
-void user_context_switch(uint32_t entry_point) {
-	asm volatile(
-		"cli              \n"
-		"mov $0x2B, %%ax  \n"
-		"mov %%ax, %%ds   \n"
-		"mov %%ax, %%es   \n"
-		"mov %%ax, %%fs   \n"
-		"mov %%ax, %%gs   \n"
-		"mov %%esp, %%eax \n"
-
-		"pushl $0x2B         \n"  // USER_DS
-		"pushl $0x83FFFF0    \n"  // esp
-		"pushf               \n"  // flags
-		"popl %%ecx          \n"
-		"orl  $0x200, %%ecx  \n"
-		"pushl %%ecx         \n"
-		"pushl $0x23         \n"  // USER_CS
-		"movl %0, %%edx      \n"  // eip
-		"pushl %%edx         \n"
-		"iret                \n"
-		:
-		: "r" (entry_point)
-	);
-}
-*/

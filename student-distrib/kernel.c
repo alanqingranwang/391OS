@@ -6,12 +6,12 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "i8259.h"
+#include "syscall.h"
 #include "rtc.h"	// JC
 #include "idt.h"
 #include "paging.h"
 #include "debug.h"
 #include "filesystem.h" //
-#include "syscall.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -185,10 +185,10 @@ entry (unsigned long magic, unsigned long addr)
 	/*******************************************************************/
 
 	/* Execute the first program (`shell') ... */
-	int32_t retval = execute("testprint");
+	uint8_t string[33] = "testprint";
+	int32_t retval = execute(string);
 	if(retval == -1) {
 		printf("Fail to execute shell, %d", retval);
-		while(1);
 	}
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");

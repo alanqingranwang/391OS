@@ -13,7 +13,7 @@ static int8_t save_buff[TERM_BUFF_SIZE];
  *			-1 - incorrect cmd or failure from operations
  *			returns are dependent on operation, check interfaces
  */
-int32_t terminal_driver(int cmd, op_data_t input){
+int32_t terminal_driver(uint32_t cmd, op_data_t input){
 	switch(cmd){
 		case OPEN:
 			return terminal_open();

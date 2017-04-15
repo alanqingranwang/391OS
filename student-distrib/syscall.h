@@ -19,10 +19,12 @@
 
 #include "lib.h"
 // #include "rtc.h" // need to call it's stuff
-#include "filesystem.h" // need dentry and shit
+#include "rtc.h"
 #include "paging.h"
 #include "x86_desc.h"
 #include "fd_table.h"
+
+#define MAX_PROCESSES 8
 
 /* Migrated from "../syscalls/ece391sysnum.h" */
 #define SYS_HALT    1
@@ -40,22 +42,6 @@
 /* Additional Macros */
 #define BYTE_MASK	0xFF
 
-/*
- * syscall_return
- *		Slight alteration to restore registers.
- *		Restores the registers then puts the return value into eax.
- *		Then does proper interrupt return.
- */
-#define syscall_return(retval)				\
-do {										\
-	asm volatile( "popal		  \n"		\
-				  "movl %0, %%eax \n"		\
-				  "iret			  \n"       \
-					: 						\
-					: "r" (retval)			\
-					: "%eax" ); 			\
-} while(0)
-
 /* per process data structure */
 typedef struct process_control_block {
 	uint8_t		process_id;
@@ -72,20 +58,20 @@ typedef struct process_control {
 	int in_use[8];
 } process_control;
 
-/* Called when an INT 0x80 is raised */
-void syscall_handler();
+process_control p_c;
 
 /* System Call Prototypes */
-int32_t halt();
-int32_t execute();
-int32_t read();
-int32_t write();
-int32_t open();
-int32_t close();
-int32_t getargs();
-int32_t vidmap();
-int32_t set_handler();
-int32_t sigreturn();
+int32_t halt(uint8_t status);
+int32_t execute(const uint8_t* command);
+int32_t read(int32_t fd, void* buf, int32_t nbytes);
+int32_t write(int32_t fd, const void* buf, int32_t nbytes);
+int32_t open(const uint8_t* filename);
+int32_t close(int32_t fd);
+int32_t getargs(uint8_t* buf, int32_t nbytes);
+int32_t vidmap(uint8_t** screen_start);
+int32_t set_handler(int32_t signum, void* handler_address);
+int32_t sigreturn(void);
+int32_t def_cmd(void); // returns -1
 
 //void user_context_switch(uint32_t entry_point);
 #endif /* _SYSCALL_H */

@@ -8,6 +8,7 @@
 #define _FILESYSTEM_H
 
 #include "lib.h"
+#include "syscall.h"
 #include "fd_table.h"
 
 // need to create a process thingy
@@ -81,6 +82,12 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry);
 int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry);
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
+/************Dir Driver Stuff**************/
+int32_t dir_driver(uint32_t cmd, op_data_t operation_data);
+int32_t dir_open(const int8_t* filename);
+int32_t dir_read(int32_t fd, uint8_t* buf, uint32_t nbytes);
+int32_t dir_write();
+int32_t dir_close(uint32_t fd);
 /***********File Driver Stuff**************/
 int32_t file_driver(uint32_t cmd, op_data_t operation_data);
 int32_t file_open(const int8_t* filename);
@@ -91,9 +98,9 @@ int32_t file_load(int8_t *fname, uint32_t address);
 /******************************************/
 
 /* pointers to the beginning of their respective blocks */
-extern boot_block_t* boot_block;
-extern dentry_t* entries; // points to the very first entry
-extern inode_t* inodes; // start of all the inodes
-extern data_block_t* data_blocks; // where the data blocks start
+boot_block_t* boot_block;
+dentry_t* entries; // points to the very first entry
+inode_t* inodes; // start of all the inodes
+data_block_t* data_blocks; // where the data blocks start
 
 #endif /* _FILESYSTEM_H */

@@ -15,6 +15,9 @@
 #define FD_OFF 0
 #define FD_ON 1
 
+#define STDIN_ 0 // STDIN is always fd = 0
+#define STDOUT_ 1 // STDOUT is always fd = 1
+
 /* device driver cmd values */
 #define OPEN 1
 #define READ 2
@@ -40,7 +43,7 @@ typedef struct file_descriptor_t {
 	// flags = 0, not in use, flags = 1, in use
 } fd_t;
 
-void fd_table_init();
+void fd_table_init(fd_t* new_table);
 
 /* Helpers */
 void set_fd_info(int32_t index, fd_t file_info);

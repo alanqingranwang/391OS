@@ -3,54 +3,78 @@
 .globl syscall_handler_wrapper
 .globl user_context_switch
 
+# not in use yet
 keyboard_handler_wrapper:
-  pusha
+  pushal
   call keyboard_handler
-  popa
+  popal
   iret
 
+# not in use yet
 rtc_handler_wrapper:
-  pusha
+  pushal
   call rtc_handler
-  popa
+  popal
   iret
 
-  # JC
-   # syscall_handler
-   # 	DESCRIPTION:
-   #			Called when an interrupt 0x80.
-   #			Takes in a system call number and does the proper task.
-   #		INPUT: Parameters for each case is passed in via registers.
-   #				EAX - system number, described in header file.
-   #				EBX - first argument
-   #				ECX - second argument
-   #				EDX - third argument
-   #		OUTPUT:
-   #		RETURN VALUE: 0 if successful
-   #						 -1 failed.
-   #		SIDE EFFECTS:
-   #
-   #
+# JC
+# syscall_handler
+# 	DESCRIPTION:
+#			Called when an interrupt 0x80.
+#			Takes in a system call number and does the proper task.
+#		INPUT: Parameters for each case is passed in via registers.
+#				EAX - system number, described in header file.
+#				EBX - first argument
+#				ECX - second argument
+#				EDX - third argument
+#		OUTPUT:
+#		RETURN VALUE: 0 if successful
+#						 -1 failed.
+#		SIDE EFFECTS:
+#
+#
 syscall_handler_wrapper:
-  pusha
-
+  # save registers
+  pushl %edi
+  pushl %esi
+  pushl %ebp
   pushl %edx
   pushl %ecx
   pushl %ebx
-  jmp *dispatcher(, %eax, 4)
-
-syscall_return_success:
-  popa
-  movl $0, %eax
-  iret
+  # parameters
+  pushl %edx # param 3
+  pushl %ecx # param 2
+  pushl %ebx # param 1
+  # check if it's a valid call
+  cmpl $10, %eax
+  jae syscall_return_failure # if cmd >= 10
+  cmpl $0, %eax
+  jbe syscall_return_failure # if cmd <= 0
+  call *dispatcher(, %eax, 4) # go to the proper function
+  jmp sys_ret # return
 
 syscall_return_failure:
-  popa
-  movl $-1, %eax
+  movl $-1, %eax # return -1
+
+sys_ret:
+  # remove the params
+  popl %ebx
+  popl %ecx
+  popl %edx
+  # restore the registers
+  popl %ebx
+  popl %ecx
+  popl %edx
+  popl %ebp
+  popl %esi
+  popl %edi
   iret
 
-dispatcher:
-  .long halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn, default
+# function pointers
+dispatcher: # 0 pad it
+  .long def_cmd
+  .long halt, execute, read, write, open, close,
+  .long getargs, vidmap, set_handler, sigreturn
 
 user_context_switch:
   cli
