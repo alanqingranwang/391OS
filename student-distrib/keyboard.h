@@ -57,6 +57,9 @@
 #define CAPS_MODE 2
 #define SHIFT_CAPS_MODE 3
 
+#define STDIN_FD 0 // the fd for STDIN
+
+
 // enum key_mode {NONE, SHIFT, CAPS, SHIFT_CAPS};
 // typedef enum key_mode mode;
 
@@ -72,5 +75,11 @@ void process_key(uint8_t key);
 void handle_backspace();
 void handle_enter();
 void clear_buffer();
+
+int32_t keyboard_driver(uint32_t cmd, op_data_t input);
+int32_t keyboard_open();
+int32_t keyboard_close();
+int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes);
+int32_t keyboard_write();
 
 #endif /* _KEYBOARD_H */

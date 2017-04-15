@@ -17,6 +17,52 @@ static int ctrl_flag = 0;
 static int screen_x_pos = 0;
 static int buffer_index = 0;
 static unsigned char buffer[BUFFER_SIZE];
+
+/***********************Keyboard Driver****************************/
+
+/* AW
+ * keyboard_driver
+ *		DESCRIPTION:
+ *			The driver for the terminal to execute the proper operation
+ *		INPUT:
+ *			cmd - the operation we should be executing
+ *		RETURN VALUE:
+ *			-1 - incorrect cmd or failure from operations
+ *			returns are dependent on operation, check interfaces
+ */
+int32_t keyboard_driver(uint32_t cmd, op_data_t input){
+	switch(cmd){
+		case OPEN:
+			return keyboard_open();
+		case CLOSE:
+			return keyboard_close();
+		case READ:
+			return keyboard_read(STDIN_FD, (uint8_t*)(input.buf), input.nbytes);
+		case WRITE:
+			return keyboard_write();
+		default:
+			return -1;
+	}
+}
+
+int32_t keyboard_open() {
+    return -1;
+}
+
+int32_t keyboard_close() {
+    return -1;
+}
+
+int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
+
+}
+
+int32_t keyboard_write() {
+    return -1;
+}
+
+/**********************************************************************/
+
 /* AW
  * This table contains the character associated with the scan number from
  *  the kbd_scan_code.

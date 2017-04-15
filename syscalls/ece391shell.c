@@ -17,12 +17,12 @@ int main ()
 	    ece391_fdputs (1, (uint8_t*)"read from keyboard failed\n");
 	    return 3;
 	}
-	if (cnt > 0 && '\n' == buf[cnt - 1])
+	if (cnt > 0 && '\n' == buf[cnt - 1]) // if read something, remove the 'n'
 	    cnt--;
-	buf[cnt] = '\0';
-	if (0 == ece391_strcmp (buf, (uint8_t*)"exit"))
+	buf[cnt] = '\0'; // create an end of line char
+	if (0 == ece391_strcmp (buf, (uint8_t*)"exit")) // if equal exit then leave
 	    return 0;
-	if ('\0' == buf[0])
+	if ('\0' == buf[0]) // if there's nothing 
 	    continue;
 	rval = ece391_execute (buf);
 	if (-1 == rval)
@@ -33,4 +33,3 @@ int main ()
 	    ece391_fdputs (1, (uint8_t*)"program terminated abnormally\n");
     }
 }
-

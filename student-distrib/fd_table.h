@@ -15,8 +15,8 @@
 #define FD_OFF 0
 #define FD_ON 1
 
-#define STDIN_ 0 // STDIN is always fd = 0
-#define STDOUT_ 1 // STDOUT is always fd = 1
+#define STDIN_ 0 // STDIN is always fd = 0, read only, keyboard input
+#define STDOUT_ 1 // STDOUT is always fd = 1, write only, terminal output
 
 /* device driver cmd values */
 #define OPEN 1
