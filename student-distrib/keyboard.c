@@ -14,7 +14,6 @@ static int CTR3 = 0;
  */
 static int caps_shift_flag = NONE_MODE;
 static int ctrl_flag = 0;
-static int screen_x_pos = 0;
 static int buffer_index = 0;
 static unsigned char buffer[BUFFER_SIZE];
 static volatile int kbdr_flag = 0;
@@ -389,11 +388,11 @@ void toggle_ctrl(int type) {
 void process_key(uint8_t key) {
     // if it's within the given range, search the table for char
     if(key >= ABC_LOW_SCANS && key <= ABC_HIGH_SCANS) {
-        screen_x_pos++;
         if(key == L_MAKE && ctrl_flag) {
             clear();
             clear_buffer();
         }
+
         /********Remove later************/
         // if pressed ctrl and 3s
         else if(key == THREE_SCAN && ctrl_flag){
@@ -424,26 +423,13 @@ void process_key(uint8_t key) {
             clear(); // print file
             print_file_info();
         }
+    
+
         /**************************/
-        else if(screen_x_pos >= NUM_COLS) {
-            if(buffer_index + 1 < BUFFER_SIZE) {
-                scroll();
-                screen_x_pos = 0;
-                putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
-                buffer[buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
-                buffer_index++;
-            }
-            else
-                screen_x_pos--;
-        }
-        else {
-            if(buffer_index + 1 < BUFFER_SIZE) { // handle buffer overflow
-                putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
-                buffer[buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
-                buffer_index++;
-            }
-            else
-                screen_x_pos--;
+        if(buffer_index + 1 < BUFFER_SIZE) {
+            putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
+            buffer[buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
+            buffer_index++;
         }
     }
 }
@@ -461,7 +447,6 @@ void handle_backspace() {
         backspace();
         buffer_index--;
         buffer[buffer_index] = ' ';
-        screen_x_pos--;
     }
 }
 /* AW
@@ -476,7 +461,6 @@ void handle_backspace() {
 void handle_enter() {
 	kbdr_flag = 1;
     scroll();
-    screen_x_pos = 0;
     //call terminal read once implemented
     // call terminal read, save the buffer
     terminal_read(STDOUT_FD, (int8_t*)buffer, buffer_index);
@@ -497,5 +481,4 @@ void clear_buffer() {
         buffer[i] = ' ';
     }
     buffer_index = 0;
-    screen_x_pos = 0;
 }
