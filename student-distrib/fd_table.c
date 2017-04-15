@@ -24,10 +24,10 @@ void fd_table_init(fd_t* new_table)
 	}
 
 	// open stdin
-	(new_table[STDIN_]).flags = FD_ON;
-	(new_table[STDIN_]).file_op_table_ptr = terminal_driver;
-	// open stdout
 	(new_table[STDOUT_]).flags = FD_ON;
+	(new_table[STDOUT_]).file_op_table_ptr = terminal_driver;
+	// open stdout
+	(new_table[STDIN_]).flags = FD_ON;
 	// (new_table[STDOUT_]).file_op_table_ptr = ; // need the keyboard driver
 }
 

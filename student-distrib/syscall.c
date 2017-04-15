@@ -120,6 +120,7 @@ int32_t execute(const uint8_t* command)
 	int32_t current_process = i;
 
 	pcb * process_pcb = (pcb *)(K_STACK_BOTTOM - PROCESS_SIZE*(1+current_process));
+	p_c.process_array[current_process] = process_pcb;
 	process_pcb->process_id = current_process;
 
 	if(current_process == 0) { // is this the first program?
@@ -136,7 +137,7 @@ int32_t execute(const uint8_t* command)
 	}
 	p_c.current_process = current_process;
 
-	//fd_init(process_pcb.fd_table);
+	fd_table_init(process_pcb->fd_table);
 
 	// get the file name and arguments
 	int file_name_length;
