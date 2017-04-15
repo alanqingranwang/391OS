@@ -55,16 +55,20 @@ int32_t keyboard_close() {
 }
 
 int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
+    /*************/sti();
 	int i = 0;
     kbdr_flag = 0;
 	while(1){
 		if(kbdr_flag == 1){
 			kbdr_flag = 0;
-			for(i = 0; i<nbytes || i<BUFFER_SIZE; i++)
-					buf[i] = buffer[i];
+			for(i = 0; i<nbytes && i<BUFFER_SIZE; i++) {
+				buf[i] = buffer[i];
+            }
 			break;
 		}
 	}
+
+    /***************/ cli();
 	return i;
 }
 
