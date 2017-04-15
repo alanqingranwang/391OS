@@ -28,7 +28,7 @@ void fd_table_init(fd_t* new_table)
 	(new_table[STDOUT_]).file_op_table_ptr = terminal_driver;
 	// open stdout
 	(new_table[STDIN_]).flags = FD_ON;
-	// (new_table[STDOUT_]).file_op_table_ptr = ; // need the keyboard driver
+	(new_table[STDIN_]).file_op_table_ptr = keyboard_driver; // need the keyboard driver
 }
 
 // /* JC

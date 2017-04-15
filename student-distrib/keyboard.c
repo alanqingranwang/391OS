@@ -56,6 +56,7 @@ int32_t keyboard_close() {
 
 int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
 	int i = 0;
+    kbdr_flag = 0;
 	while(1){
 		if(kbdr_flag == 1){
 			kbdr_flag = 0;
@@ -469,7 +470,7 @@ void handle_backspace() {
  *      SIDE EFFECTS: none
  */
 void handle_enter() {
-	kbdr_flag = 0;
+	kbdr_flag = 1;
     scroll();
     screen_x_pos = 0;
     //call terminal read once implemented
