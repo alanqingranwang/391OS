@@ -3,8 +3,10 @@
  * tab size = 3, no space
  */
 #include "rtc.h"
+#include "fd_table.h"
+
 /* Interrupt Happened Flag */
-static uint32_t interrupt_flag; // When interrupt happens this changes to 1
+volatile static uint32_t interrupt_flag; // When interrupt happens this changes to 1
 // int32_t rtc_fd; // holds the rtc's fd when opened
 /* Keeps track of current time */
 static uint8_t second;
@@ -14,6 +16,7 @@ static uint8_t day;
 static uint8_t month;
 static uint32_t year;
 static uint8_t curr_rate;
+static uint32_t curr_frequency;
 /* Purposely didn't include 2 Hz, it will be a default if an invalid freq is selected */
 static uint32_t frequencies[NUM_FREQ] = {32768, 16384, 8192, 4096, 2048, 1024,
 				512, 256, 128, 64, 32, 16, 8, 4};
@@ -66,13 +69,9 @@ void rtc_init(void)
  */
 void rtc_handler(void)
 {
-	// save registers, assembly wrapping
-	//save_registers();
-	//uint32_t flags;
-   // save previous state of interrupts, and prevent them
-	//cli_and_save(flags);
 	send_eoi(RTC_IRQ);	// tell PIC to continue with it's work
 	/* Don't touch anything above */
+
 	// INSERT HERE FOR THE HANDLER TO DO SOMETHING OR UNCOMMENT
 	// print_time();	// this one looks cooler
 	// test_interrupts();	// this one looks like a rave
@@ -81,13 +80,15 @@ void rtc_handler(void)
 	// have the handler print if turned on
 	if(get_print_one())
 		putc('1'); // uncomment when testing for freq
+
+
 	/* Don't touch anything below */
-	interrupt_flag = 1; // Allow read to return
+	// alternate between then numbers so that rtc_read doesn't need to assign
+	interrupt_flag = 1;
+
 	// Register C needs to be read after an IRQ 8 otherwise IRQ won't happen again
 	outb(REG_C, SELECT_REG);
 	inb(CMOS_RTC_PORT);	// throw away data
-	//restore_flags(flags);
-	//restore_registers();
 }
 /* JC
  * set_frequency
@@ -119,6 +120,9 @@ void set_frequency(uint32_t frequency)
 	curr_rate &= NIBBLE_MASK;	// can't be over 15
 	if(curr_rate < MAX_RATE) // can't be less than 3
 		curr_rate = MAX_RATE; // forced to 1024 Hz
+
+	curr_frequency = frequencies[curr_rate]; // save the frequency value
+
 	uint32_t flags;
 	int8_t prev_data;
 	// lock it
@@ -132,6 +136,7 @@ void set_frequency(uint32_t frequency)
 	restore_flags(flags);
 }
 /*********************************************************/
+
 /* JC
  * rtc_driver
  * 	DESCRIPTION:
@@ -164,12 +169,13 @@ int32_t rtc_driver(uint32_t cmd, op_data_t operation_data)
 		// will need to opdate later with an fd, maybe
 			return rtc_write(operation_data.buf);
 		case CLOSE:
-			return rtc_close(/*operation_data.fd*/);
+			return rtc_close(operation_data.fd);
 		default:
-			printf("Invalid Command");
+			printf("Invalid Command rtc_driver\n");
 			return -1;
 	}
 }
+
 /* JC
  * rtc_driver
  * 	DESCRIPTION:
@@ -190,21 +196,21 @@ int32_t rtc_open()
 	// Upon open it should be frequency 2Hz
 	set_frequency(2);
 
-	// should RTC always be able to open?
-	// int32_t fd_index = get_fd_index(); // get an available index
-	// if(fd_index != -1)
-	// {
-	// 	// fill in the descriptor
-	// 	fd_t rtc_fd_info;
-	// 	rtc_fd_info.file_op_table_ptr = rtc_driver; // give it the function ptr
-	// 	rtc_fd_info.inode_ptr = -1; // not a normal file
-	// 	rtc_fd_info.file_position = 0;
-	// 	rtc_fd_info.flags = 1;	// in use
-	// 	set_fd_info(fd_index, rtc_fd_info);
-	// }
-	return 0;
-	// return fd_index;
+	int32_t fd_index = get_fd_index(); // get an available index
+	if(fd_index != -1)
+	{
+		// fill in the descriptor
+		fd_t rtc_fd_info;
+		rtc_fd_info.file_op_table_ptr = rtc_driver; // give it the function ptr
+		rtc_fd_info.inode_ptr = -1; // not a normal file
+		rtc_fd_info.file_position = 0;
+		rtc_fd_info.flags = 1;	// in use
+		set_fd_info(fd_index, rtc_fd_info);
+	}
+
+	return fd_index;
 }
+
 /* JC
  * rtc_driver
  * 	DESCRIPTION:
@@ -217,9 +223,12 @@ int32_t rtc_open()
 int32_t rtc_read()
 {
 	interrupt_flag = 0;
-	while(!interrupt_flag){}	// wait for interrupt to happen
+	// wait for interrupt to happen
+	while(!interrupt_flag);
+
 	return 0;
 }
+
 /* JC
  * rtc_driver
  * 	DESCRIPTION:
@@ -250,17 +259,15 @@ int32_t rtc_write(const void* buf)
  *			 0 - successful close
  *		SIDE_EFFECTS: closes an fd
  */
-int32_t rtc_close(/*int32_t fd*/)
+int32_t rtc_close(int32_t fd)
 {
-	// if(fd < FIRST_VALID_INDEX || fd > MAX_OPEN_FILES)
-	// {
-	//		printf("Invalid FD");
-	// 	return -1; // can't close index 0 and index 1
-	// }
-	// uint32_t flags;
-	// cli_and_save(flags);
-	// (fd_table[fd]).flags = 0; // turn it back to not in use
-	// restore_flags(flags);
+	if(fd < FIRST_VALID_INDEX || fd > MAX_OPEN_FILES)
+	{
+		printf("Invalid FD, rtc_close\n");
+		return -1; // can't close index 0 and index 1
+	}
+
+	close_fd(fd);
 	return 0; // should only return 0 for checkpoint 2
 }
 /* IGNORE STUFF BELOW */

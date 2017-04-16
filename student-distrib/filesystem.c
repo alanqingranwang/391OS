@@ -163,7 +163,7 @@ int32_t dir_driver(uint32_t cmd, op_data_t operation_data)
 		case CLOSE:
 			return dir_close(operation_data.fd);
 		default:
-			printf("Invalid Command\n");
+			printf("Invalid Command dir_driver\n");
 			return -1;
 	}
 }
@@ -185,7 +185,7 @@ int32_t dir_open(const int8_t* filename)
 	int32_t fd_index = get_fd_index(); // get an available index
 	if(fd_index == -1)
 	{
-		printf("No Available FD\n");
+		printf("No Available FD, dir_open\n");
 		return -1;
 	}
 
@@ -244,7 +244,7 @@ int32_t dir_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
  */
 int32_t dir_write()
 {
-	printf("READ ONLY DIRECTORY");
+	printf("READ ONLY DIRECTORY\n");
 	return -1;
 }
 
@@ -264,7 +264,7 @@ int32_t dir_close(uint32_t fd)
 {
 	if(fd < FIRST_VALID_INDEX || fd > MAX_OPEN_FILES)
 	{
-		printf("INVALID FD");
+		printf("INVALID FD, dir_close\n");
 		return -1; // can't close stdin or stdout
 	}
 
@@ -301,7 +301,7 @@ int32_t file_driver(uint32_t cmd, op_data_t operation_data)
 		case LOAD:
 			return file_load(operation_data.filename, operation_data.address);
 		default:
-			printf("Invalid Command\n");
+			printf("Invalid Command file_driver\n");
 			return -1;
 	}
 }
@@ -322,7 +322,7 @@ int32_t file_open(const int8_t* filename)
 	dentry_t my_dentry;
 	if(read_dentry_by_name((uint8_t*)filename, &my_dentry) == -1)
 	{
-		printf("Invalid Name\n");
+		printf("Invalid Name file_open\n");
 		return -1;
 	}
 
@@ -376,7 +376,7 @@ int32_t file_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
  */
 int32_t file_write()
 {
-	printf("READ ONLY FILES");
+	printf("READ ONLY FILES\n");
 	return -1;
 }
 
@@ -396,7 +396,7 @@ int32_t file_close(int32_t fd)
 {
 	if(fd < FIRST_VALID_INDEX || fd > MAX_OPEN_FILES)
 	{
-		printf("INVALID FD");
+		printf("INVALID FD, file_close\n");
 		return -1; // can't close stdin or stdout
 	}
 
