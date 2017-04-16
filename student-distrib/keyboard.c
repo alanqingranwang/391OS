@@ -427,7 +427,7 @@ void process_key(uint8_t key) {
 
 
         /**************************/
-        if(buffer_index + 1 < BUFFER_SIZE) {
+        else if(buffer_index + 1 < BUFFER_SIZE) {
             putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
             buffer[buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
             buffer_index++;

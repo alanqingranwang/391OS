@@ -3,6 +3,7 @@
 .globl syscall_handler_wrapper
 .globl user_context_switch
 .globl sys_ret
+.globl sys_ret_halt
 
 # not in use yet
 keyboard_handler_wrapper:
@@ -38,7 +39,6 @@ syscall_handler_wrapper:
   # save registers
   pushl %edi
   pushl %esi
-  pushl %ebp
   pushl %edx
   pushl %ecx
   pushl %ebx
@@ -66,7 +66,6 @@ sys_ret:
   popl %ebx
   popl %ecx
   popl %edx
-  popl %ebp
   popl %esi
   popl %edi
   iret
@@ -78,6 +77,7 @@ dispatcher: # 0 pad it
   .long getargs, vidmap, set_handler, sigreturn
 
 user_context_switch:
+  cli
   movl 4(%esp), %edx	# Retrieve input
   movl $0x2B, %eax      # USER_DS
   movw %ax,   %ds
@@ -87,7 +87,12 @@ user_context_switch:
 
   pushl $0x2B     		 # USER_DS
   pushl $0x83FFFFC  	 # esp
-  pushl $0x200
+
+  pushf
+  popl  %ebx
+  orl   $0x200, %ebx
+  pushl %ebx
+
   pushl $0x23         	 # USER_CS
   pushl %edx      	 	 # eip
   iret

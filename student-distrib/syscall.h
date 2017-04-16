@@ -49,6 +49,8 @@ typedef struct process_control_block {
 	fd_t 		fd_table[8];
 	uint32_t    parent_stack_ptr;
 	uint32_t	parent_ss_ptr;
+	uint32_t    current_esp;
+	uint32_t    current_ebp;
 } pcb;
 
 typedef struct process_control {

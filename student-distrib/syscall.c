@@ -11,9 +11,7 @@
 #define K_STACK_BOTTOM		0x007FFFFC
 #define PROGRAM_PAGE		0x08000000
 #define PROGRAM_START		0x08048000
-#define PROCESS_SIZE     	0x00008000
-
-
+#define PROCESS_SIZE     	0x00002000
 
 // note to self, I need something that's the opposite of their
 // do call, in piazza.
@@ -51,21 +49,34 @@ int32_t halt(uint8_t status)
 	// uint8_t status = param1 & BYTE_MASK; // just retrieve the lower byte, safe way vs typecast
 
 	uint32_t esp = (p_c.process_array[p_c.current_process])->parent_stack_ptr;
-	asm volatile(
-		"movl %0, %%esp \n"
-		:
-		: "r"(esp)
-	);
+	// asm volatile(
+	// 	"movl %0, %%esp \n"
+	// 	:
+	// 	: "r"(esp)
+	// );
 
 	uint32_t ss = (p_c.process_array[p_c.current_process])->parent_ss_ptr;
-	asm volatile(
-		"movl %0, %%ss \n"
-		:
-		: "r"(ss)
-	);
+	// asm volatile(
+	// 	"movl %0, %%ss \n"
+	// 	:
+	// 	: "r"(ss)
+	// );
 
 	/** prepare for context switch */
 	// write tss esp0 and ebp0 for new k_stack process (not yet implemented)
+
+	asm volatile(
+		"movl %0, %%esp \n"
+		:
+		: "r"(p_c.process_array[p_c.current_process]->current_esp)
+	);
+
+	asm volatile(
+		"movl %0, %%ebp \n"
+		:
+		: "r"(p_c.process_array[p_c.current_process]->current_ebp)
+	);
+
 	p_c.in_use[p_c.current_process] = 0;
 	p_c.current_process = p_c.process_array[p_c.current_process]->parent_id;
 	p_c.no_processes--;
@@ -75,9 +86,14 @@ int32_t halt(uint8_t status)
 	tss.esp0 = esp;
 	tss.ss0 = ss;
 
-	// CLOSE FD'S
+	if(p_c.no_processes < 0) {
+		execute("shell");
+	}
 
 	// CALL RETURN WRAPPER HERE!
+
+	asm volatile("jmp execute_return");
+
 	return 0;
 }
 
@@ -213,27 +229,37 @@ int32_t execute(const uint8_t* command)
 
 
 	//store esp and ss into the Tss
-	uint32_t esp;
-	asm volatile(
-		"movl %%esp, %0 \n"
-		: "=r"(esp)
-	);
 
-	uint32_t ss;
-	asm volatile(
+	uint32_t ss = KERNEL_DS;
+	/*asm volatile(
 		"movl %%ss, %0 \n"
 		: "=r"(ss)
-	);
+	);*/
 
 	/** prepare for context switch */
 	// write tss esp0 and ebp0 for new k_stack process (not yet implemented)
-	tss.esp0 = esp;
+	tss.esp0 = 0x800000 - 0x2000 * process_pcb->process_id - 4;
 	tss.ss0 = ss;
 
+	uint32_t esp;
+	asm volatile(
+		"movl %%esp, %0 \n"
+		: "=r"(p_c.process_array[p_c.current_process]->current_esp)
+	);
+
+	asm volatile(
+		"movl %%ebp, %0 \n"
+		: "=r"(p_c.process_array[p_c.current_process]->current_ebp)
+	);
 	/** push IRET context to stack and IRET */
 	user_context_switch(entry_point);
 
+	asm volatile ("execute_return: ");
+	//asm volatile ("addl $8, %esp");
+	asm volatile ("leave");
+	asm volatile ("ret");
 	/** return */
+
 	return 0;
 }
 

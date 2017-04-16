@@ -187,7 +187,10 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Execute the first program (`shell') ... */
 	uint8_t string[33] = "shell ";
-	int32_t retval = execute(string);
+	int32_t retval;
+	while(1) {
+		retval = execute(string);
+	}
 	if(retval == -1) {
 		printf("Fail to execute shell, %d", retval);
 	}
