@@ -23,6 +23,7 @@
 #include "paging.h"
 #include "x86_desc.h"
 #include "fd_table.h"
+#include "exceptions.h"
 
 #define MAX_PROCESSES 8
 

@@ -190,10 +190,11 @@ entry (unsigned long magic, unsigned long addr)
 	int32_t retval;
 	while(1) {
 		retval = execute(string);
+		if(retval == -1) {
+			printf("Fail to execute shell, %d", retval);
+		}
 	}
-	if(retval == -1) {
-		printf("Fail to execute shell, %d", retval);
-	}
+
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");
 }

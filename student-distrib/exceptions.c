@@ -34,7 +34,7 @@ void exception_29() { exception_handler(29);}
 void exception_30() { exception_handler(30);}
 void exception_31() { exception_handler(31);}
 
-/* 
+/*
  * exception_handler
  *   DESCRIPTION: Prints proper exception to blue screen of death
  *   INPUTS: i - determines which exception was reached
@@ -143,6 +143,9 @@ void exception_handler(int i) {
             printf("Reserved\n");
             break;
     }
-    show_blue_screen();
-    while(1);
+
+    exception_flag = 1;
+    halt(255);
+    // show_blue_screen();
+    // while(1);
 }

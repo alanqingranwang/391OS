@@ -47,7 +47,8 @@ int32_t halt(uint8_t status)
 {
 	/* uncomment when ready */
 	// uint8_t status = param1 & BYTE_MASK; // just retrieve the lower byte, safe way vs typecast
-	uint32_t extended_status = 0x000000FF & status;
+	uint32_t extended_status = (0x000000FF & status) + exception_flag;
+	exception_flag = 0;
 
 	uint32_t esp = (p_c.process_array[p_c.current_process])->parent_stack_ptr;
 	// asm volatile(
@@ -124,6 +125,7 @@ int32_t halt(uint8_t status)
  */
 int32_t execute(const uint8_t* command)
 {
+	exception_flag = 0;
 	printf("%s\n", command);
 	if(p_c.no_processes >= 7) {
 		return -1;  // too many processes

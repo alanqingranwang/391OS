@@ -189,25 +189,20 @@ int32_t rtc_open()
 {
 	// Upon open it should be frequency 2Hz
 	set_frequency(2);
-	return 0; // for Checkpoint 2, just return 0
-	// uint32_t flags;
-	// cli_and_save(flags);
-	// // should RTC always be able to open?
+
+	// should RTC always be able to open?
 	// int32_t fd_index = get_fd_index(); // get an available index
-	// if(fd_index == -1)
+	// if(fd_index != -1)
 	// {
-	//		printf("No Available FD");
-	// 	restore_flags(flags);
-	// 	return -1; // no available fd
+	// 	// fill in the descriptor
+	// 	fd_t rtc_fd_info;
+	// 	rtc_fd_info.file_op_table_ptr = rtc_driver; // give it the function ptr
+	// 	rtc_fd_info.inode_ptr = -1; // not a normal file
+	// 	rtc_fd_info.file_position = 0;
+	// 	rtc_fd_info.flags = 1;	// in use
+	// 	set_fd_info(fd_index, rtc_fd_info);
 	// }
-	// // fill in the descriptor
-	// fd_t rtc_fd_info;
-	// rtc_fd_info.file_op_table_ptr = rtc_driver; // give it the function ptr
-	// rtc_fd_info.inode_ptr = -1; // not a normal file
-	// rtc_fd_info.file_position = 0;
-	// rtc_fd_info.flags = 1;	// in use
-	// set_fd_info(fd_index, rtc_fd_info);
-	// restore_flags(flags);
+	return 0;
 	// return fd_index;
 }
 /* JC

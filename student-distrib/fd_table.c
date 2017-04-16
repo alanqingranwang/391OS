@@ -126,6 +126,9 @@ int32_t get_inode_ptr(int32_t index)
  */
 void close_fd(int32_t index)
 {
+	if(index < 0 || index >= MAX_OPEN_FILES) {
+		return;
+	}
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_op_table_ptr = NULL;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = -1;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = 0;
