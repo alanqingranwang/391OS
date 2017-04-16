@@ -47,6 +47,7 @@ int32_t halt(uint8_t status)
 {
 	/* uncomment when ready */
 	// uint8_t status = param1 & BYTE_MASK; // just retrieve the lower byte, safe way vs typecast
+	uint32_t extended_status = 0x000000FF & status;
 
 	uint32_t esp = (p_c.process_array[p_c.current_process])->parent_stack_ptr;
 	// asm volatile(
@@ -91,6 +92,12 @@ int32_t halt(uint8_t status)
 	}
 
 	// CALL RETURN WRAPPER HERE!
+	asm volatile(
+		"movl %0, %%eax \n"
+		: "=r"(extended_status)
+		:
+		: "%eax"
+	);
 
 	asm volatile("jmp execute_return");
 
@@ -241,7 +248,6 @@ int32_t execute(const uint8_t* command)
 	tss.esp0 = 0x800000 - 0x2000 * process_pcb->process_id - 4;
 	tss.ss0 = ss;
 
-	uint32_t esp;
 	asm volatile(
 		"movl %%esp, %0 \n"
 		: "=r"(p_c.process_array[p_c.current_process]->current_esp)
@@ -255,7 +261,6 @@ int32_t execute(const uint8_t* command)
 	user_context_switch(entry_point);
 
 	asm volatile ("execute_return: ");
-	//asm volatile ("addl $8, %esp");
 	asm volatile ("leave");
 	asm volatile ("ret");
 	/** return */

@@ -46,6 +46,7 @@ syscall_handler_wrapper:
   pushl %edx # param 3
   pushl %ecx # param 2
   pushl %ebx # param 1
+
   # check if it's a valid call
   cmpl $10, %eax
   jae syscall_return_failure # if cmd >= 10
