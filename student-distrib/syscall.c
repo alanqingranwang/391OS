@@ -8,7 +8,7 @@
 #include "wrapper.h"
 #include "filesystem.h" // need dentry and shit
 
-#define K_STACK_BOTTOM		0x007FFFFC
+#define K_STACK_BOTTOM		0x00800000
 #define PROGRAM_PAGE		0x08000000
 #define PROGRAM_START		0x08048000
 #define PROCESS_SIZE     	0x00002000
