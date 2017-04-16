@@ -182,35 +182,21 @@ int32_t dir_driver(uint32_t cmd, op_data_t operation_data)
  */
 int32_t dir_open(const int8_t* filename)
 {
-	// check if the file name exists
-	dentry_t my_dentry;
-	if(!(filename == "." && read_dentry_by_name((uint8_t*)filename, &my_dentry) != -1))
-	{
-		printf("Invalid Name\n");
-		return -1;
-	}
-
-	// name is valid
-	uint32_t flags;
-	cli_and_save(flags);
-
 	int32_t fd_index = get_fd_index(); // get an available index
 	if(fd_index == -1)
 	{
 		printf("No Available FD\n");
-		restore_flags(flags);
 		return -1;
 	}
 
 	// fill in the descriptor
 	fd_t dir_fd_info;
 	dir_fd_info.file_op_table_ptr = dir_driver; // give it the function ptr
-	dir_fd_info.inode_ptr = my_dentry.inode_idx;
+	dir_fd_info.inode_ptr = -1;
 	dir_fd_info.file_position = 0; // start offset at 0
 	dir_fd_info.flags = FD_ON;	// in use
 	set_fd_info(fd_index, dir_fd_info);
 
-	restore_flags(flags);
 	return fd_index;
 }
 
@@ -242,7 +228,6 @@ int32_t dir_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
 	}
 
 	add_offset(fd, 1); // increment offset to next file
-
 	return bytes_read;
 }
 
@@ -283,12 +268,7 @@ int32_t dir_close(uint32_t fd)
 		return -1; // can't close stdin or stdout
 	}
 
-	// lock it
-	uint32_t flags;
-	cli_and_save(flags);
 	close_fd(fd);	// close the portal
-	restore_flags(flags);
-
 	return 0;
 }
 
@@ -345,24 +325,20 @@ int32_t file_open(const int8_t* filename)
 		printf("Invalid Name\n");
 		return -1;
 	}
+
 	// name is valid
-	uint32_t flags;
-	cli_and_save(flags);
 	int32_t fd_index = get_fd_index(); // get an available index
-	if(fd_index == -1)
+	if(fd_index != -1)
 	{
-		printf("No Available FD\n");
-		restore_flags(flags);
-		return -1; // no available fd
+		// fill in the descriptor
+		fd_t file_fd_info;
+		file_fd_info.file_op_table_ptr = file_driver; // give it the function ptr
+		file_fd_info.inode_ptr = my_dentry.inode_idx;
+		file_fd_info.file_position = 0; // start offset at 0
+		file_fd_info.flags = FD_ON;	// in use
+		set_fd_info(fd_index, file_fd_info);
 	}
-	// fill in the descriptor
-	fd_t file_fd_info;
-	file_fd_info.file_op_table_ptr = file_driver; // give it the function ptr
-	file_fd_info.inode_ptr = my_dentry.inode_idx;
-	file_fd_info.file_position = 0; // start offset at 0
-	file_fd_info.flags = FD_ON;	// in use
-	set_fd_info(fd_index, file_fd_info);
-	restore_flags(flags);
+
 	return fd_index;
 }
 /* JC
@@ -387,6 +363,7 @@ int32_t file_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
 		add_offset(fd, read_amt);
 	return read_amt;	// return the response
 }
+
 /* JC
  * file_write
  *		DESCRIPTION:
@@ -402,6 +379,7 @@ int32_t file_write()
 	printf("READ ONLY FILES");
 	return -1;
 }
+
 /* JC
  *	file_close
  *		DESCRIPTION:
@@ -421,11 +399,8 @@ int32_t file_close(int32_t fd)
 		printf("INVALID FD");
 		return -1; // can't close stdin or stdout
 	}
-	// lock it
-	uint32_t flags;
-	cli_and_save(flags);
+
 	close_fd(fd);	// close the portal
-	restore_flags(flags);
 	return 0;
 }
 

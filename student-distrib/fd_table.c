@@ -18,6 +18,7 @@ void fd_table_init(fd_t* new_table)
 	uint32_t table_loop;
 	for(table_loop = 0; table_loop < MAX_OPEN_FILES; table_loop++)
 	{
+		(new_table[table_loop]).file_op_table_ptr = NULL;
 		(new_table[table_loop]).inode_ptr = -1;
 		(new_table[table_loop]).file_position = 0;
 		(new_table[table_loop]).flags = FD_OFF; // initialize all not in use.
@@ -125,6 +126,9 @@ int32_t get_inode_ptr(int32_t index)
  */
 void close_fd(int32_t index)
 {
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_op_table_ptr = NULL;
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = -1;
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = 0;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).flags = FD_OFF;
 }
 

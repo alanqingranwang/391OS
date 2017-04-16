@@ -2,6 +2,7 @@
 .globl rtc_handler_wrapper
 .globl syscall_handler_wrapper
 .globl user_context_switch
+.globl sys_ret
 
 # not in use yet
 keyboard_handler_wrapper:

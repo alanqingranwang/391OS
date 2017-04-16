@@ -72,10 +72,13 @@ int32_t halt(uint8_t status)
 
 	add_process(p_c.current_process);
 
+	tss.esp0 = esp;
+	tss.ss0 = ss;
+
 	// CLOSE FD'S
 
 	// CALL RETURN WRAPPER HERE!
-	return -1;
+	return 0;
 }
 
 /* JC
