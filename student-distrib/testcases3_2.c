@@ -110,6 +110,7 @@ void print_freq(uint32_t rate)
 	uint32_t curr_freq;
 	op_data_t rtc_pack; // create the data package, check out filesystem for struct info
 	int32_t filed = rtc_driver(OPEN, rtc_pack); // open it
+	rtc_pack.fd = filed;
 	if(filed != -1)
 	{
 		/* Test Writing Frequency - to test frequency visually uncomment print time in interrupt handler */
