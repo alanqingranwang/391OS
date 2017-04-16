@@ -6,7 +6,7 @@
 #include "fd_table.h"
 
 /* Interrupt Happened Flag */
-volatile static uint32_t interrupt_flag; // When interrupt happens this changes to 1
+static volatile uint32_t interrupt_flag; // When interrupt happens this changes to 1
 // int32_t rtc_fd; // holds the rtc's fd when opened
 /* Keeps track of current time */
 static uint8_t second;
@@ -117,8 +117,10 @@ void set_frequency(uint32_t frequency)
 			break;
 	curr_rate++; // need to increment for calculations
 	// check if it's within range
-	curr_rate &= NIBBLE_MASK;	// can't be over 15
-	if(curr_rate < MAX_RATE) // can't be less than 3
+	if(curr_rate > MIN_RATE)
+		curr_rate = MIN_RATE;	// can't be over 15
+
+	if(curr_rate < MAX_RATE) // can't be less than 6
 		curr_rate = MAX_RATE; // forced to 1024 Hz
 
 	curr_frequency = frequencies[curr_rate]; // save the frequency value
@@ -222,10 +224,14 @@ int32_t rtc_open()
  */
 int32_t rtc_read()
 {
+	uint32_t flags;
+	cli_and_save(flags);
+	sti(); // allow interrupts
 	interrupt_flag = 0;
 	// wait for interrupt to happen
 	while(!interrupt_flag);
 
+	restore_flags(flags);
 	return 0;
 }
 
