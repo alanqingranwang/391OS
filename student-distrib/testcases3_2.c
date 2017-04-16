@@ -23,12 +23,12 @@ void set_print_one(int change)
  * test_file_data
  *	DESCRIPTION: prints out the given index's file data
  *	Called by keyboard.c - naturally wraps around the number of dentries.
- * 
+ *
  *
  */
 void test_file_data(int index)
 {
-	// Testing read from functionality. 
+	// Testing read from functionality.
 	uint32_t buffer_size = 500;		// modify if necessary
 	uint32_t bytes_to_read = 500;		// modify if necessary
 	int8_t buffer[buffer_size];
@@ -133,5 +133,3 @@ void print_freq(uint32_t rate)
 	else
 		printf("couldn't open\n");
 }
-
-
