@@ -32,31 +32,6 @@ void fd_table_init(fd_t* new_table)
 	(new_table[STDIN_]).file_op_table_ptr = keyboard_driver; // need the keyboard driver
 }
 
-// /* JC
-//  * fd_table_destroy
-//  *	DESCRIPTION:
-//  *		Cleans up the given file descriptor table because it's not in use anymore.
-//  *
-//  *
-//  *
-//  *
-//  */
-// void fd_table_destroy(fd_t* old_table)
-// {
-// 	uint32_t flags;
-// 	cli_and_save(flags);
-
-// 	uint32_t table_loop;
-// 	for(table_loop = 0; table_loop < MAX_OPEN_FILES; table_loop++)
-// 	{
-// 		(old_table[table_loop]).flags = FD_OFF;
-// 		(old_table[table_loop]).inode_ptr = -1;
-// 	}
-
-
-// 	restore_flags(flags);
-// }
-
 /* JC
  * get_fd_index
  * 	DESCRIPTION:

@@ -23,7 +23,6 @@
 #define READ 2
 #define WRITE 3
 #define CLOSE 4
-#define LOAD 5
 
 // Fill with what you need, and pass as param to driver
 typedef struct op_data_t {
