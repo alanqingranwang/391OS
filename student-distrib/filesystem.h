@@ -94,7 +94,6 @@ int32_t file_open(const int8_t* filename);
 int32_t file_read(int32_t fd, uint8_t* buf, uint32_t nbytes);
 int32_t file_write();
 int32_t file_close(int32_t fd);
-int32_t file_load(int8_t *fname, uint32_t address);
 /******************************************/
 
 /* pointers to the beginning of their respective blocks */

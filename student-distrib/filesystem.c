@@ -298,8 +298,6 @@ int32_t file_driver(uint32_t cmd, op_data_t operation_data)
 			return file_write();
 		case CLOSE:
 			return file_close(operation_data.fd);
-		case LOAD:
-			return file_load(operation_data.filename, operation_data.address);
 		default:
 			printf("Invalid Command file_driver\n");
 			return -1;
@@ -401,20 +399,6 @@ int32_t file_close(int32_t fd)
 	}
 
 	close_fd(fd);	// close the portal
-	return 0;
-}
-
-int32_t file_load(int8_t *fname, uint32_t address) {
-	dentry_t dentry;
-
-	if(read_dentry_by_name((uint8_t*) fname, &dentry) == -1) {
-		return -1;
-	}
-
-	if(read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size)) {
-		return -1;
-	}
-
 	return 0;
 }
 
