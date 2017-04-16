@@ -98,6 +98,7 @@ int32_t halt(uint8_t status)
  */
 int32_t execute(const uint8_t* command)
 {
+	printf("%s\n", command);
 	if(p_c.no_processes >= 7) {
 		return -1;  // too many processes
 	}
@@ -138,13 +139,12 @@ int32_t execute(const uint8_t* command)
 	p_c.current_process = current_process;
 
 	fd_table_init(process_pcb->fd_table);
-
 	// get the file name and arguments
 	int file_name_length;
 	int8_t file_name[32];
 	int8_t args[1024];
 
-	for(i = 0; command[i] != ' '; i++) {
+	for(i = 0; command[i] != ' ' && command[i] != '\0'; i++) {
 		if(i >= 31) return -1;
 		file_name[i] = command[i];
 	}

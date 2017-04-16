@@ -19,4 +19,7 @@ int32_t terminal_close(int32_t fd);
 int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes);
 /* writes to the terminal file */
 int32_t terminal_write(int32_t fd, int8_t* buf, int32_t nbytes);
+
+int32_t terminal_retrieve(int32_t fd, int8_t* buf, int32_t nbytes);
+
 #endif /* _TERMINAL_H */

@@ -77,10 +77,7 @@ dispatcher: # 0 pad it
   .long getargs, vidmap, set_handler, sigreturn
 
 user_context_switch:
-
-  pushl %ebp
-  movl %esp, %ebp
-  movl 8(%ebp), %edx	# Retrieve input
+  movl 4(%esp), %edx	# Retrieve input
   movl $0x2B, %eax      # USER_DS
   movw %ax,   %ds
   movw %ax,   %es

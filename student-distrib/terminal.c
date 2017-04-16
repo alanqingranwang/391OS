@@ -67,8 +67,10 @@ int32_t terminal_close(int32_t fd){
  *			 0 - sucess
  */
 int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes){
-	int32_t success = 0;
 	int32_t i;
+	for(i = 0; i<TERM_BUFF_SIZE; i++)
+		save_buff[i] = ' ';
+	int32_t success = 0;
 	for(i = 0; (i < TERM_BUFF_SIZE) && (i < nbytes); i++){
 		save_buff[i] = buf[i];
 		success++;
@@ -87,11 +89,18 @@ int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes){
  *			otherwise number of bytes written
  */
 int32_t terminal_write(int32_t fd, int8_t* buf, int32_t nbytes){
-	int32_t success = 0;
-	int32_t i;
-	for(i = 0; i < nbytes; i++){
+	int32_t i=0;
+	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
 		putc(buf[i]);
-		success++;
 	}
-	return success;
+	return i;
+}
+
+int32_t terminal_retrieve(int32_t fd, int8_t* buf, int32_t nbytes){
+	int32_t i=0;
+	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
+		buf[i] = save_buff[i];
+		if (save_buff[i] == ' ') break;
+	}
+	return i;
 }

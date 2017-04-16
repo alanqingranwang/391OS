@@ -56,19 +56,20 @@ int32_t keyboard_close() {
 int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
     /*************/sti();
 	int i = 0;
+    int count;
     kbdr_flag = 0;
 	while(1){
 		if(kbdr_flag == 1){
 			kbdr_flag = 0;
 			for(i = 0; i<nbytes && i<BUFFER_SIZE; i++) {
-				buf[i] = buffer[i];
+				count = terminal_retrieve(fd,buf,nbytes);
             }
 			break;
 		}
-	}
-
-    /***************/ cli();
-	return i;
+    }
+    /***************/
+    printf("%d\n", count);
+	return count;
 }
 
 int32_t keyboard_write() {
@@ -423,7 +424,7 @@ void process_key(uint8_t key) {
             clear(); // print file
             print_file_info();
         }
-    
+
 
         /**************************/
         if(buffer_index + 1 < BUFFER_SIZE) {
