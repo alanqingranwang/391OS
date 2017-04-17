@@ -1,4 +1,4 @@
-/* JC
+/* 
  * syscall.c - Contains functions for system calls.
  *
  * tab size = 3, no space
@@ -6,28 +6,30 @@
 
 #include "syscall.h"
 #include "wrapper.h"
-#include "filesystem.h" // need dentry and shit
+#include "filesystem.h"
 
 #define K_STACK_BOTTOM		0x00800000
-#define PROGRAM_PAGE			0x08000000
+#define PROGRAM_PAGE		0x08000000
 #define PROGRAM_START		0x08048000
 #define PROCESS_SIZE     	0x00002000
-
-
-/* WARNING:	Some system calls need to synchronize with interrupt handlers. For example, the read system
- *		call made on the RTC device should wait until the next RTC interrupt has occurred before it returns.
- *		Use simple volatile flag variables to do this synchronization (e.g., something like int rtc_interrupt_occurred;)
- *		when possible (try something more complicated only after everything works!), and small critical sections
- *		with cli/sti. For example, writing to the RTC should blcok interrupts to interact with the device. Writing
- *		to the terminal also probably needs to block interrupts, if only briefly, to update screen data when printing
- *		(keyboard input is also printed to the screen from the interrupt handler).
- *
- * 	RTC flag, turn flag off after change, turn flag on after interrupt.
- */
+#define STATUS_BYTEMASK     0x000000FF
+#define MAX_ARGS			1024
+#define FILE_NAME_LENGTH    32
+#define BYTES_TO_READ       28
+#define ENTRY_POINT_START   24
+#define BYTE_SIZE			8
+#define MAGIC_NUMBER_SIZE	4
 
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
 static uint32_t extended_status;
 
+/* NM
+ * void pc_init()
+ * Description: initializes process controller
+ * Input: None
+ * Output: None
+ * Return Value: None
+ */
 void pc_init(){
 	p_c.no_processes = -1;
 	p_c.current_process = -1;
@@ -57,7 +59,7 @@ int32_t halt(uint8_t status)
 		execute((uint8_t*)"shell");
 	}
 
-	extended_status = (0x000000FF & status) + exception_flag;
+	extended_status = (STATUS_BYTEMASK & status) + exception_flag;
 
 	asm volatile(
 		"movl %0, %%esp \n"
@@ -116,11 +118,11 @@ int32_t execute(const uint8_t* command)
 
 	// get the file name and arguments
 	int32_t file_name_length;
-	int8_t file_name[32];
-	int8_t args[1024];
+	int8_t file_name[FILE_NAME_LENGTH];
+	int8_t args[MAX_ARGS];
 
 	for(i = 0; command[i] != ' ' && command[i] != '\0'; i++) {
-		if(i >= 31) return -1;
+		if(i >= FILE_NAME_LENGTH-1) return -1;
 		file_name[i] = command[i];
 	}
 	file_name[i] = '\0';
@@ -138,14 +140,14 @@ int32_t execute(const uint8_t* command)
 		return -1;
 
 	// Read first 4 bytes to see if its an executable
-	uint8_t buf[28];
-	uint32_t read_bytes = 28;
+	uint8_t buf[BYTES_TO_READ];
+	uint32_t read_bytes = BYTES_TO_READ;
 
 	if(read_data(file_dentry.inode_idx, 0, buf, read_bytes) == -1)
 		return -1;
 
 	exception_flag = 0;
-	if(p_c.no_processes >= 7) {
+	if(p_c.no_processes >= MAX_PROCESSES-1) {
 		return -1;  // too many processes
 	}
 	else {
@@ -157,7 +159,7 @@ int32_t execute(const uint8_t* command)
 	if(command == NULL) return -1;
 
 	/** Create PCB/ open FDs */
-	for(i = 0; i < 8; i++) {
+	for(i = 0; i < MAX_PROCESSES; i++) {
 		if(p_c.in_use[i] == 0) {
 			p_c.in_use[i] = 1;
 			break;
@@ -183,7 +185,7 @@ int32_t execute(const uint8_t* command)
 
 
 	int j;
-	for(j = 0; j < 4; j++) {
+	for(j = 0; j < MAGIC_NUMBER_SIZE; j++) {
 		if(buf[j] != magic_numbers[j]) {
 			return -1; // not executable
 		}
@@ -191,15 +193,15 @@ int32_t execute(const uint8_t* command)
 
 	// Extract entry point of task
 	uint32_t entry_point = 0;
-	for(j = 24; j < 28; j++) {
-		entry_point |= (buf[j] << (8*(j-24)));
+	for(j = ENTRY_POINT_START; j < BYTES_TO_READ; j++) {
+		entry_point |= (buf[j] << (BYTE_SIZE*(j-ENTRY_POINT_START)));
 	}
 
 	/* set up paging */
 	add_process(process_pcb->process_id);
 
 	dentry_t dentry;
-	uint32_t address = 0x08048000;
+	uint32_t address = PROGRAM_START;
 	if(read_dentry_by_name((uint8_t*) file_name, &dentry) == -1) {
 		return -1;
 	}
@@ -210,7 +212,7 @@ int32_t execute(const uint8_t* command)
 
 	/** prepare for context switch */
 	// write tss esp0 and ebp0 for new k_stack process (not yet implemented)
-	tss.esp0 = K_STACK_BOTTOM - 0x2000 * (process_pcb->process_id) - 4;
+	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (process_pcb->process_id) - BYTE_SIZE/2;
 	tss.ss0 = KERNEL_DS;
 
 	asm volatile(
