@@ -18,7 +18,7 @@ rtc_handler_wrapper:
   call rtc_handler
   popal
   iret
-  
+
 
 # JC
 # syscall_handler
@@ -75,7 +75,7 @@ sys_ret:
 # function pointers
 dispatcher: # 0 pad it
   .long def_cmd
-  .long halt, execute, read, write, open, close,
+  .long halt, execute, read, write, open, close
   .long getargs, vidmap, set_handler, sigreturn
 
 user_context_switch:
