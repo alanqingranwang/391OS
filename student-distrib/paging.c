@@ -84,10 +84,10 @@ void enablePaging() {
 
 void flush_tlb() {
 	asm volatile(
-         "mov %%cr3, %%eax;"
-         "mov %%eax, %%cr3;"
-         :
-         :
-         :"%eax"                /* clobbered register */
-         );
+     "mov %%cr3, %%eax;"
+     "mov %%eax, %%cr3;"
+     :
+     :
+     :"%eax"                /* clobbered register */
+     );
 }

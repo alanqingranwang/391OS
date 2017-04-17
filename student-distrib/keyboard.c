@@ -66,8 +66,6 @@ int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
 			break;
 		}
     }
-    /***************/
-    printf("%d\n", count);
 
 	return count;
 }
