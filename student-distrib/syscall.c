@@ -28,7 +28,7 @@
  */
 
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
-static extended_status;
+static uint32_t extended_status;
 
 /* JC
  * int32_t halt(uint8_t status)
@@ -51,7 +51,7 @@ int32_t halt(uint8_t status)
 		p_c.current_process = -1;
 		p_c.process_array[0] = 0;
 		p_c.in_use[0] = 0;
-		execute("shell");
+		execute((uint8_t*)"shell");
 	}
 
 	extended_status = (0x000000FF & status) + exception_flag;

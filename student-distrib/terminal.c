@@ -96,7 +96,7 @@ int32_t terminal_write(int32_t fd, int8_t* buf, int32_t nbytes){
 	return i;
 }
 
-int32_t terminal_retrieve(int32_t fd, int8_t* buf, int32_t nbytes){
+int32_t terminal_retrieve(int32_t fd, uint8_t* buf, int32_t nbytes){
 	int32_t i=0;
 	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
 		buf[i] = save_buff[i];
