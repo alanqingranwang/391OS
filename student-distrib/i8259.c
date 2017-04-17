@@ -6,7 +6,7 @@
 #include "lib.h"
 
 /* Interrupt masks to determine which interrupts
- * are enabled and disabled 
+ * are enabled and disabled
  *		Holds the most recent state of the masks
  */
 uint8_t master_mask; /* IRQs 0-7 */
@@ -14,13 +14,13 @@ uint8_t slave_mask; /* IRQs 8-15 */
 
 /* JC
  * i8259_init
- * 	DESCRIPTION: 
+ * 	DESCRIPTION:
  *			This function initializes the 8259 PIC for both
  *			the Master (0x20) and Slave (0xA0) to assigned IRQ vector numbers.
  *			Master is assigned to 0x20 to 0x27
- *			Slave is assigned to 0x28 to 0x2F 
+ *			Slave is assigned to 0x28 to 0x2F
  * 	INPUT: none
- *		OUTPUT: 
+ *		OUTPUT:
  *		RETURN VALUE: void
  *		SIDE EFFECTS: changes master and slave PIC assignments
  *
@@ -28,15 +28,14 @@ uint8_t slave_mask; /* IRQs 8-15 */
 void
 i8259_init(void)
 {
-	uint32_t flags; // uint32_t suppose to be unsigned long 
+    uint32_t flags; // uint32_t suppose to be unsigned long
 	cli_and_save(flags); // save original flag state and clear interrupts
-
 	// assume that all port writes are immediate
 	// master init
 	outb(ICW1, MASTER_8259_PORT);		// ICW1: select 8259A-1 init
 	outb(ICW2_MASTER, MASTER_MD);	 	// ICW2: 8259A-1 IR0-7 mapped to 0x20 - 0x27
 	outb(ICW3_MASTER, MASTER_MD);	 	// 8259A-1 (the master) has a slave on IR2
-	outb(ICW4, MASTER_MD);				
+	outb(ICW4, MASTER_MD);			
 
 	// slave init
 	outb(ICW1, SLAVE_8259_PORT);		// ICW1: select 8259A-2 init
@@ -70,7 +69,7 @@ i8259_init(void)
 /* JC
  * enable_irq
  *		http://wiki.osdev.org/8259_PIC#Masking
- * 	DESCRIPTION: 
+ * 	DESCRIPTION:
  *			THIS SHOULD BE CALLED WHEN A NEW IRQ NEEDS TO BE ADDED.
  *			This function takes a given IRQ line and re-enables it.
  *			This unmasking allows the IRQ line to raise interrupts.
@@ -83,7 +82,7 @@ i8259_init(void)
 void
 enable_irq(uint32_t irq_num)
 {
-	if(irq_num < 8)
+    if(irq_num < 8)
 	{
 		// takes the data from the port, and turns on the given irq_num
 		master_mask &= ~(1 << irq_num);
@@ -113,7 +112,7 @@ enable_irq(uint32_t irq_num)
 void
 disable_irq(uint32_t irq_num)
 {
-	if(irq_num < 8)
+    if(irq_num < 8)
 	{
 		// takes the data from the port, and turns on the given irq_num
 		master_mask |= (1 << irq_num);
@@ -146,12 +145,12 @@ disable_irq(uint32_t irq_num)
  * 	INPUT: irq_num - the interrupt that is done
  *		OUTPUT: none
  *		RETURN VALUE: none
- *		SIDE EFFECTS: 
+ *		SIDE EFFECTS:
  */
 void
 send_eoi(uint32_t irq_num)
 {
-	if(irq_num >= 8) // slave interrupts
+    if(irq_num >= 8) // slave interrupts
 	{
 		outb((EOI | SLAVE_IRQ), MASTER_8259_PORT);	// tell master that slave is done too
 		outb((EOI | (irq_num-8)), SLAVE_8259_PORT); 	// send end of interrupt to slave
@@ -159,4 +158,3 @@ send_eoi(uint32_t irq_num)
 	else
 		outb((EOI | irq_num), MASTER_8259_PORT); 		// send end of interrupt to master
 }
-

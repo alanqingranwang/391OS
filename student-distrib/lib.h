@@ -49,6 +49,12 @@ void show_blue_screen(void);
  */
 void test_interrupts(void);
 
+void scroll(void);
+
+void backspace(void);
+
+void update_cursor();
+
 /*
  *	scroll
  *		Shifts video memory to simulate scrolling

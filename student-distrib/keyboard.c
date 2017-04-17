@@ -3,12 +3,9 @@
  *              also contains the handler for keyboard input.
  * tab size = 2, spaces
  */
-
 #include "keyboard.h"
-
 static int CTR4 = NUM_FREQ; // remove later
 static int CTR3 = 0;
-
 /*
  * 0 - neither
  * 1 - shift
@@ -17,10 +14,67 @@ static int CTR3 = 0;
  */
 static int caps_shift_flag = NONE_MODE;
 static int ctrl_flag = 0;
-static int screen_x_pos = 0;
 static int buffer_index = 0;
-
 static unsigned char buffer[BUFFER_SIZE];
+static volatile int kbdr_flag = 0;
+
+/***********************Keyboard Driver****************************/
+
+/* AW
+ * keyboard_driver
+ *		DESCRIPTION:
+ *			The driver for the terminal to execute the proper operation
+ *		INPUT:
+ *			cmd - the operation we should be executing
+ *		RETURN VALUE:
+ *			-1 - incorrect cmd or failure from operations
+ *			returns are dependent on operation, check interfaces
+ */
+int32_t keyboard_driver(uint32_t cmd, op_data_t input){
+	switch(cmd){
+		case OPEN:
+			return keyboard_open();
+		case CLOSE:
+			return keyboard_close();
+		case READ:
+			return keyboard_read(STDIN_FD, (uint8_t*)(input.buf), input.nbytes);
+		case WRITE:
+			return keyboard_write();
+		default:
+			return -1;
+	}
+}
+
+int32_t keyboard_open() {
+    return -1;
+}
+
+int32_t keyboard_close() {
+    return -1;
+}
+
+int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
+	int i = 0;
+    int count;
+    kbdr_flag = 0;
+	while(1){
+		if(kbdr_flag == 1){
+			kbdr_flag = 0;
+			for(i = 0; i<nbytes && i<BUFFER_SIZE; i++) {
+				count = terminal_retrieve(fd, buf, nbytes);
+            }
+			break;
+		}
+    }
+
+	return count;
+}
+
+int32_t keyboard_write() {
+    return -1;
+}
+
+/**********************************************************************/
 
 /* AW
  * This table contains the character associated with the scan number from
@@ -184,7 +238,6 @@ static unsigned char kbd_ascii_key_map[KEY_MODES][TOTAL_SCANCODES] =
     '\0'  /* All other keys are undefined */
   }
 };
-
 /* AW
  * keyboard_init
  *      DESCRIPTION:
@@ -198,16 +251,13 @@ void keyboard_init()
 {
     uint32_t flags;
     cli_and_save(flags);
-
     // set the IDT table entry for KBD
     // Map keyboard interrupts to IDT
     idt[KBD_VECTOR_NUM].present = 1;
-    SET_IDT_ENTRY(idt[KBD_VECTOR_NUM], keyboard_handler);
-
+    SET_IDT_ENTRY(idt[KBD_VECTOR_NUM], keyboard_handler_wrapper);
     enable_irq(KBD_IRQ);    // enable IRQ 1
     restore_flags(flags);
 }
-
 /* AW
  * keyboard_handler
  *      DESCRIPTION:
@@ -223,16 +273,14 @@ void keyboard_init()
 void keyboard_handler()
 {
     // save registers, assembly wrapping
-    save_registers();
-    uint32_t flags;
+    //save_registers();
+    //uint32_t flags;
     // save previous state of interrupts, and prevent them
-    cli_and_save(flags);
+    //cli_and_save(flags);
     send_eoi(KBD_IRQ);  // tell PIC to continue with its work
-
     // get input key
     uint8_t key;
     key = inb(KBD_DATA_PORT);
-
     // handle all keystrokes
     switch(key) {
         case CAPS:
@@ -266,12 +314,10 @@ void keyboard_handler()
             process_key(key);
             break;
     }
-
     // restore and return
-    restore_flags(flags);
-    restore_registers();
+    //restore_flags(flags);
+    //restore_registers();
 }
-
 /* AW
  * toggle_caps
  *      DESCRIPTION:
@@ -291,7 +337,6 @@ void toggle_caps() {
     else
         caps_shift_flag = SHIFT_MODE;
 }
-
 /* AW
  * toggle_shift
  *      DESCRIPTION:
@@ -315,7 +360,6 @@ void toggle_shift(int type) {
             caps_shift_flag = CAPS_MODE;
     }
 }
-
 /* AW
  * toggle_ctrl(int type)
  *      DESCRIPTION:
@@ -331,7 +375,6 @@ void toggle_ctrl(int type) {
     else
         ctrl_flag = 0;
 }
-
 /* AW
  * process_key(uint8_t key)
  *      DESCRIPTION:
@@ -344,17 +387,17 @@ void toggle_ctrl(int type) {
 void process_key(uint8_t key) {
     // if it's within the given range, search the table for char
     if(key >= ABC_LOW_SCANS && key <= ABC_HIGH_SCANS) {
-        screen_x_pos++;
         if(key == L_MAKE && ctrl_flag) {
             clear();
             clear_buffer();
         }
+
         /********Remove later************/
         // if pressed ctrl and 3s
         else if(key == THREE_SCAN && ctrl_flag){
             clear();
             test_file_data(CTR3); // print the next file in dentry
-            CTR3++; 
+            CTR3++;
             CTR3 %= get_num_entries(); // wrap around
         }
         // if pressed ctrl and 4s
@@ -367,7 +410,7 @@ void process_key(uint8_t key) {
               print_freq(CTR4);
               set_print_one(0); // turn off
             }
-            else{               
+            else{
               print_freq(CTR4); // show next freq
               set_print_one(1); // turn on
               CTR4--;
@@ -379,30 +422,16 @@ void process_key(uint8_t key) {
             clear(); // print file
             print_file_info();
         }
+
+
         /**************************/
-        else if(screen_x_pos >= NUM_COLS) {
-            if(buffer_index + 1 < BUFFER_SIZE) {
-                scroll();
-                screen_x_pos = 0;
-                putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
-                buffer[buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
-                buffer_index++;
-            }
-            else
-                screen_x_pos--;
-        }
-        else {
-            if(buffer_index + 1 < BUFFER_SIZE) { // handle buffer overflow
-                putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
-                buffer[buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
-                buffer_index++;
-            }
-            else
-                screen_x_pos--;
+        else if(buffer_index + 1 < BUFFER_SIZE) {
+            putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
+            buffer[buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
+            buffer_index++;
         }
     }
 }
-
 /* AW
  * handle_backspace()
  *      DESCRIPTION:
@@ -417,10 +446,8 @@ void handle_backspace() {
         backspace();
         buffer_index--;
         buffer[buffer_index] = ' ';
-        screen_x_pos--;
     }
 }
-
 /* AW
  * handle_enter()
  *      DESCRIPTION:
@@ -431,14 +458,13 @@ void handle_backspace() {
  *      SIDE EFFECTS: none
  */
 void handle_enter() {
+	kbdr_flag = 1;
     scroll();
-    screen_x_pos = 0;
     //call terminal read once implemented
     // call terminal read, save the buffer
     terminal_read(STDOUT_FD, (int8_t*)buffer, buffer_index);
     clear_buffer();
 }
-
 /* AW
  * clear_buffer()
  *      DESCRIPTION:
@@ -454,5 +480,4 @@ void clear_buffer() {
         buffer[i] = ' ';
     }
     buffer_index = 0;
-    screen_x_pos = 0;
 }

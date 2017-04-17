@@ -15,6 +15,9 @@
 #define FD_OFF 0
 #define FD_ON 1
 
+#define STDIN_ 0 // STDIN is always fd = 0, read only, keyboard input
+#define STDOUT_ 1 // STDOUT is always fd = 1, write only, terminal output
+
 /* device driver cmd values */
 #define OPEN 1
 #define READ 2
@@ -26,7 +29,8 @@ typedef struct op_data_t {
 	int8_t *filename; // used in open
 	int32_t fd; // used in read, write, close
 	void* buf; // used in read and write
-	uint32_t nbytes; // used in read, and write
+	uint32_t nbytes; // used in read, and
+	uint32_t address; // used in load
 } op_data_t;
 
 /* File Descriptor Structure Described in 7.2 Documentation */
@@ -38,7 +42,7 @@ typedef struct file_descriptor_t {
 	// flags = 0, not in use, flags = 1, in use
 } fd_t;
 
-void fd_table_init();
+void fd_table_init(fd_t* new_table);
 
 /* Helpers */
 void set_fd_info(int32_t index, fd_t file_info);

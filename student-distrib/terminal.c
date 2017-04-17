@@ -1,11 +1,8 @@
 /* JC
  * terminal.c - Contains the terminal driver.
  */
-
 #include "terminal.h"
-
 static int8_t save_buff[TERM_BUFF_SIZE];
-
 /* JC
  * terminal_driver
  *		DESCRIPTION:
@@ -16,7 +13,7 @@ static int8_t save_buff[TERM_BUFF_SIZE];
  *			-1 - incorrect cmd or failure from operations
  *			returns are dependent on operation, check interfaces
  */
-int32_t terminal_driver(int cmd, op_data_t input){
+int32_t terminal_driver(uint32_t cmd, op_data_t input){
 	switch(cmd){
 		case OPEN:
 			return terminal_open();
@@ -30,7 +27,6 @@ int32_t terminal_driver(int cmd, op_data_t input){
 			return -1;
 	}
 }
-
 /* JC
  * terminal_open
  *		DESCRIPTION:
@@ -44,7 +40,6 @@ int32_t terminal_driver(int cmd, op_data_t input){
 int32_t terminal_open(){
 	return 0;
 }
-
 /* JC
  * terminal_close
  *		DESCRIPTION:
@@ -57,7 +52,6 @@ int32_t terminal_open(){
 int32_t terminal_close(int32_t fd){
 	return 0;
 }
-
 /* JC
  * terminal_read
  *		DESCRIPTION:
@@ -73,17 +67,16 @@ int32_t terminal_close(int32_t fd){
  *			 0 - sucess
  */
 int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes){
-	int32_t success = 0;
-
 	int32_t i;
+	for(i = 0; i<TERM_BUFF_SIZE; i++)
+		save_buff[i] = ' ';
+	int32_t success = 0;
 	for(i = 0; (i < TERM_BUFF_SIZE) && (i < nbytes); i++){
 		save_buff[i] = buf[i];
 		success++;
 	}
-
 	return success;
 }
-
 /* JC
  * terminal_write
  *		DESCRIPTION:
@@ -96,13 +89,18 @@ int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes){
  *			otherwise number of bytes written
  */
 int32_t terminal_write(int32_t fd, int8_t* buf, int32_t nbytes){
-	int32_t success = 0;
-
-	int32_t i;
-	for(i = 0; i < nbytes; i++){
+	int32_t i=0;
+	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
 		putc(buf[i]);
-		success++;
 	}
+	return i;
+}
 
-	return success;
+int32_t terminal_retrieve(int32_t fd, uint8_t* buf, int32_t nbytes){
+	int32_t i=0;
+	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
+		buf[i] = save_buff[i];
+		if (save_buff[i] == ' ') break;
+	}
+	return i;
 }

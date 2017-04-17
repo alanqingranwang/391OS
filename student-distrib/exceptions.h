@@ -3,6 +3,8 @@
 
 #include "lib.h"
 
+int exception_flag;
+
 /* ungeneralized exception handlers */
 extern void exception_0();
 extern void exception_1();

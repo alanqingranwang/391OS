@@ -6,11 +6,12 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "i8259.h"
+#include "syscall.h"
 #include "rtc.h"	// JC
 #include "idt.h"
 #include "paging.h"
 #include "debug.h"
-#include "filesystem.h" // JC
+#include "filesystem.h" //
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -160,7 +161,6 @@ entry (unsigned long magic, unsigned long addr)
 	idt_init();	// initialize the IDT
 	i8259_init();	// initialize the PIC
 	keyboard_init();	// initialize the keyboard
-	// to test rtc, uncomment function in handler
 	rtc_init();	// initialize the RTC
 	paging_init();	// initialize Paging
 
@@ -169,6 +169,7 @@ entry (unsigned long magic, unsigned long addr)
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
+	clear();
 	sti();
 
 	/***************************Checkpoint 3.1**************************/
@@ -185,6 +186,15 @@ entry (unsigned long magic, unsigned long addr)
 	/*******************************************************************/
 
 	/* Execute the first program (`shell') ... */
+	uint8_t string[33] = "shell ";
+	int32_t retval;
+	while(1) {
+		retval = execute(string);
+		if(retval == -1) {
+			printf("Fail to execute shell, %d", retval);
+		}
+		printf("hi");
+	}
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");

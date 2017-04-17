@@ -37,6 +37,11 @@ void paging_init() {
     enablePaging();
 }
 
+void add_process(uint32_t process_id) {
+    page_directory[32] = (0x00800000 + process_id * 0x00400000) | PROCESS_SET;
+    flush_tlb();
+}
+
 /*
  * enablePaging
  *   DESCRIPTION: Helper function to handle in-line-assembly for
@@ -75,4 +80,14 @@ void enablePaging() {
     :	/* No inputs */
     : "%eax" /* clobbers eax */
     );
+}
+
+void flush_tlb() {
+	asm volatile(
+     "mov %%cr3, %%eax;"
+     "mov %%eax, %%cr3;"
+     :
+     :
+     :"%eax"                /* clobbered register */
+     );
 }

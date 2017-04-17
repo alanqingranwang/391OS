@@ -6,6 +6,7 @@
 #include "lib.h"
 #include "rtc.h"
 #include "keyboard.h"
+#include "wrapper.h"
 //#include "syscall.h"
 
 #define NUM_EXCEPTIONS 32
@@ -14,7 +15,7 @@
 /* vector numbers */
 #define RTC_VECTOR_NUM 	40		// 0x28
 #define KBD_VECTOR_NUM 	33		// 0x21
-//#define SYSCALL_VECTOR_NUM 128 // 0x80
+#define SYSCALL_VECTOR_NUM 128 // 0x80
 
 /* Initialize the idt, including mapping all 256 entries */
 void idt_init(void);

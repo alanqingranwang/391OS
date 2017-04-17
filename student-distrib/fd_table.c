@@ -4,28 +4,32 @@
  */
 
 #include "fd_table.h"
+#include "syscall.h"
+#include "keyboard.h" // need driver, stdin
+#include "terminal.h" // need driver, stdout
 
-/* File Descriptor Table */
-static fd_t fd_table[MAX_OPEN_FILES];
 
 /* JC
  * Initializes the file descriptor table, will migrate to the execute syscall
  *		When we start creating multiple processes.
  */
-void fd_table_init()
+void fd_table_init(fd_t* new_table)
 {
-	uint32_t flags;
-	cli_and_save(flags);
-
 	uint32_t table_loop;
 	for(table_loop = 0; table_loop < MAX_OPEN_FILES; table_loop++)
 	{
-		(fd_table[table_loop]).flags = FD_OFF; // initialize all not in use.
+		(new_table[table_loop]).file_op_table_ptr = NULL;
+		(new_table[table_loop]).inode_ptr = -1;
+		(new_table[table_loop]).file_position = 0;
+		(new_table[table_loop]).flags = FD_OFF; // initialize all not in use.
 	}
 
 	// open stdin
+	(new_table[STDOUT_]).flags = FD_ON;
+	(new_table[STDOUT_]).file_op_table_ptr = terminal_driver;
 	// open stdout
-	restore_flags(flags);
+	(new_table[STDIN_]).flags = FD_ON;
+	(new_table[STDIN_]).file_op_table_ptr = keyboard_driver; // need the keyboard driver
 }
 
 /* JC
@@ -45,7 +49,7 @@ int32_t get_fd_index()
 	// should not consider index 0 and 1
 	for(table_loop = FIRST_VALID_INDEX; table_loop < MAX_OPEN_FILES; table_loop++)
 	{
-		if((fd_table[table_loop]).flags == FD_OFF) // available index
+		if(((((p_c.process_array)[p_c.current_process])->fd_table)[table_loop]).flags == FD_OFF) // available index
 			return table_loop;
 	}
 
@@ -66,10 +70,10 @@ int32_t get_fd_index()
  */
 void set_fd_info(int32_t index, fd_t file_info)
 {
-	(fd_table[index]).file_op_table_ptr = file_info.file_op_table_ptr;
-	(fd_table[index]).inode_ptr = file_info.inode_ptr;
-	(fd_table[index]).file_position = file_info.file_position;
-	(fd_table[index]).flags = file_info.flags;
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_op_table_ptr = file_info.file_op_table_ptr;
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = file_info.inode_ptr;
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = file_info.file_position;
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).flags = file_info.flags;
 }
 
 /* JC
@@ -83,7 +87,7 @@ void set_fd_info(int32_t index, fd_t file_info)
  */
 int32_t get_inode_ptr(int32_t index)
 {
-	return fd_table[index].inode_ptr;
+	return ((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr;
 }
 
 /* JC
@@ -97,7 +101,13 @@ int32_t get_inode_ptr(int32_t index)
  */
 void close_fd(int32_t index)
 {
-	fd_table[index].flags = FD_OFF;
+	if(index < 0 || index >= MAX_OPEN_FILES) {
+		return;
+	}
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_op_table_ptr = NULL;
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = -1;
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = 0;
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).flags = FD_OFF;
 }
 
 /*	JC
@@ -111,7 +121,7 @@ void close_fd(int32_t index)
  */
 uint32_t get_file_position(int32_t index)
 {
-	return fd_table[index].file_position;
+	return ((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position;
 }
 
 /* JC
@@ -126,7 +136,5 @@ uint32_t get_file_position(int32_t index)
  */
 void add_offset(int32_t index, uint32_t amt)
 {
-	fd_table[index].file_position += amt;
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position += amt;
 }
-
-

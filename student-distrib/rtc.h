@@ -24,7 +24,6 @@
 #include "lib.h"
 /* adding the interrupt to the table is the job of the init */
 #include "idt.h"
-#include "fd_table.h"
 
 /**** remove later *******/
 #include "testcases3_2.h"
@@ -83,6 +82,7 @@
 
 #define DEFAULT_FREQ		2 	// 2Hz = 2 interrupts/second
 #define MAX_RATE			6		// 1024Hz
+#define MIN_RATE			15
 #define NUM_FREQ			14
 
 /* Externally-visible functions */
@@ -96,7 +96,7 @@ int32_t rtc_driver(uint32_t cmd, op_data_t operation_data);
 int32_t rtc_open();
 int32_t rtc_read();
 int32_t rtc_write(const void* buf);
-int32_t rtc_close(/*int32_t fd*/);
+int32_t rtc_close(int32_t fd);
 
 void set_frequency(uint32_t frequency);
 
