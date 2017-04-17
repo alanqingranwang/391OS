@@ -193,6 +193,7 @@ entry (unsigned long magic, unsigned long addr)
 		if(retval == -1) {
 			printf("Fail to execute shell, %d", retval);
 		}
+		printf("hi");
 	}
 
 	/* Spin (nicely, so we don't chew up cycles) */

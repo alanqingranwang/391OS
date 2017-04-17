@@ -46,6 +46,14 @@ static extended_status;
  */
 int32_t halt(uint8_t status)
 {
+	if(p_c.process_array[p_c.current_process]->parent_id == -1){
+		p_c.no_processes = -1;
+		p_c.current_process = -1;
+		p_c.process_array[0] = 0;
+		p_c.in_use[0] = 0;
+		execute("shell");
+	}
+
 	extended_status = (0x000000FF & status) + exception_flag;
 
 	asm volatile(
@@ -75,6 +83,7 @@ int32_t halt(uint8_t status)
 		: "r"(extended_status)
 		: "%eax"
 	);
+
 	asm volatile("jmp execute_return");
 
 	return 0;
