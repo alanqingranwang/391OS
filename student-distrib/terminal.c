@@ -38,7 +38,7 @@ int32_t terminal_driver(uint32_t cmd, op_data_t input){
  *			0 - success
  */
 int32_t terminal_open(){
-	return 0;
+	return -1;
 }
 /* JC
  * terminal_close
@@ -50,7 +50,7 @@ int32_t terminal_open(){
  *			0 - success
  */
 int32_t terminal_close(int32_t fd){
-	return 0;
+	return -1;
 }
 /* JC
  * terminal_read
@@ -75,7 +75,8 @@ int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes){
 		save_buff[i] = buf[i];
 		success++;
 	}
-	return success;
+	return -1; // not suppose to be able to read
+	// return success;
 }
 /* JC
  * terminal_write
@@ -96,7 +97,13 @@ int32_t terminal_write(int32_t fd, int8_t* buf, int32_t nbytes){
 	return i;
 }
 
-int32_t terminal_retrieve(int32_t fd, uint8_t* buf, int32_t nbytes){
+/* NM
+ * terminal_retrieve
+ *	DESCRIPTION:
+ *		Puts the saved buffer from the previous output into the buf.
+ *		Used by the keyboard.
+ */
+int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
 	int32_t i=0;
 	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
 		buf[i] = save_buff[i];
