@@ -46,28 +46,7 @@ static extended_status;
  */
 int32_t halt(uint8_t status)
 {
-	/* uncomment when ready */
-	// uint8_t status = param1 & BYTE_MASK; // just retrieve the lower byte, safe way vs typecast
 	extended_status = (0x000000FF & status) + exception_flag;
-	// CALL RETURN WRAPPER HERE!
-
-
-	uint32_t esp = (p_c.process_array[p_c.current_process])->parent_stack_ptr;
-	// asm volatile(
-	// 	"movl %0, %%esp \n"
-	// 	:
-	// 	: "r"(esp)
-	// );
-
-	uint32_t ss = (p_c.process_array[p_c.current_process])->parent_ss_ptr;
-	// asm volatile(
-	// 	"movl %0, %%ss \n"
-	// 	:
-	// 	: "r"(ss)
-	// );
-
-	/** prepare for context switch */
-	// write tss esp0 and ebp0 for new k_stack process (not yet implemented)
 
 	asm volatile(
 		"movl %0, %%esp \n"
@@ -87,12 +66,8 @@ int32_t halt(uint8_t status)
 
 	add_process(p_c.current_process);
 
-	tss.esp0 = esp;
-	tss.ss0 = ss;
-
-	if(p_c.no_processes < 0) {
-		execute("shell");
-	}
+	tss.esp0 = p_c.process_array[p_c.current_process]->current_esp;
+	tss.ss0  = KERNEL_DS;
 
 	asm volatile(
 		"movl %0, %%eax \n"
@@ -153,14 +128,10 @@ int32_t execute(const uint8_t* command)
 
 	if(current_process == 0) { // is this the first program?
 		// process_pcb->parent = NULL;
-		process_pcb->parent_stack_ptr = NULL;
-		process_pcb->parent_ss_ptr = NULL;
 		process_pcb->parent_id = -1;
 	}
 	else{
 		// process_pcb->parent = process_array[p_c.current_process]
-		process_pcb->parent_stack_ptr = tss.esp0;
-		process_pcb->parent_ss_ptr = tss.ss0;
 		process_pcb->parent_id = p_c.current_process;
 	}
 	p_c.current_process = current_process;
@@ -227,27 +198,10 @@ int32_t execute(const uint8_t* command)
 		return -1;;
 	}
 
-
-	//open fds into file_descriptor table portion of pcb
-	//(JERRY LOOK HERE !!!!)
-	//we have a pcb->fd_table that needs to be initialized
-	//pcb->fd_table[0] holds std_in: keyboard r/w/o/c
-	//pcb->fd_table[1] holds std_out: terminal r/w/o/c
-
-
-
-	//store esp and ss into the Tss
-
-	uint32_t ss = KERNEL_DS;
-	/*asm volatile(
-		"movl %%ss, %0 \n"
-		: "=r"(ss)
-	);*/
-
 	/** prepare for context switch */
 	// write tss esp0 and ebp0 for new k_stack process (not yet implemented)
-	tss.esp0 = 0x800000 - 0x2000 * process_pcb->process_id - 4;
-	tss.ss0 = ss;
+	tss.esp0 = K_STACK_BOTTOM - 0x2000 * (process_pcb->process_id) - 4;
+	tss.ss0 = KERNEL_DS;
 
 	asm volatile(
 		"movl %%esp, %0 \n"
