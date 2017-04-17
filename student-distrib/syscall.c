@@ -28,6 +28,7 @@
  */
 
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
+static extended_status;
 
 /* JC
  * int32_t halt(uint8_t status)
@@ -47,15 +48,9 @@ int32_t halt(uint8_t status)
 {
 	/* uncomment when ready */
 	// uint8_t status = param1 & BYTE_MASK; // just retrieve the lower byte, safe way vs typecast
-	uint32_t extended_status = (0x000000FF & status) + exception_flag;
-	printf("%d\n", extended_status);
+	extended_status = (0x000000FF & status) + exception_flag;
 	// CALL RETURN WRAPPER HERE!
-	asm volatile(
-		"movl %0, %%eax \n"
-		:
-		: "r"(extended_status)
-		: "%eax"
-	);
+
 
 	uint32_t esp = (p_c.process_array[p_c.current_process])->parent_stack_ptr;
 	// asm volatile(
@@ -99,6 +94,12 @@ int32_t halt(uint8_t status)
 		execute("shell");
 	}
 
+	asm volatile(
+		"movl %0, %%eax \n"
+		:
+		: "r"(extended_status)
+		: "%eax"
+	);
 	asm volatile("jmp execute_return");
 
 	return 0;
