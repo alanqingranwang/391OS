@@ -8,8 +8,8 @@
 #define _FILESYSTEM_H
 
 #include "lib.h"
+#include "syscall.h"
 #include "fd_table.h"
-#include "terminal.h"
 
 // need to create a process thingy
 /* should automatically open stdin and stdout, which correspond to the file
@@ -33,7 +33,7 @@
 #define MAX_NAME_CHARACTERS 32 // maximum number of characters
 #define MAX_ENTRIES 63 // maximum possible dentries
 #define DENTRY_SIZE 64 // size of dentry in bytes
-#define DENTRY_RESERVE_SIZE 6 
+#define DENTRY_RESERVE_SIZE 6
 #define MAX_INODE_DATA_BLOCKS 1023 // this is how many data blocks an inode can have
 #define MAX_CHARS_IN_DATA 4096 // this is how many characters exist in a data block
 
@@ -96,5 +96,10 @@ int32_t file_write();
 int32_t file_close(int32_t fd);
 /******************************************/
 
-#endif /* _FILESYSTEM_H */
+/* pointers to the beginning of their respective blocks */
+boot_block_t* boot_block;
+dentry_t* entries; // points to the very first entry
+inode_t* inodes; // start of all the inodes
+data_block_t* data_blocks; // where the data blocks start
 
+#endif /* _FILESYSTEM_H */
