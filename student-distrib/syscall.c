@@ -109,6 +109,43 @@ int32_t halt(uint8_t status)
  */
 int32_t execute(const uint8_t* command)
 {
+	int i;
+	// get the file name and arguments
+	int32_t file_name_length;
+	int8_t file_name[32];
+	int8_t args[1024];
+
+	for(i = 0; command[i] != ' ' && command[i] != '\0'; i++) {
+		if(i >= 31) return -1;
+		file_name[i] = command[i];
+	}
+	file_name[i] = '\0';
+	file_name_length = i;
+
+	for(; command[i] != '\0'; i++) {
+		args[i-1 - file_name_length] = command[i];
+	}
+	args[i-1 - file_name_length] = '\0';
+
+	// if it returns -1, that means the file doesn't exist
+	dentry_t file_dentry;
+	if(read_dentry_by_name((uint8_t*)file_name, &file_dentry) == -1) // get the data
+		return -1;
+
+	// Read first 4 bytes to see if its an executable
+	uint8_t buf[28];
+	uint32_t read_bytes = 28;
+
+	if(read_data(file_dentry.inode_idx, 0, buf, read_bytes) == -1)
+		return -1;
+
+
+
+
+
+
+
+
 	exception_flag = 0;
 	if(p_c.no_processes >= 7) {
 		return -1;  // too many processes
@@ -122,7 +159,6 @@ int32_t execute(const uint8_t* command)
 	if(command == NULL) return -1;
 
 	/** Create PCB/ open FDs */
-	int i;
 	for(i = 0; i < 8; i++) {
 		if(p_c.in_use[i] == 0) {
 			p_c.in_use[i] = 1;
@@ -146,40 +182,6 @@ int32_t execute(const uint8_t* command)
 	p_c.current_process = current_process;
 
 	fd_table_init(process_pcb->fd_table);
-	// get the file name and arguments
-	int file_name_length;
-	int8_t file_name[32];
-	int8_t args[1024];
-
-	for(i = 0; command[i] != ' ' && command[i] != '\0'; i++) {
-		if(i >= 31) return -1;
-		file_name[i] = command[i];
-	}
-	file_name[i] = '\0';
-	file_name_length = i;
-
-	for(; command[i] != '\0'; i++) {
-		args[i-1 - file_name_length] = command[i];
-	}
-	args[i-1 - file_name_length] = '\0';
-
-	// Read first 4 bytes to see if its an executable
-	uint8_t buf[28];
-	op_data_t file_pack;
-	file_pack.filename = file_name;
-	file_pack.buf = buf;
-	file_pack.nbytes = 28;
-	int32_t myfd = file_driver(OPEN, file_pack);
-
-	if(myfd == -1) { // is file opened?
-		return -1;
-	}
-
-	file_pack.fd = myfd;
-	if(file_driver(READ, file_pack) == -1) {
-		return -1;
-	}
-	file_driver(CLOSE, file_pack);
 
 	int j;
 	for(j = 0; j < 4; j++) {
