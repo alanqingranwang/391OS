@@ -22,27 +22,27 @@ static volatile int kbdr_flag = 0;
 
 /* AW
  * keyboard_driver
- *    DESCRIPTION:
- *      The driver for the terminal to execute the proper operation
- *    INPUT:
- *      cmd - the operation we should be executing
- *    RETURN VALUE:
- *      -1 - incorrect cmd or failure from operations
- *      returns are dependent on operation, check interfaces
+ *		DESCRIPTION:
+ *			The driver for the terminal to execute the proper operation
+ *		INPUT:
+ *			cmd - the operation we should be executing
+ *		RETURN VALUE:
+ *			-1 - incorrect cmd or failure from operations
+ *			returns are dependent on operation, check interfaces
  */
 int32_t keyboard_driver(uint32_t cmd, op_data_t input){
-  switch(cmd){
-    case OPEN:
-      return keyboard_open();
-    case CLOSE:
-      return keyboard_close();
-    case READ:
-      return keyboard_read(STDIN_FD, (uint8_t*)(input.buf), input.nbytes);
-    case WRITE:
-      return keyboard_write();
-    default:
-      return -1;
-  }
+	switch(cmd){
+		case OPEN:
+			return keyboard_open();
+		case CLOSE:
+			return keyboard_close();
+		case READ:
+			return keyboard_read(STDIN_FD, (uint8_t*)(input.buf), input.nbytes);
+		case WRITE:
+			return keyboard_write();
+		default:
+			return -1;
+	}
 }
 
 int32_t keyboard_open() {
@@ -54,26 +54,22 @@ int32_t keyboard_close() {
 }
 
 int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
-    uint32_t flags;
-    cli_and_save(flags);
-    /*************/sti();
-  int i = 0;
+	int i = 0;
     int count;
     kbdr_flag = 0;
-  while(1){
-    if(kbdr_flag == 1){
-      kbdr_flag = 0;
-      for(i = 0; i<nbytes && i<BUFFER_SIZE; i++) {
-        count = terminal_retrieve(fd,buf,nbytes);
+	while(1){
+		if(kbdr_flag == 1){
+			kbdr_flag = 0;
+			for(i = 0; i<nbytes && i<BUFFER_SIZE; i++) {
+				count = terminal_retrieve(fd,buf,nbytes);
             }
-      break;
-    }
+			break;
+		}
     }
     /***************/
     printf("%d\n", count);
-    
-    restore_flags(flags);
-  return count;
+
+	return count;
 }
 
 int32_t keyboard_write() {
@@ -464,7 +460,7 @@ void handle_backspace() {
  *      SIDE EFFECTS: none
  */
 void handle_enter() {
-  kbdr_flag = 1;
+	kbdr_flag = 1;
     scroll();
     //call terminal read once implemented
     // call terminal read, save the buffer

@@ -224,14 +224,10 @@ int32_t rtc_open()
  */
 int32_t rtc_read()
 {
-	uint32_t flags;
-	cli_and_save(flags);
 	sti(); // allow interrupts
 	interrupt_flag = 0;
 	// wait for interrupt to happen
 	while(!interrupt_flag);
-
-	restore_flags(flags);
 	return 0;
 }
 

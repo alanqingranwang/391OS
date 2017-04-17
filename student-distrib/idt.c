@@ -82,6 +82,7 @@ void idt_init() {
 
     /* Turn on system call interrupt 0x80 */
     // uncomment when done with system call
+    idt[SYSCALL_VECTOR_NUM].reserved3 = 1;
     idt[SYSCALL_VECTOR_NUM].present = 1;
     idt[SYSCALL_VECTOR_NUM].dpl = 3;
     SET_IDT_ENTRY(idt[SYSCALL_VECTOR_NUM], syscall_handler_wrapper);
