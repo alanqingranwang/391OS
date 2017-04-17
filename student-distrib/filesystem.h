@@ -11,14 +11,6 @@
 #include "syscall.h"
 #include "fd_table.h"
 
-// need to create a process thingy
-/* should automatically open stdin and stdout, which correspond to the file
- *		descriptors 0 and 1, respectively. stdin is a read-only file which corresponds
- *		to keyboard input. stdout is a write-only location in the file array, and marking
- *		the files as in-use. For the remaining six file descriptors avaialable, an entry
- *		in the file array is dynamically associated with the file being open'd whenever
- *		the open system call is made (return -1 if the array is full).
- */
 
 /* All The Macros */
 /* Macro for filesystem init in entry code */
