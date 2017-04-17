@@ -9,12 +9,10 @@
 #include "filesystem.h" // need dentry and shit
 
 #define K_STACK_BOTTOM		0x00800000
-#define PROGRAM_PAGE		0x08000000
+#define PROGRAM_PAGE			0x08000000
 #define PROGRAM_START		0x08048000
 #define PROCESS_SIZE     	0x00002000
 
-// note to self, I need something that's the opposite of their
-// do call, in piazza.
 
 /* WARNING:	Some system calls need to synchronize with interrupt handlers. For example, the read system
  *		call made on the RTC device should wait until the next RTC interrupt has occurred before it returns.
@@ -38,9 +36,10 @@ static uint32_t extended_status;
  *			from BL into the 32-bit return value to the parent program's execute system call.
  *			Be careful not to return all 32 bits from EBX. This call should never return to
  *			the caller.
- * 	INPUT: status -
+ * 	INPUT:
+ *			status - contains the status upon halting.
  *		OUTPUT:
- *		RETURN VALUE:
+ *		RETURN VALUE: status
  *		SIDE EFFECTS:
  *
  */
@@ -246,9 +245,9 @@ int32_t execute(const uint8_t* command)
  *			You should use a jump table referenced by the task's file array to call for a generic handler for this
  *			call into a file-type-specific function. This jump table should be inserted into the file array on the
  *			open system call (see below).
- * 	INPUT: fd - file descriptor
- *				 buf -
- *				 nbytes -
+ * 	INPUT: fd - file descriptor index
+ *				 buf - buffer we are copying to
+ *				 nbytes - how many bytes to read
  *		OUTPUT:
  *		RETURN VALUE: 	in general - return number of bytes read
  *							0 - if the initial file position is at or beyond the end of file (for normal files
@@ -257,25 +256,31 @@ int32_t execute(const uint8_t* command)
  *										or as much as fits in the buffer from one such line. The line should include
  *										line feed character.
  *							RTC - always return 0
- *
  *		SIDE EFFECTS:
  *
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes)
 {
- 	/* uncomment when ready */
- 	// int32_t fd = (int32_t)param1;
- 	// void* buf = (void*)param2;
- 	// int32_t nbytes = (int32_t)param3;
+	if(!check_valid_fd(fd))
+	{
+		printf("Invalid FD, sys_read\n");
+		return -1; // invalid fd
+	}
 
+	if(buf == NULL)
+		return -1; // invalid pointer
+
+	// Create the operation pack
  	op_data_t unknown_pack;
  	unknown_pack.fd = fd;
  	unknown_pack.buf = buf;
  	unknown_pack.nbytes = nbytes;
 
+ 	// get the function pointer to the specific file or rtc or thing
  	int32_t (*func_ptr)(uint32_t, op_data_t);
  	func_ptr = ((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).file_op_table_ptr;
 
+ 	// read from the unknown function
  	return func_ptr(READ, unknown_pack);
 }
 
@@ -286,9 +291,9 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
  *			displayed to the screen immediately. In the case of the RTC, the system call should always accept only
  *			a 4-byte integer specifying the interrupt rate in Hz, and should set the rate of periodic interrupts
  *			accordingly. set_frequency function in rtc.h
- * 	INPUT: fd -
- *				 buf -
- *				 nbytes -
+ * 	INPUT: fd - file descriptor index
+ *				 buf - buffer that we are writing from
+ *				 nbytes - how many bytes to write
  *		OUTPUT:
  *		RETURN VALUE: Writes to regular files should always return -1 to indicate failure since the file system
  *						  is read-only.
@@ -298,19 +303,26 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
  */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 {
- 	/* uncomment when ready */
- 	// int32_t fd = (int32_t)param1;
- 	// const void* buf = (void*)param2;
- 	// int32_t nbytes = (int32_t)param3;
+	if(!check_valid_fd(fd))
+	{
+		printf("Invalid FD, sys_write\n");
+		return -1; // invalid fd
+	}
 
+	if(buf == NULL)
+		return -1; // invalid pointer
+
+	// Create the operation pack
  	op_data_t unknown_pack;
  	unknown_pack.fd = fd;
  	unknown_pack.buf = (void*)buf;
  	unknown_pack.nbytes = nbytes;
 
+ 	// get the function pointer to the specific file or rtc or thing
  	int32_t (*func_ptr)(uint32_t, op_data_t);
  	func_ptr = ((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).file_op_table_ptr;
 
+ 	// write to the unknown function
  	return func_ptr(WRITE, unknown_pack);
 }
 
@@ -320,7 +332,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
  *			Provides access to file system. The call should find the directory entry corresponding to the named file,
  *			allocate an unused file descriptor, and set up any data necessary to handle the given type of file (directory,
  *			RTC device, or regular file).
- * 	INPUT: filename -
+ * 	INPUT: filename - file name we are trying to open
  *		OUTPUT:
  *		RETURN VALUE: -1 - if the named file doesn't exist or no desciptors are free.
  *		SIDE EFFECTS:
@@ -328,10 +340,19 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
  */
 int32_t open(const uint8_t* filename)
 {
- 	/* uncomment when ready */
- 	// const uint8_t* filename = (uint8_t*)param1;
+	if(filename == NULL)
+	{
+		printf("invalid pointer, sys_open\n");
+		return -1; // check pointer
+	}
 
- 	dentry_t dentry; // looking for this dentry
+	if(filename[0] == '\0')
+	{
+		printf("invalid name, sys_open\n");
+		return -1; // empty name
+	}
+
+	dentry_t dentry; // looking for this dentry
  	if(read_dentry_by_name(filename, &dentry) == -1) // find the dentry
  		return -1; // doesn't exist
 
@@ -359,7 +380,7 @@ int32_t open(const uint8_t* filename)
  * 	DESCRIPTION:
  *			Closes the specified file descriptor and makes it available for return from later calls to open. You should now
  *			allow the user to close the default descriptors (0 for input and 1 for output).
- * 	INPUT: fd -
+ * 	INPUT: fd - file descriptor we should close
  *		OUTPUT:
  *		RETURN VALUE: -1 - trying to close an invalid descriptor
  *							0 - successful closes
@@ -368,15 +389,21 @@ int32_t open(const uint8_t* filename)
  */
 int32_t close(int32_t fd)
 {
- 	/* uncomment when ready */
- 	// int32_t fd = (int32_t)param1;
+	if(!check_valid_fd(fd))
+	{
+		printf("Invalid FD, sys_close\n");
+		return -1; // invalid fd
+	}
 
+	// Create the operation pack
  	op_data_t unknown_pack;
  	unknown_pack.fd = fd;
 
+ 	// get the function pointer for the unknown function
  	int32_t (*func_ptr)(uint32_t, op_data_t);
  	func_ptr = ((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).file_op_table_ptr;
 
+ 	// close it
  	return func_ptr(CLOSE, unknown_pack);
 }
 
@@ -396,11 +423,7 @@ int32_t close(int32_t fd)
  */
 int32_t getargs(uint8_t* buf, int32_t nbytes)
 {
- 	/* uncomment when ready */
- 	// uint8_t* buf = (uint8_t*)param1;
- 	// int32_t nbytes = (int32_t)param2;
 
- 	// syscall_return_failure();
  	return -1;
 }
 
@@ -422,10 +445,6 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
  */
 int32_t vidmap(uint8_t** screen_start)
 {
- 	/* uncomment when ready */
- 	// uint8_t** screen_start = (uint8_t**)param1;
-
- 	// syscall_return_failure();
  	return -1;
 }
 
@@ -441,11 +460,7 @@ int32_t vidmap(uint8_t** screen_start)
  */
 int32_t set_handler(int32_t signum, void* handler_address)
 {
- 	/* uncomment when ready */
- 	// int32_t signum = (int32_t)param1;
- 	// void* handler_address = (void*)handler_address;
 
- 	// syscall_return_failure();
  	return -1;
 }
 
@@ -460,7 +475,6 @@ int32_t set_handler(int32_t signum, void* handler_address)
  */
 int32_t sigreturn(void)
 {
- 	// syscall_return_failure();
  	return -1;
 }
 
