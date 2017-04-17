@@ -45,31 +45,54 @@ int32_t keyboard_driver(uint32_t cmd, op_data_t input){
 	}
 }
 
+/* AW
+ * keyboard_open
+ *   empty functionality, should always be open
+ */
 int32_t keyboard_open() {
     return -1;
 }
 
+/* AW
+ * keyboard_close
+ *  empty functionality, should always be open
+ */
 int32_t keyboard_close() {
     return -1;
 }
 
+/* NM
+ * keyboard_read
+ *  DESCRIPTION: 
+ *    Waits for the keyboard handler to be called, then takes the buffer
+ *    that was inputed by the user and reads it.
+ *  INPUT:
+ *    fd - fd index, should be STDIN
+ *    buf - buffer that we are putting stuff into
+ *    nbytes - number of bytes that we are reading
+ */
 int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
 	int i = 0;
-    int count;
-    kbdr_flag = 0;
-	while(1){
+  int count;
+  kbdr_flag = 0;
+	
+  while(1){
 		if(kbdr_flag == 1){
 			kbdr_flag = 0;
-			for(i = 0; i<nbytes && i<BUFFER_SIZE; i++) {
-				count = terminal_retrieve(fd, buf, nbytes);
-            }
+      for(i = 0; i<nbytes && i<BUFFER_SIZE; i++) {
+				count = terminal_retrieve(buf, nbytes);
+      }
 			break;
 		}
-    }
+  }
 
 	return count;
 }
 
+/* AW
+ *  keyboard_write
+ *  empty functionality, you can't write to a keyboard.
+ */
 int32_t keyboard_write() {
     return -1;
 }
@@ -422,7 +445,6 @@ void process_key(uint8_t key) {
             clear(); // print file
             print_file_info();
         }
-
 
         /**************************/
         else if(buffer_index + 1 < BUFFER_SIZE) {

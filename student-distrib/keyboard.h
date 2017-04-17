@@ -41,11 +41,11 @@
 #define CTRL_BREAK   0x9D
 #define L_MAKE       0x26
 
-#define CAPS            0x3A
-#define BKSP            0x0E
-#define ENTER           0x1C
-#define FOUR_SCAN 0x05
-#define THREE_SCAN 0x04
+#define CAPS         0x3A
+#define BKSP         0x0E
+#define ENTER        0x1C
+#define FOUR_SCAN 	0x05
+#define THREE_SCAN 	0x04
 
 #define BUFFER_SIZE     128
 #define KEY_MODES       4   // nothing, shift, caps, shift and caps
@@ -58,10 +58,6 @@
 #define SHIFT_CAPS_MODE 3
 
 #define STDIN_FD 0 // the fd for STDIN
-
-
-// enum key_mode {NONE, SHIFT, CAPS, SHIFT_CAPS};
-// typedef enum key_mode mode;
 
 /* Externally-visible functions */
 
