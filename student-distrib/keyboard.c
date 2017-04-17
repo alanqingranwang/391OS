@@ -411,6 +411,7 @@ void process_key(uint8_t key) {
         if(key == L_MAKE && ctrl_flag) {
             clear();
             clear_buffer();
+            printf("391OS> ");
         }
 
         /********Remove later************/
