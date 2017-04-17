@@ -163,6 +163,7 @@ entry (unsigned long magic, unsigned long addr)
 	keyboard_init();	// initialize the keyboard
 	rtc_init();	// initialize the RTC
 	paging_init();	// initialize Paging
+	pc_init();
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your

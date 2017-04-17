@@ -28,6 +28,13 @@
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
 static uint32_t extended_status;
 
+void pc_init(){
+	p_c.no_processes = -1;
+	p_c.current_process = -1;
+	p_c.process_array[0] = 0;
+	p_c.in_use[0] = 0;
+}
+
 /* JC
  * int32_t halt(uint8_t status)
  * 	DESCRIPTION:
@@ -46,10 +53,7 @@ static uint32_t extended_status;
 int32_t halt(uint8_t status)
 {
 	if(p_c.process_array[p_c.current_process]->parent_id == -1){
-		p_c.no_processes = -1;
-		p_c.current_process = -1;
-		p_c.process_array[0] = 0;
-		p_c.in_use[0] = 0;
+		pc_init();
 		execute((uint8_t*)"shell");
 	}
 
