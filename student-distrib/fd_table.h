@@ -53,5 +53,6 @@ uint32_t get_file_position(int32_t index);
 void add_offset(int32_t index, uint32_t amt);
 
 void close_fd(int32_t index);
+int32_t check_valid_fd(int32_t index);
 
 #endif /* _FD_TABLE_H */

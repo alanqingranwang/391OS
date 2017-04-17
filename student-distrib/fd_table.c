@@ -10,14 +10,21 @@
 
 
 /* JC
- * Initializes the file descriptor table, will migrate to the execute syscall
- *		When we start creating multiple processes.
+ * fd_table_init
+ *		DESCRIPTION:
+ *			Given the fd_table of a specific process. Initialize it to all off. Then
+ *			initialize the fd index 0 and 1 to be used by terminal_driver and keyboard_driver
+ *		INPUT:
+ *			new_table - a pointer to the table we are trying to initialize
+ *		Return value: none
+ *
  */
 void fd_table_init(fd_t* new_table)
 {
 	uint32_t table_loop;
 	for(table_loop = 0; table_loop < MAX_OPEN_FILES; table_loop++)
 	{
+		// initialize to empty fd structure
 		(new_table[table_loop]).file_op_table_ptr = NULL;
 		(new_table[table_loop]).inode_ptr = -1;
 		(new_table[table_loop]).file_position = 0;
@@ -70,6 +77,9 @@ int32_t get_fd_index()
  */
 void set_fd_info(int32_t index, fd_t file_info)
 {
+	if(index < 0 || index >= MAX_OPEN_FILES)
+		return;
+
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_op_table_ptr = file_info.file_op_table_ptr;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = file_info.inode_ptr;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = file_info.file_position;
@@ -87,6 +97,9 @@ void set_fd_info(int32_t index, fd_t file_info)
  */
 int32_t get_inode_ptr(int32_t index)
 {
+	if(index < 0 || index >= MAX_OPEN_FILES)
+		return -1;
+
 	return ((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr;
 }
 
@@ -101,9 +114,9 @@ int32_t get_inode_ptr(int32_t index)
  */
 void close_fd(int32_t index)
 {
-	if(index < 0 || index >= MAX_OPEN_FILES) {
+	if(index < 0 || index >= MAX_OPEN_FILES)
 		return;
-	}
+	
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_op_table_ptr = NULL;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = -1;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = 0;
@@ -136,5 +149,31 @@ uint32_t get_file_position(int32_t index)
  */
 void add_offset(int32_t index, uint32_t amt)
 {
+	if(index < 0 || index >= MAX_OPEN_FILES)
+		return;
+	
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position += amt;
 }
+
+/* JC
+ * check_valid_fd
+ *		DESCRIPTION:
+ *			Check if the index is on.
+ *		INPUT:
+ *			index - the file descriptor we want to check
+ *		RETURN VALUE: 0 for invalid, 1 for valid
+ */
+int32_t check_valid_fd(int32_t index)
+{
+	if(((((p_c.process_array)[p_c.current_process])->fd_table)[index]).flags)
+	{
+		// fd is in use
+		if(index < 0 || index >= MAX_OPEN_FILES)
+			return 0;
+		else
+			return 1;
+	}	
+	
+	return 0;
+}
+
