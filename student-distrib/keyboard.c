@@ -61,7 +61,7 @@ int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
 		if(kbdr_flag == 1){
 			kbdr_flag = 0;
 			for(i = 0; i<nbytes && i<BUFFER_SIZE; i++) {
-				count = terminal_retrieve(fd,buf,nbytes);
+				count = terminal_retrieve(fd, buf, nbytes);
             }
 			break;
 		}

@@ -1,4 +1,5 @@
 #include "exceptions.h"
+#include "syscall.h"
 
 /* map exception to proper handler function */
 void exception_0() { exception_handler(0);}
