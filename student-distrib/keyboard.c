@@ -72,21 +72,19 @@ int32_t keyboard_close() {
  *    nbytes - number of bytes that we are reading
  */
 int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
-	int i = 0;
   int count;
   kbdr_flag = 0;
 	
   while(1){
 		if(kbdr_flag == 1){
-			kbdr_flag = 0;
-      for(i = 0; i<nbytes && i<BUFFER_SIZE; i++) {
-				count = terminal_retrieve(buf, nbytes);
-      }
+			count = terminal_retrieve(buf, nbytes);
 			break;
 		}
   }
 
-	return count;
+  // count is always less than or equal to nbytes
+  buf[count] = '\n'; // replace the space with a new line
+  return ++count;
 }
 
 /* AW
