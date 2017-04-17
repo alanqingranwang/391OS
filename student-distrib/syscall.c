@@ -25,10 +25,10 @@ static uint32_t extended_status;
 
 /* NM
  * void pc_init()
- * Description: initializes process controller
- * Input: None
- * Output: None
- * Return Value: None
+ *  DESCRIPTION: initializes process controller
+ *  INPUT: None
+ *  OUTPUT: None
+ *  RETURN VALUE: None
  */
 void pc_init(){
 	p_c.no_processes = -1;
@@ -37,7 +37,7 @@ void pc_init(){
 	p_c.in_use[0] = 0;
 }
 
-/* JC
+/* 
  * int32_t halt(uint8_t status)
  * 	DESCRIPTION:
  *			Terminates a process, returning the specified value to its parent process
@@ -53,14 +53,17 @@ void pc_init(){
  *
  */
 int32_t halt(uint8_t status)
-{
+{   
+	/* if terminating original shell, restart shell */
 	if(p_c.process_array[p_c.current_process]->parent_id == -1){
 		pc_init();
 		execute((uint8_t*)"shell");
 	}
 
+	//return status
 	extended_status = (STATUS_BYTEMASK & status) + exception_flag;
 
+	/* restore esp and ebp */
 	asm volatile(
 		"movl %0, %%esp \n"
 		:
@@ -73,15 +76,19 @@ int32_t halt(uint8_t status)
 		: "r"(p_c.process_array[p_c.current_process]->current_ebp)
 	);
 
+	/* revert process controller info to parent process */
 	p_c.in_use[p_c.current_process] = 0;
 	p_c.current_process = p_c.process_array[p_c.current_process]->parent_id;
 	p_c.no_processes--;
 
+	/* prepare paging for context switch */
 	add_process(p_c.current_process);
 
+	/* prepare tss for context switch */
 	tss.esp0 = p_c.process_array[p_c.current_process]->current_esp;
 	tss.ss0  = KERNEL_DS;
 
+	/* set return value */
 	asm volatile(
 		"movl %0, %%eax \n"
 		:
@@ -89,12 +96,13 @@ int32_t halt(uint8_t status)
 		: "%eax"
 	);
 
+	/* return */
 	asm volatile("jmp execute_return");
 
 	return 0;
 }
 
-/* JC
+/* 
  * int32_t execute(const uint8_t* command)
  * 	DESCRIPTION:
  *			Attempts to load and execute a new program, handing off
@@ -116,11 +124,12 @@ int32_t execute(const uint8_t* command)
 {
 	int32_t i;
 
-	// get the file name and arguments
+	/* get the file name and arguments */
 	int32_t file_name_length;
 	int8_t file_name[FILE_NAME_LENGTH];
 	int8_t args[MAX_ARGS];
 
+	/* parse file and extract useful data */
 	for(i = 0; command[i] != ' ' && command[i] != '\0'; i++) {
 		if(i >= FILE_NAME_LENGTH-1) return -1;
 		file_name[i] = command[i];
@@ -146,6 +155,7 @@ int32_t execute(const uint8_t* command)
 	if(read_data(file_dentry.inode_idx, 0, buf, read_bytes) == -1)
 		return -1;
 
+	/* initialize new process in process controller */
 	exception_flag = 0;
 	if(p_c.no_processes >= MAX_PROCESSES-1) {
 		return -1;  // too many processes
@@ -154,11 +164,9 @@ int32_t execute(const uint8_t* command)
 		p_c.no_processes++;
 	}
 
-	/** Parse args and check file validity */
 	//check command validity
 	if(command == NULL) return -1;
 
-	/** Create PCB/ open FDs */
 	for(i = 0; i < MAX_PROCESSES; i++) {
 		if(p_c.in_use[i] == 0) {
 			p_c.in_use[i] = 1;
@@ -167,6 +175,7 @@ int32_t execute(const uint8_t* command)
 	}
 	int32_t current_process = i;
 
+	/* create pcb and initialize it */
 	pcb * process_pcb = (pcb *)(K_STACK_BOTTOM - PROCESS_SIZE*(1+current_process));
 	p_c.process_array[current_process] = process_pcb;
 	process_pcb->process_id = current_process;
@@ -191,7 +200,7 @@ int32_t execute(const uint8_t* command)
 		}
 	}
 
-	// Extract entry point of task
+	/* Extract entry point of task */
 	uint32_t entry_point = 0;
 	for(j = ENTRY_POINT_START; j < BYTES_TO_READ; j++) {
 		entry_point |= (buf[j] << (BYTE_SIZE*(j-ENTRY_POINT_START)));
@@ -200,6 +209,7 @@ int32_t execute(const uint8_t* command)
 	/* set up paging */
 	add_process(process_pcb->process_id);
 
+	/* read file into memory */
 	dentry_t dentry;
 	uint32_t address = PROGRAM_START;
 	if(read_dentry_by_name((uint8_t*) file_name, &dentry) == -1) {
@@ -210,11 +220,11 @@ int32_t execute(const uint8_t* command)
 		return -1;;
 	}
 
-	/** prepare for context switch */
-	// write tss esp0 and ebp0 for new k_stack process (not yet implemented)
+	/* prepare tss for context switch */
 	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (process_pcb->process_id) - BYTE_SIZE/2;
 	tss.ss0 = KERNEL_DS;
 
+	/* store current esp and ebp for halt */
 	asm volatile(
 		"movl %%esp, %0 \n"
 		: "=r"(p_c.process_array[p_c.current_process]->current_esp)
@@ -224,13 +234,15 @@ int32_t execute(const uint8_t* command)
 		"movl %%ebp, %0 \n"
 		: "=r"(p_c.process_array[p_c.current_process]->current_ebp)
 	);
-	/** push IRET context to stack and IRET */
+	
+	/* push IRET context to stack and IRET */
 	user_context_switch(entry_point);
 
+	/* used for halting */
 	asm volatile ("execute_return: ");
 	asm volatile ("leave");
 	asm volatile ("ret");
-	/** return */
+	/* return */
 
 	return 0;
 }
