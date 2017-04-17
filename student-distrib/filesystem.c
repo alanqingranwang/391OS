@@ -2,21 +2,13 @@
  * filesystem.c - Contains the definitions for the files
  * tab size = 3, no space
  */
-
 #include "filesystem.h"
-
 static uint32_t num_entries;
 static uint32_t num_inodes;
 static uint32_t num_data_blocks;
-/* pointers to the beginning of their respective blocks */
-static boot_block_t* boot_block;
-static dentry_t* entries; // points to the very first entry
-static inode_t* inodes; // start of all the inodes
-static data_block_t* data_blocks; // where the data blocks start
+
 /* holds the file_name size for all the dentries, maxes at 32 chars */
-
 static int32_t character_count[MAX_ENTRIES];
-
 /* JC
  * filesystem_init
  * 	DESCRIPTION:
@@ -47,13 +39,16 @@ void filesystem_init(boot_block_t* boot_addr)
 	// initiaize the file_name table
 	create_char_count();
 
-	fd_table_init(); // will be by itself later on?
+ 	// initialize the process
+	p_c.no_processes = -1;
+	p_c.current_process = -1; // index into process_array for which process is currently running
+	uint32_t pc_count;
+	for(pc_count = 0; pc_count < MAX_PROCESSES; pc_count++)
+		p_c.in_use[pc_count] = 0;
 
 	restore_flags(flags);
 }
-
 /************************CHECKPOINT 3.2****************************/
-
 /* JC
  * print_file_info
  *		Prints all the file information.
@@ -61,62 +56,62 @@ void filesystem_init(boot_block_t* boot_addr)
  *		file type
  *		file size (in bytes)
  */
-void print_file_info()
-{
-	clear();
-	// uint32_t d_loop; // loops through all the dentry loops
-	// uint32_t char_loop; // go through all the characters
-	// dentry_t file_dent;
+ void print_file_info()
+ {
+ 	clear();
+ 	// uint32_t d_loop; // loops through all the dentry loops
+ 	// uint32_t char_loop; // go through all the characters
+ 	// dentry_t file_dent;
 
-	// for(d_loop = 0; d_loop < num_entries; d_loop++)
-	// {
-	// 	read_dentry_by_index(d_loop, &file_dent); // get the dentry
-		
-	// 	// print out the name
-	// 	printf("file name: "); // can't use %s, if there's no guaranteed '\0'
-	// 	char_loop = print_name(file_dent.file_name, character_count[d_loop]);
+ 	// for(d_loop = 0; d_loop < num_entries; d_loop++)
+ 	// {
+ 	// 	read_dentry_by_index(d_loop, &file_dent); // get the dentry
 
-	// 	for(char_loop = char_loop; char_loop < NUM_SPACES; char_loop++)
-	// 		printf(" "); // add spaces to align the rest		
+ 	// 	// print out the name
+ 	// 	printf("file name: "); // can't use %s, if there's no guaranteed '\0'
+ 	// 	char_loop = print_name(file_dent.file_name, character_count[d_loop]);
 
-	// 	printf("file type: %d ", file_dent.file_type);
-	// 	printf("file size: %d\n", inodes[file_dent.inode_idx].file_size);
-	// }
+ 	// 	for(char_loop = char_loop; char_loop < NUM_SPACES; char_loop++)
+ 	// 		printf(" "); // add spaces to align the rest
 
-	op_data_t dir_pack;
-	dir_pack.filename = ".";
-	int32_t dir_fd = dir_driver(OPEN, dir_pack);
-	dir_pack.fd = dir_fd;
+ 	// 	printf("file type: %d ", file_dent.file_type);
+ 	// 	printf("file size: %d\n", inodes[file_dent.inode_idx].file_size);
+ 	// }
 
-	uint8_t buffer[33];
-	dir_pack.nbytes = 32;
-	dir_pack.buf = (void*)buffer;
+ 	op_data_t dir_pack;
+ 	dir_pack.filename = ".";
+ 	int32_t dir_fd = dir_driver(OPEN, dir_pack);
+ 	dir_pack.fd = dir_fd;
 
-	op_data_t term_pack;	
+ 	uint8_t buffer[33];
+ 	dir_pack.nbytes = 32;
+ 	dir_pack.buf = (void*)buffer;
 
-	int32_t cnt;
-	while(0 != (cnt = dir_driver(READ, dir_pack)))
-	{
-		if(cnt == -1)
-		{
-			dir_driver(CLOSE, dir_pack);
-			printf("directory entry read failed\n");
-			return;
-		}
-		term_pack.buf = dir_pack.buf;
-		term_pack.nbytes = (uint32_t)(cnt);
+ 	op_data_t term_pack;
 
-		if(-1 == terminal_driver(WRITE,term_pack))
-		{
-			dir_driver(CLOSE, dir_pack);
-			printf("terminal write failed\n");
-			return;
-		}
-		putc('\n');
-	}
+ 	int32_t cnt;
+ 	while(0 != (cnt = dir_driver(READ, dir_pack)))
+ 	{
+ 		if(cnt == -1)
+ 		{
+ 			dir_driver(CLOSE, dir_pack);
+ 			printf("directory entry read failed\n");
+ 			return;
+ 		}
+ 		term_pack.buf = dir_pack.buf;
+ 		term_pack.nbytes = (uint32_t)(cnt);
 
-	dir_driver(CLOSE, dir_pack);
-}
+ 		if(-1 == terminal_driver(WRITE,term_pack))
+ 		{
+ 			dir_driver(CLOSE, dir_pack);
+ 			printf("terminal write failed\n");
+ 			return;
+ 		}
+ 		putc('\n');
+ 	}
+
+ 	dir_driver(CLOSE, dir_pack);
+ }
 
 /* JC
  * print_name - helper
@@ -168,7 +163,7 @@ int32_t dir_driver(uint32_t cmd, op_data_t operation_data)
 		case CLOSE:
 			return dir_close(operation_data.fd);
 		default:
-			printf("Invalid Command\n");
+			printf("Invalid Command dir_driver\n");
 			return -1;
 	}
 }
@@ -187,35 +182,21 @@ int32_t dir_driver(uint32_t cmd, op_data_t operation_data)
  */
 int32_t dir_open(const int8_t* filename)
 {
-	// check if the file name exists
-	dentry_t my_dentry;
-	if(!(filename == "." && read_dentry_by_name((uint8_t*)filename, &my_dentry) != -1))
-	{
-		printf("Invalid Name\n");
-		return -1;
-	}
-
-	// name is valid
-	uint32_t flags;
-	cli_and_save(flags);
-
 	int32_t fd_index = get_fd_index(); // get an available index
 	if(fd_index == -1)
 	{
-		printf("No Available FD\n");
-		restore_flags(flags);
+		printf("No Available FD, dir_open\n");
 		return -1;
 	}
 
 	// fill in the descriptor
 	fd_t dir_fd_info;
 	dir_fd_info.file_op_table_ptr = dir_driver; // give it the function ptr
-	dir_fd_info.inode_ptr = my_dentry.inode_idx;
+	dir_fd_info.inode_ptr = -1;
 	dir_fd_info.file_position = 0; // start offset at 0
 	dir_fd_info.flags = FD_ON;	// in use
 	set_fd_info(fd_index, dir_fd_info);
 
-	restore_flags(flags);
 	return fd_index;
 }
 
@@ -247,7 +228,6 @@ int32_t dir_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
 	}
 
 	add_offset(fd, 1); // increment offset to next file
-
 	return bytes_read;
 }
 
@@ -264,7 +244,7 @@ int32_t dir_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
  */
 int32_t dir_write()
 {
-	printf("READ ONLY DIRECTORY");
+	printf("READ ONLY DIRECTORY\n");
 	return -1;
 }
 
@@ -284,27 +264,22 @@ int32_t dir_close(uint32_t fd)
 {
 	if(fd < FIRST_VALID_INDEX || fd > MAX_OPEN_FILES)
 	{
-		printf("INVALID FD");
+		printf("INVALID FD, dir_close\n");
 		return -1; // can't close stdin or stdout
 	}
 
-	// lock it
-	uint32_t flags;
-	cli_and_save(flags);
 	close_fd(fd);	// close the portal
-	restore_flags(flags);
-
 	return 0;
 }
 
-/************************File Driver******************************/
+/***********************File Driver*******************************/
 
 /* JC
  *	file_driver
  *	DESCRIPTION:
- *	
+ *
  *	INPUT:
- *	
+ *
  *	OUTPUT:
  *
  *	RETURN VALUE:
@@ -317,14 +292,14 @@ int32_t file_driver(uint32_t cmd, op_data_t operation_data)
 		case OPEN:
 			return file_open(operation_data.filename);
 		case READ:
-			return file_read(operation_data.fd, 
+			return file_read(operation_data.fd,
 						(uint8_t*)operation_data.buf, operation_data.nbytes);
 		case WRITE:
 			return file_write();
 		case CLOSE:
 			return file_close(operation_data.fd);
 		default:
-			printf("Invalid Command\n");
+			printf("Invalid Command file_driver\n");
 			return -1;
 	}
 }
@@ -345,34 +320,25 @@ int32_t file_open(const int8_t* filename)
 	dentry_t my_dentry;
 	if(read_dentry_by_name((uint8_t*)filename, &my_dentry) == -1)
 	{
-		printf("Invalid Name\n");
+		printf("Invalid Name file_open\n");
 		return -1;
 	}
 
 	// name is valid
-	uint32_t flags;
-	cli_and_save(flags);
-
 	int32_t fd_index = get_fd_index(); // get an available index
-	if(fd_index == -1)
+	if(fd_index != -1)
 	{
-		printf("No Available FD\n");
-		restore_flags(flags);
-		return -1; // no available fd
+		// fill in the descriptor
+		fd_t file_fd_info;
+		file_fd_info.file_op_table_ptr = file_driver; // give it the function ptr
+		file_fd_info.inode_ptr = my_dentry.inode_idx;
+		file_fd_info.file_position = 0; // start offset at 0
+		file_fd_info.flags = FD_ON;	// in use
+		set_fd_info(fd_index, file_fd_info);
 	}
 
-	// fill in the descriptor
-	fd_t file_fd_info;
-	file_fd_info.file_op_table_ptr = file_driver; // give it the function ptr
-	file_fd_info.inode_ptr = my_dentry.inode_idx;
-	file_fd_info.file_position = 0; // start offset at 0
-	file_fd_info.flags = FD_ON;	// in use
-	set_fd_info(fd_index, file_fd_info);
-
-	restore_flags(flags);
 	return fd_index;
 }
-
 /* JC
  * file_read
  *		DESCRIPTION:
@@ -391,10 +357,8 @@ int32_t file_open(const int8_t* filename)
 int32_t file_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
 {
 	uint32_t read_amt = read_data(get_inode_ptr(fd), get_file_position(fd), buf, nbytes);
-
 	if(add_offset > 0)	// if there's an amount then increment
 		add_offset(fd, read_amt);
-
 	return read_amt;	// return the response
 }
 
@@ -410,7 +374,7 @@ int32_t file_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
  */
 int32_t file_write()
 {
-	printf("READ ONLY FILES");
+	printf("READ ONLY FILES\n");
 	return -1;
 }
 
@@ -430,21 +394,15 @@ int32_t file_close(int32_t fd)
 {
 	if(fd < FIRST_VALID_INDEX || fd > MAX_OPEN_FILES)
 	{
-		printf("INVALID FD");
+		printf("INVALID FD, file_close\n");
 		return -1; // can't close stdin or stdout
 	}
 
-	// lock it
-	uint32_t flags;
-	cli_and_save(flags);
 	close_fd(fd);	// close the portal
-	restore_flags(flags);
-
 	return 0;
 }
 
 /*************************************************************/
-
 /* JC
  * create_char_count
  * 	DESCRIPTION:
@@ -462,7 +420,6 @@ void create_char_count()
 	// register keyword puts the variable into a register for faster access
 	register uint32_t len;
 	register uint32_t dentry_loop;
-
 	// access each file name
 	for(dentry_loop = 0; dentry_loop < MAX_ENTRIES; dentry_loop++)
 	{
@@ -471,11 +428,9 @@ void create_char_count()
 		while(((entries[dentry_loop]).file_name)[len] != '\0'
 				&& len < MAX_NAME_CHARACTERS)
 			len++;
-
 		character_count[dentry_loop] = len; // hold count for future functions
 	}
 }
-
 /* JC
  * read_dentry_by_name
  * 	DESCRIPTION:
@@ -497,10 +452,8 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
 	int32_t entry_name_len; // holds how long the dentry's filename is
 	int32_t dentry_loop;
 	int32_t given_name_len = strlen((int8_t*)fname);
-
 	if(given_name_len > MAX_NAME_CHARACTERS)
 		given_name_len = MAX_NAME_CHARACTERS; // pretend as if it's the same size.
-
 	// go through all the dentries
 	for(dentry_loop = 0; dentry_loop < MAX_ENTRIES; dentry_loop++)
 	{
@@ -519,10 +472,8 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
 			}
 		}
 	}
-
 	return -1;
 }
-
 /* JC
  * read_dentry_by_index
  * 	DESCRIPTION:
@@ -541,14 +492,12 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry)
 {
 	if(index > MAX_ENTRIES)
 		return -1; // invalid index
-
 	// copy over the data
 	strncpy(dentry->file_name, (entries[index]).file_name, character_count[index]);
 	dentry->file_type = (entries[index]).file_type;
 	dentry->inode_idx = (entries[index]).inode_idx;
 	return 0;
 }
-
 /* JC
  * Returns the number of entries in the filesystem.
  */
@@ -556,7 +505,6 @@ uint32_t get_num_entries()
 {
 	return num_entries;
 }
-
 /* JC
  * Returns the name of the entry in the filesystem
  */
@@ -564,7 +512,6 @@ int8_t* get_entry_name(uint32_t index)
 {
 	return (entries[index]).file_name;
 }
-
 /* JC
  * read_data
  * 	DESCRIPTION:
@@ -602,30 +549,23 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	uint32_t curr_byte; // keep track of current byte
 	uint32_t curr_data_block; // current data block
 	uint32_t end_of_block_byte;
-
 	if(inode >= num_inodes)
 		return -1; // inode number too big
-
 	this_file_size = (inodes[inode]).file_size; // reduce syntax
-
 	// offset is greater than file size or no need to read
 	if((offset >= this_file_size) || (length == 0))
 		return 0;
-
 	/* Find the start location (data block, offset in data block) */
 	start_block = offset/MAX_CHARS_IN_DATA;
 	start_offset = offset%MAX_CHARS_IN_DATA; // offset in start block
-
 	/* Find the end location (data block, offset in data block) */
 	end_search = offset+length;
 	// should not go past the total number of chars
 	if(end_search > this_file_size)
-		end_search = this_file_size; 
-
+		end_search = this_file_size;
 	// last block we need
 	end_block = end_search/MAX_CHARS_IN_DATA;	// 4096/4096 = 1
 	end_offset = end_search%MAX_CHARS_IN_DATA; // offset in end block
-
 	chars_read = 0;
 	curr_byte = start_offset;
 	end_of_block_byte = MAX_CHARS_IN_DATA;
@@ -640,20 +580,15 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 			else
 				return chars_read; // found invalid block, but read some stuff
 		}
-
 		if(block_loop == end_block)
 			end_of_block_byte = end_offset; // last block, change how far to parse
-
 		while(curr_byte < end_of_block_byte)
 		{
 			buf[chars_read] = ((data_blocks[curr_data_block]).data)[curr_byte]; // get char
 			chars_read++; // next byte to fill
 			curr_byte++; // next byte in filesys
 		}
-
 		curr_byte = 0; // reset to the beginning
 	}
-
 	return chars_read;
 }
-
