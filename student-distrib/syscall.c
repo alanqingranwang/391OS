@@ -137,8 +137,9 @@ int32_t execute(const uint8_t* command)
 	file_name[i] = '\0';
 	file_name_length = i;
 
-	for(; command[i] != '\0'; i++) {
-		args[i-1 - file_name_length] = command[i];
+	for(; command[i] != '\0'; i++) {  //vk place rest of command into args[] without leading spaces
+		if(command[i] != ' ') args[i-1 - file_name_length] = command[i];
+		else i--;
 	}
 	args[i-1 - file_name_length] = '\0';
 	getargs(args, i - file_name_length);  //vk
