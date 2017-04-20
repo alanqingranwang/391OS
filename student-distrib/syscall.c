@@ -141,6 +141,7 @@ int32_t execute(const uint8_t* command)
 		args[i-1 - file_name_length] = command[i];
 	}
 	args[i-1 - file_name_length] = '\0';
+	getargs(args, i - file_name_length);  //vk
 
 
 	// if it returns -1, that means the file doesn't exist
@@ -441,8 +442,18 @@ int32_t close(int32_t fd)
  */
 int32_t getargs(uint8_t* buf, int32_t nbytes)
 {
+	// what is /*our task data structure buffer pointer */ 's ' size?
+	/* our task data structure buffer pointer */ // may possibly be a array within dentry_t from filesystem?
+	//might need to create that array for the dentry_t struct
 
- 	return -1;
+	if(nbytes > /*our task data structure buffer pointer*/.length() + 1){
+		/* our task data structure buffer pointer */ = '\0';
+		return -1;  //arguments do not fit in buffer
+	}
+
+	strncpy( (int8_t *)buf , (const int8_t*)/*our task data structure buffer pointer*/);
+
+ 	return 1;  //successful copy of arguments into user-level space
 }
 
 /* JC
@@ -463,7 +474,19 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
  */
 int32_t vidmap(uint8_t** screen_start)
 {
- 	return -1;
+ 	//screen_start is the location to which the text-mode video memory should be mapped.
+
+	uint32_t 128MB = 0x08000000;
+	uint32_t 132MB = 0x08048000;  //128 MB + 4MB  // RANGE for the single USER_LEVEL page within virtual memory
+
+	if((uint8_t *)screen_start < 128MB || (uint8_t *)screen_start > 132MB ) return -1;  //screen_start not within valid range
+
+	// need to place text-mode video buffer into screen_start
+	//how big is the video screen? VIDEO starts at 0xB8000 as seen in lib.h
+	// how is VIDEO memory stored in order for us to place screen_start into it?
+
+	return 0;
+
 }
 
 /* JC
