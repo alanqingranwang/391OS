@@ -72,10 +72,9 @@ void handle_backspace();
 void handle_enter();
 void clear_buffer();
 
-int32_t keyboard_driver(uint32_t cmd, op_data_t input);
-int32_t keyboard_open();
-int32_t keyboard_close();
+int32_t keyboard_open(const uint8_t* blank1);
 int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes);
-int32_t keyboard_write();
+int32_t keyboard_write(int32_t fd, const void* blank1, int32_t blank2);
+int32_t keyboard_close(int32_t fd);
 
 #endif /* _KEYBOARD_H */
