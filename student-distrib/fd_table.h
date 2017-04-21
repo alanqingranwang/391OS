@@ -18,24 +18,33 @@
 #define STDIN_ 0 // STDIN is always fd = 0, read only, keyboard input
 #define STDOUT_ 1 // STDOUT is always fd = 1, write only, terminal output
 
-/* device driver cmd values */
-#define OPEN 1
-#define READ 2
-#define WRITE 3
-#define CLOSE 4
+// /* device driver cmd values */
+// #define OPEN 1
+// #define READ 2
+// #define WRITE 3
+// #define CLOSE 4
 
-// Fill with what you need, and pass as param to driver
-typedef struct op_data_t {
-	int8_t *filename; // used in open
-	int32_t fd; // used in read, write, close
-	void* buf; // used in read and write
-	uint32_t nbytes; // used in read, and
-	uint32_t address; // used in load
-} op_data_t;
+// Don't remove these
+// // Fill with what you need, and pass as param to driver
+// typedef struct op_data_t {
+// 	int8_t *filename; // used in open
+// 	int32_t fd; // used in read, write, close
+// 	void* buf; // used in read and write
+// 	uint32_t nbytes; // used in read, and
+// 	uint32_t address; // used in load
+// } op_data_t;
+
+/* Template jump table structure for drivers */
+typedef struct file_op_table_t {
+	int32_t (*open)(const uint8_t*);
+	int32_t (*read)(int32_t, uint8_t*, int32_t);
+	int32_t (*write)(int32_t, const void*, int32_t);
+	int32_t (*close)(int32_t);
+} fd_op_table;
 
 /* File Descriptor Structure Described in 7.2 Documentation */
 typedef struct file_descriptor_t {
-	int32_t (*file_op_table_ptr)(uint32_t, op_data_t); // points at the file type's driver function
+	fd_op_table fd_jump; // points at the file type's driver function
 	int32_t inode_ptr; // index to the inode for this file, -1 for non_files
 	uint32_t file_position; // current reading location in file, read system call should update this.
 	uint32_t flags; // among other things, marks file descriptor as in-use

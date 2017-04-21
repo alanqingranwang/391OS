@@ -25,7 +25,10 @@ void fd_table_init(fd_t* new_table)
 	for(table_loop = 0; table_loop < MAX_OPEN_FILES; table_loop++)
 	{
 		// initialize to empty fd structure
-		(new_table[table_loop]).file_op_table_ptr = NULL;
+		((new_table[table_loop]).fd_jump).open = NULL;
+		((new_table[table_loop]).fd_jump).read = NULL;
+		((new_table[table_loop]).fd_jump).write = NULL;
+		((new_table[table_loop]).fd_jump).close = NULL;
 		(new_table[table_loop]).inode_ptr = -1;
 		(new_table[table_loop]).file_position = 0;
 		(new_table[table_loop]).flags = FD_OFF; // initialize all not in use.
@@ -33,10 +36,16 @@ void fd_table_init(fd_t* new_table)
 
 	// open stdin
 	(new_table[STDOUT_]).flags = FD_ON;
-	(new_table[STDOUT_]).file_op_table_ptr = terminal_driver;
+	((new_table[STDOUT_]).fd_jump).open = terminal_open;
+	((new_table[STDOUT_]).fd_jump).read = terminal_read;
+	((new_table[STDOUT_]).fd_jump).write = terminal_write;
+	((new_table[STDOUT_]).fd_jump).close = terminal_close;
 	// open stdout
 	(new_table[STDIN_]).flags = FD_ON;
-	(new_table[STDIN_]).file_op_table_ptr = keyboard_driver; // need the keyboard driver
+	((new_table[STDIN_]).fd_jump).open = keyboard_open;
+	((new_table[STDIN_]).fd_jump).read = keyboard_read;
+	((new_table[STDIN_]).fd_jump).write = keyboard_write;
+	((new_table[STDIN_]).fd_jump).close = keyboard_close;
 }
 
 /* JC
@@ -80,7 +89,10 @@ void set_fd_info(int32_t index, fd_t file_info)
 	if(index < 0 || index >= MAX_OPEN_FILES)
 		return;
 
-	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_op_table_ptr = file_info.file_op_table_ptr;
+	(((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump).open = (file_info.fd_jump).open;
+	(((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump).read = (file_info.fd_jump).read;
+	(((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump).write = (file_info.fd_jump).write;
+	(((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump).close = (file_info.fd_jump).close;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = file_info.inode_ptr;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = file_info.file_position;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).flags = file_info.flags;
@@ -117,7 +129,10 @@ void close_fd(int32_t index)
 	if(index < 0 || index >= MAX_OPEN_FILES)
 		return;
 	
-	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_op_table_ptr = NULL;
+	(((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump).open = NULL;
+	(((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump).read = NULL;
+	(((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump).write = NULL;
+	(((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump).close = NULL;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = -1;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = 0;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).flags = FD_OFF;
@@ -165,15 +180,10 @@ void add_offset(int32_t index, uint32_t amt)
  */
 int32_t check_valid_fd(int32_t index)
 {
-	if(((((p_c.process_array)[p_c.current_process])->fd_table)[index]).flags)
-	{
-		// fd is in use
-		if(index < 0 || index >= MAX_OPEN_FILES)
-			return 0;
-		else
-			return 1;
-	}	
-	
-	return 0;
+	// fd is in use
+	if(index < 0 || index >= MAX_OPEN_FILES)
+		return 0;
+
+	return ((((p_c.process_array)[p_c.current_process])->fd_table)[index]).flags;
 }
 
