@@ -33,6 +33,7 @@ typedef struct process_control_block {
 	fd_t 		fd_table[FD_TABLE_SIZE];
 	uint32_t    current_esp;
 	uint32_t    current_ebp;
+	uint8_t*		arg_buf;
 } pcb;
 
 /* process controller */
@@ -44,7 +45,7 @@ typedef struct process_control {
 } process_control;
 
 /* holds all the processing info */
-process_control p_c; 
+process_control p_c;
 
 /* initializes the process controller */
 void pc_init();

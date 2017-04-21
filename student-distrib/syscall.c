@@ -1,4 +1,4 @@
-/* 
+/*
  * syscall.c - Contains functions for system calls.
  *
  * tab size = 3, no space
@@ -37,7 +37,7 @@ void pc_init(){
 	p_c.in_use[0] = 0;
 }
 
-/* 
+/*
  * int32_t halt(uint8_t status)
  * 	DESCRIPTION:
  *			Terminates a process, returning the specified value to its parent process
@@ -53,7 +53,7 @@ void pc_init(){
  *
  */
 int32_t halt(uint8_t status)
-{   
+{
 	/* if terminating original shell, restart shell */
 	if(p_c.process_array[p_c.current_process]->parent_id == -1){
 		pc_init();
@@ -102,7 +102,7 @@ int32_t halt(uint8_t status)
 	return 0;
 }
 
-/* 
+/*
  * int32_t execute(const uint8_t* command)
  * 	DESCRIPTION:
  *			Attempts to load and execute a new program, handing off
@@ -142,8 +142,6 @@ int32_t execute(const uint8_t* command)
 		else i--;
 	}
 	args[i-1 - file_name_length] = '\0';
-	getargs(args, i - file_name_length);  //vk
-
 
 	// if it returns -1, that means the file doesn't exist
 	dentry_t file_dentry;
@@ -169,18 +167,21 @@ int32_t execute(const uint8_t* command)
 	//check command validity
 	if(command == NULL) return -1;
 
-	for(i = 0; i < MAX_PROCESSES; i++) {
-		if(p_c.in_use[i] == 0) {
-			p_c.in_use[i] = 1;
+	int j;
+	for(j = 0; j < MAX_PROCESSES; j++) {
+		if(p_c.in_use[j] == 0) {
+			p_c.in_use[j] = 1;
 			break;
 		}
 	}
-	int32_t current_process = i;
+	int32_t current_process = j;
 
 	/* create pcb and initialize it */
 	pcb * process_pcb = (pcb *)(K_STACK_BOTTOM - PROCESS_SIZE*(1+current_process));
 	p_c.process_array[current_process] = process_pcb;
 	process_pcb->process_id = current_process;
+
+	getargs(args, i - file_name_length);  //vk
 
 	if(current_process == 0) { // is this the first program?
 		// process_pcb->parent = NULL;
@@ -194,8 +195,6 @@ int32_t execute(const uint8_t* command)
 
 	fd_table_init(process_pcb->fd_table);
 
-
-	int j;
 	for(j = 0; j < MAGIC_NUMBER_SIZE; j++) {
 		if(buf[j] != magic_numbers[j]) {
 			return -1; // not executable
@@ -236,7 +235,7 @@ int32_t execute(const uint8_t* command)
 		"movl %%ebp, %0 \n"
 		: "=r"(p_c.process_array[p_c.current_process]->current_ebp)
 	);
-	
+
 	/* push IRET context to stack and IRET */
 	user_context_switch(entry_point);
 
@@ -447,12 +446,12 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	/* our task data structure buffer pointer */ // may possibly be a array within dentry_t from filesystem?
 	//might need to create that array for the dentry_t struct
 
-	if(nbytes > /*our task data structure buffer pointer*/.length() + 1){
-		/* our task data structure buffer pointer */ = '\0';
+	if(nbytes > process_pcb->arg_buf.length() + 1){
+		process_pcb->arg_buf = '\0';
 		return -1;  //arguments do not fit in buffer
 	}
 
-	strncpy( (int8_t *)buf , (const int8_t*)/*our task data structure buffer pointer*/);
+	strncpy( (int8_t *)buf , (const int8_t*)process_pcb->arg_buf);
 
  	return 1;  //successful copy of arguments into user-level space
 }
