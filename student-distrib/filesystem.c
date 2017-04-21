@@ -78,39 +78,39 @@ void filesystem_init(boot_block_t* boot_addr)
  	// 	printf("file size: %d\n", inodes[file_dent.inode_idx].file_size);
  	// }
 
- 	op_data_t dir_pack;
- 	dir_pack.filename = ".";
- 	int32_t dir_fd = dir_driver(OPEN, dir_pack);
- 	dir_pack.fd = dir_fd;
+ 	// op_data_t dir_pack;
+ 	// dir_pack.filename = ".";
+ 	// int32_t dir_fd = dir_driver(OPEN, dir_pack);
+ 	// dir_pack.fd = dir_fd;
 
- 	uint8_t buffer[33];
- 	dir_pack.nbytes = 32;
- 	dir_pack.buf = (void*)buffer;
+ 	// uint8_t buffer[33];
+ 	// dir_pack.nbytes = 32;
+ 	// dir_pack.buf = (void*)buffer;
 
- 	op_data_t term_pack;
+ 	// op_data_t term_pack;
 
- 	int32_t cnt;
- 	while(0 != (cnt = dir_driver(READ, dir_pack)))
- 	{
- 		if(cnt == -1)
- 		{
- 			dir_driver(CLOSE, dir_pack);
- 			printf("directory entry read failed\n");
- 			return;
- 		}
- 		term_pack.buf = dir_pack.buf;
- 		term_pack.nbytes = (uint32_t)(cnt);
+ 	// int32_t cnt;
+ 	// while(0 != (cnt = dir_driver(READ, dir_pack)))
+ 	// {
+ 	// 	if(cnt == -1)
+ 	// 	{
+ 	// 		dir_driver(CLOSE, dir_pack);
+ 	// 		printf("directory entry read failed\n");
+ 	// 		return;
+ 	// 	}
+ 	// 	term_pack.buf = dir_pack.buf;
+ 	// 	term_pack.nbytes = (uint32_t)(cnt);
 
- 		if(-1 == terminal_driver(WRITE,term_pack))
- 		{
- 			dir_driver(CLOSE, dir_pack);
- 			printf("terminal write failed\n");
- 			return;
- 		}
- 		putc('\n');
- 	}
+ 	// 	if(-1 == terminal_driver(WRITE,term_pack))
+ 	// 	{
+ 	// 		dir_driver(CLOSE, dir_pack);
+ 	// 		printf("terminal write failed\n");
+ 	// 		return;
+ 	// 	}
+ 	// 	putc('\n');
+ 	// }
 
- 	dir_driver(CLOSE, dir_pack);
+ 	// dir_driver(CLOSE, dir_pack);
  }
 
 /* JC
@@ -137,38 +137,6 @@ int32_t print_name(int8_t* buf, int32_t max_char)
 /**********************Directory Driver****************************/
 
 /* JC
- *	dir_driver
- *	DESCRIPTION:
- *		The driver for directory r/w/o/c
- *	INPUT:
- *		cmd - holds a value to signify open, read, write, close
- *		operation_data - holds a package of information depending on the given function call
- *	OUTPUT:
- *		Invalid Command if cmd isn't valid
- *	RETURN VALUE:
- *		-1 for invalid command
- *		dependent on operation, check other related functions
- */
-int32_t dir_driver(uint32_t cmd, op_data_t operation_data)
-{
-	switch(cmd)
-	{
-		case OPEN:
-			return dir_open(operation_data.filename);
-		case READ:
-			return dir_read(operation_data.fd,
-						(uint8_t*)operation_data.buf, operation_data.nbytes);
-		case WRITE:
-			return dir_write();
-		case CLOSE:
-			return dir_close(operation_data.fd);
-		default:
-			printf("Invalid Command dir_driver\n");
-			return -1;
-	}
-}
-
-/* JC
  *	dir_open
  *	DESCRIPTION:
  *		Allocates a pointer on the file descriptor table for the given process.
@@ -180,7 +148,7 @@ int32_t dir_driver(uint32_t cmd, op_data_t operation_data)
  *		-1 - invalid, or unable to open
  *		fd_index - the index holding the file descriptor.
  */
-int32_t dir_open(const int8_t* filename)
+int32_t dir_open(const uint8_t* filename)
 {
 	int32_t fd_index = get_fd_index(); // get an available index
 	if(fd_index == -1)
@@ -191,7 +159,10 @@ int32_t dir_open(const int8_t* filename)
 
 	// fill in the descriptor
 	fd_t dir_fd_info;
-	dir_fd_info.file_op_table_ptr = dir_driver; // give it the function ptr
+	(dir_fd_info.fd_jump).open = dir_open; // give it the function ptr
+	(dir_fd_info.fd_jump).read = dir_read; 
+	(dir_fd_info.fd_jump).write = dir_write; 
+	(dir_fd_info.fd_jump).close = dir_close; 
 	dir_fd_info.inode_ptr = -1;
 	dir_fd_info.file_position = 0; // start offset at 0
 	dir_fd_info.flags = FD_ON;	// in use
@@ -212,7 +183,7 @@ int32_t dir_open(const int8_t* filename)
  *		bytes_read - 0 if there's nothing left to read, specifically when the index
  *							of dentry is greater than the number of entries we have.
  */
-int32_t dir_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
+int32_t dir_read(int32_t fd, uint8_t* buf, int32_t nbytes)
 {
 	int32_t bytes_read = 0; // 0 bytes read
 	int32_t dent_index = get_file_position(fd); // get the current file index
@@ -242,7 +213,7 @@ int32_t dir_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
  *	RETURN VALUE:
  *		-1 - can't write to directory
  */
-int32_t dir_write()
+int32_t dir_write(int32_t fd, const void* blank1, int32_t blank2)
 {
 	printf("READ ONLY DIRECTORY\n");
 	return -1;
@@ -260,49 +231,13 @@ int32_t dir_write()
  *		0 - successful close
  *		-1 - can't close the given fd, invalid
  */
-int32_t dir_close(uint32_t fd)
+int32_t dir_close(int32_t fd)
 {
-	if(fd < FIRST_VALID_INDEX || fd > MAX_OPEN_FILES)
-	{
-		printf("INVALID FD, dir_close\n");
-		return -1; // can't close stdin or stdout
-	}
-
 	close_fd(fd);	// close the portal
 	return 0;
 }
 
 /***********************File Driver*******************************/
-
-/* JC
- *	file_driver
- *	DESCRIPTION:
- *
- *	INPUT:
- *
- *	OUTPUT:
- *
- *	RETURN VALUE:
- *
- */
-int32_t file_driver(uint32_t cmd, op_data_t operation_data)
-{
-	switch(cmd)
-	{
-		case OPEN:
-			return file_open(operation_data.filename);
-		case READ:
-			return file_read(operation_data.fd,
-						(uint8_t*)operation_data.buf, operation_data.nbytes);
-		case WRITE:
-			return file_write();
-		case CLOSE:
-			return file_close(operation_data.fd);
-		default:
-			printf("Invalid Command file_driver\n");
-			return -1;
-	}
-}
 
 /* JC
  * file_open
@@ -314,28 +249,30 @@ int32_t file_driver(uint32_t cmd, op_data_t operation_data)
  *		RETURN VALUE: the fd index
  *
  */
-int32_t file_open(const int8_t* filename)
+int32_t file_open(const uint8_t* filename)
 {
 	// check if the file name exists
 	dentry_t my_dentry;
-	if(read_dentry_by_name((uint8_t*)filename, &my_dentry) == -1)
-	{
-		printf("Invalid Name file_open\n");
-		return -1;
-	}
+	read_dentry_by_name(filename, &my_dentry);
 
 	// name is valid
 	int32_t fd_index = get_fd_index(); // get an available index
-	if(fd_index != -1)
+	if(fd_index == -1)
 	{
-		// fill in the descriptor
-		fd_t file_fd_info;
-		file_fd_info.file_op_table_ptr = file_driver; // give it the function ptr
-		file_fd_info.inode_ptr = my_dentry.inode_idx;
-		file_fd_info.file_position = 0; // start offset at 0
-		file_fd_info.flags = FD_ON;	// in use
-		set_fd_info(fd_index, file_fd_info);
+		printf("No Available FD, file_open\n");
+		return -1;
 	}
+
+	// fill in the descriptor
+	fd_t file_fd_info;
+	(file_fd_info.fd_jump).open = file_open; // give it the function ptr
+	(file_fd_info.fd_jump).read = file_read; 
+	(file_fd_info.fd_jump).write = file_write; 
+	(file_fd_info.fd_jump).close = file_close;
+	file_fd_info.inode_ptr = my_dentry.inode_idx;
+	file_fd_info.file_position = 0; // start offset at 0
+	file_fd_info.flags = FD_ON;	// in use
+	set_fd_info(fd_index, file_fd_info);
 
 	return fd_index;
 }
@@ -354,7 +291,7 @@ int32_t file_open(const int8_t* filename)
  *			-1 - something wrong happened, couldn't read
  *
  */
-int32_t file_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
+int32_t file_read(int32_t fd, uint8_t* buf, int32_t nbytes)
 {
 	uint32_t read_amt = read_data(get_inode_ptr(fd), get_file_position(fd), buf, nbytes);
 	if(add_offset > 0)	// if there's an amount then increment
@@ -372,7 +309,7 @@ int32_t file_read(int32_t fd, uint8_t* buf, uint32_t nbytes)
  *			-1 - couldn't read
  *
  */
-int32_t file_write()
+int32_t file_write(int32_t fd, const void* blank1, int32_t blank2)
 {
 	printf("READ ONLY FILES\n");
 	return -1;
@@ -392,12 +329,6 @@ int32_t file_write()
  */
 int32_t file_close(int32_t fd)
 {
-	if(fd < FIRST_VALID_INDEX || fd > MAX_OPEN_FILES)
-	{
-		printf("INVALID FD, file_close\n");
-		return -1; // can't close stdin or stdout
-	}
-
 	close_fd(fd);	// close the portal
 	return 0;
 }
