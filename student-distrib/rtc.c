@@ -55,6 +55,7 @@ void rtc_init(void)
 	enable_irq(RTC_IRQ);	// enable PIC to accept interrupts
 	restore_flags(flags);
 }
+
 /* JC
  * rtc_handler
  * 	DESCRIPTION:
@@ -90,6 +91,7 @@ void rtc_handler(void)
 	outb(REG_C, SELECT_REG);
 	inb(CMOS_RTC_PORT);	// throw away data
 }
+
 /* JC
  * set_frequency
  *		DESCRIPTION:
@@ -140,46 +142,7 @@ void set_frequency(uint32_t frequency)
 /*********************************************************/
 
 /* JC
- * rtc_driver
- * 	DESCRIPTION:
- *			This driver acts like a jump table for an rtc file descriptor.
- *			The caller will fill the operation data package with the necessary information
- *			and also pass in the proper command number to call the correct operation function
- *		INPUT:
- *			cmd - signifies which operation we want
- *					OPEN = 1
- *					READ = 2
- *					WRITE = 3
- *					CLOSE = 4
- *			operation_data - contains a set of useful data to compelete each operation
- *					The caller should fill this structure with the necessary information
- *		OUTPUT: none
- *		RETURN VALUE:
- *				-1 - failure
- *				dependent on the operation - look at the operation's interface
- *		SIDE_EFFECTS: none
- */
-int32_t rtc_driver(uint32_t cmd, op_data_t operation_data)
-{
-	switch(cmd)
-	{
-		case OPEN:
-			return rtc_open();
-		case READ:
-			return rtc_read();
-		case WRITE:
-		// will need to opdate later with an fd, maybe
-			return rtc_write(operation_data.buf);
-		case CLOSE:
-			return rtc_close(operation_data.fd);
-		default:
-			printf("Invalid Command rtc_driver\n");
-			return -1;
-	}
-}
-
-/* JC
- * rtc_driver
+ * rtc_open
  * 	DESCRIPTION:
  *			Allocates a file descriptor for the RTC.
  *		INPUT: none
@@ -193,28 +156,34 @@ int32_t rtc_driver(uint32_t cmd, op_data_t operation_data)
  *			If so then fd should be contained somewhere
  *			unless it doesn't use an fd
  */
-int32_t rtc_open()
+int32_t rtc_open(const uint8_t* blank1)
 {
 	// Upon open it should be frequency 2Hz
 	set_frequency(2);
 
 	int32_t fd_index = get_fd_index(); // get an available index
-	if(fd_index != -1)
+	if(fd_index == -1)
 	{
-		// fill in the descriptor
-		fd_t rtc_fd_info;
-		rtc_fd_info.file_op_table_ptr = rtc_driver; // give it the function ptr
-		rtc_fd_info.inode_ptr = -1; // not a normal file
-		rtc_fd_info.file_position = 0;
-		rtc_fd_info.flags = 1;	// in use
-		set_fd_info(fd_index, rtc_fd_info);
+		printf("No Available FD, rtc_open\n");
+		return -1;
 	}
+
+	// fill in the descriptor
+	fd_t rtc_fd_info;
+	(rtc_fd_info.fd_jump).open = rtc_open; // give it the function ptr
+	(rtc_fd_info.fd_jump).read = rtc_read; 
+	(rtc_fd_info.fd_jump).write = rtc_write; 
+	(rtc_fd_info.fd_jump).close = rtc_close;
+	rtc_fd_info.inode_ptr = -1; // not a normal file
+	rtc_fd_info.file_position = 0;
+	rtc_fd_info.flags = 1;	// in use
+	set_fd_info(fd_index, rtc_fd_info);
 
 	return fd_index;
 }
 
 /* JC
- * rtc_driver
+ * rtc_read
  * 	DESCRIPTION:
  *			Returns once the next RTC interrupt occurs.
  *		INPUT: none
@@ -222,7 +191,7 @@ int32_t rtc_open()
  *		RETURN VALUE: 0 - always
  *		SIDE_EFFECTS: none
  */
-int32_t rtc_read()
+int32_t rtc_read(int32_t fd, uint8_t* blank1, int32_t blank2)
 {
 	interrupt_flag = 0;
 	// wait for interrupt to happen
@@ -231,7 +200,7 @@ int32_t rtc_read()
 }
 
 /* JC
- * rtc_driver
+ * rtc_write
  * 	DESCRIPTION:
  *			Given a pointer to a frequency, change the frequency of the RTC driver.
  *		INPUT:
@@ -242,14 +211,15 @@ int32_t rtc_read()
  *			 0 - successful change
  *		SIDE_EFFECTS: modifies RTC frequency
  */
-int32_t rtc_write(const void* buf)
+int32_t rtc_write(int32_t fd, const void* buf, int32_t blank1)
 {
 	uint32_t* speed = (uint32_t*)buf; // change into meaningful data
 	set_frequency(*speed);
 	return 0;
 }
+
 /* JC
- * rtc_driver
+ * rtc_close
  * 	DESCRIPTION:
  *			Closes the specified fd if it's valid. Simply turns flag into not in use.
  *		INPUT:
@@ -271,6 +241,7 @@ int32_t rtc_close(int32_t fd)
 	close_fd(fd);
 	return 0; // should only return 0 for checkpoint 2
 }
+
 /* IGNORE STUFF BELOW */
 /* JC
  * get_update_flag - helper
