@@ -62,7 +62,7 @@ void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
 
 		// the while loop keeps reading until there's nothing to read or there's an error
 		while((retval = file_read(myfd, (uint8_t*)buffer, nbytes)) > 0) // read stuff
-			terminal_write(1, (void*)buffer, nbytes);
+			terminal_write(1, (void*)buffer, retval);
 
 		// close current file
 		file_close(myfd); // close it
