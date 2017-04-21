@@ -272,7 +272,7 @@ int32_t file_open(const uint8_t* filename)
 int32_t file_read(int32_t fd, uint8_t* buf, int32_t nbytes)
 {
 	uint32_t read_amt = read_data(get_inode_ptr(fd), get_file_position(fd), buf, nbytes);
-	if(add_offset > 0)	// if there's an amount then increment
+	if(read_amt > 0)	// if there's an amount then increment
 		add_offset(fd, read_amt);
 	return read_amt;	// return the response
 }
