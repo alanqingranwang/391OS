@@ -61,7 +61,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 	uint8_t* buffer = (uint8_t*)buf;
 	int32_t i=0;
-	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
+	for(i = 0; i < nbytes /*&& i < TERM_BUFF_SIZE*/; i++){
 		putc(buffer[i]);
 	}
 	return i;
