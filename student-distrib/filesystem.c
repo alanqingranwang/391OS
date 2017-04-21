@@ -59,58 +59,35 @@ void filesystem_init(boot_block_t* boot_addr)
  void print_file_info()
  {
  	clear();
- 	// uint32_t d_loop; // loops through all the dentry loops
- 	// uint32_t char_loop; // go through all the characters
- 	// dentry_t file_dent;
+ 	uint32_t d_loop = 0; // loops through all the dentry loops
+ 	uint32_t char_loop; // go through all the characters
+ 	dentry_t file_dent;
 
- 	// for(d_loop = 0; d_loop < num_entries; d_loop++)
- 	// {
- 	// 	read_dentry_by_index(d_loop, &file_dent); // get the dentry
+ 	int32_t dir_fd = dir_open((uint8_t*)".");
+ 	uint8_t buffer[33];
+ 	int32_t nbytes = 32;
 
- 	// 	// print out the name
- 	// 	printf("file name: "); // can't use %s, if there's no guaranteed '\0'
- 	// 	char_loop = print_name(file_dent.file_name, character_count[d_loop]);
+ 	int32_t cnt;
+ 	while(0 != (cnt = dir_read(dir_fd, buffer, nbytes)))
+ 	{
+ 		read_dentry_by_index(d_loop, &file_dent); // get the dentry
+ 		if(cnt == -1)
+ 		{
+ 			dir_close(dir_fd);
+ 			printf("directory entry read failed\n");
+ 			return;
+ 		}
+ 		printf("file name: ");
+ 		terminal_write(1, buffer, cnt);
+ 		for(char_loop = cnt; char_loop < NUM_SPACES; char_loop++)
+ 			putc(' '); // add spaces to align the rest
 
- 	// 	for(char_loop = char_loop; char_loop < NUM_SPACES; char_loop++)
- 	// 		printf(" "); // add spaces to align the rest
+ 		printf("file type: %d ", file_dent.file_type);
+ 		printf("file size: %d\n", inodes[file_dent.inode_idx].file_size);
+ 		d_loop++;
+ 	}
 
- 	// 	printf("file type: %d ", file_dent.file_type);
- 	// 	printf("file size: %d\n", inodes[file_dent.inode_idx].file_size);
- 	// }
-
- 	// op_data_t dir_pack;
- 	// dir_pack.filename = ".";
- 	// int32_t dir_fd = dir_driver(OPEN, dir_pack);
- 	// dir_pack.fd = dir_fd;
-
- 	// uint8_t buffer[33];
- 	// dir_pack.nbytes = 32;
- 	// dir_pack.buf = (void*)buffer;
-
- 	// op_data_t term_pack;
-
- 	// int32_t cnt;
- 	// while(0 != (cnt = dir_driver(READ, dir_pack)))
- 	// {
- 	// 	if(cnt == -1)
- 	// 	{
- 	// 		dir_driver(CLOSE, dir_pack);
- 	// 		printf("directory entry read failed\n");
- 	// 		return;
- 	// 	}
- 	// 	term_pack.buf = dir_pack.buf;
- 	// 	term_pack.nbytes = (uint32_t)(cnt);
-
- 	// 	if(-1 == terminal_driver(WRITE,term_pack))
- 	// 	{
- 	// 		dir_driver(CLOSE, dir_pack);
- 	// 		printf("terminal write failed\n");
- 	// 		return;
- 	// 	}
- 	// 	putc('\n');
- 	// }
-
- 	// dir_driver(CLOSE, dir_pack);
+ 	dir_close(dir_fd);
  }
 
 /* JC
@@ -276,6 +253,7 @@ int32_t file_open(const uint8_t* filename)
 
 	return fd_index;
 }
+
 /* JC
  * file_read
  *		DESCRIPTION:

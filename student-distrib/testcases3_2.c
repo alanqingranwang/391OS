@@ -53,45 +53,26 @@ void test_file_data(int index)
  */
 void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
 {
-	// // open file driver
-	// op_data_t file_pack;
-	// file_pack.filename = name;
-	// file_pack.buf = (void*)buffer;
-	// file_pack.nbytes = nbytes;	// how many bytes to read at a time
-	// int32_t myfd = file_driver(OPEN, file_pack); // open the file
-	// // open terminal driver
-	// op_data_t term_pack;
-	// terminal_driver(OPEN, term_pack);
+	// open file driver
+	int32_t myfd = file_open((uint8_t*)name); // open the file
 
-	// if(myfd != -1) // file opened
-	// {
-	// 	file_pack.fd = myfd;
-	// 	int32_t retval; // don't take out
+	if(myfd != -1) // file opened
+	{
+		int32_t retval; // don't take out
 
-	// 	// the while loop keeps reading until there's nothing to read or there's an error
-	// 	while((retval = file_driver(READ, file_pack)) > 0) // read stuff
-	// 	{
-	// 		// following for loop pritns out the buffer, but should be replaced
-	// 		// with openning terminal driver and calling write
-	// 		// terminal should be doing the writing or reading or what not
-	// 		term_pack.buf = file_pack.buf;
-	// 		term_pack.nbytes = (uint32_t)retval;
-	// 		terminal_driver(WRITE, term_pack);
-	// 	}
+		// the while loop keeps reading until there's nothing to read or there's an error
+		while((retval = file_read(myfd, (uint8_t*)buffer, nbytes)) > 0) // read stuff
+			terminal_write(1, (void*)buffer, nbytes);
 
-	// 	// close current file
-	// 	file_driver(CLOSE, file_pack); // close it
+		// close current file
+		file_close(myfd); // close it
 
-	// 	printf("\nfile name: "); // this is causing problems
-	// 	print_name(file_pack.filename, MAX_NAME_CHARACTERS); // wrote our own function to print name
-	// 	// different from terminal write
-	// }
-	// else
-	// {
-	// 	printf("file doesn't exist.\n");
-	// }
-	// // close terminal driver
-	// terminal_driver(CLOSE, term_pack);
+		printf("\nfile name: "); // this is causing problems
+		print_name(name, MAX_NAME_CHARACTERS); // wrote our own function to print name
+		// different from terminal write
+	}
+	else
+		printf("file doesn't exist.\n");
 }
 
 /* JC
@@ -106,30 +87,19 @@ void print_file_text(int8_t* name, int8_t* buffer, int32_t nbytes)
  */
 void print_freq(uint32_t rate)
 {
-	// uint32_t freq = HIGHEST_FREQ;
-	// uint32_t curr_freq;
-	// op_data_t rtc_pack; // create the data package, check out filesystem for struct info
-	// int32_t filed = rtc_driver(OPEN, rtc_pack); // open it
-	// rtc_pack.fd = filed;
-	// if(filed != -1)
-	// {
-	// 	/* Test Writing Frequency - to test frequency visually uncomment print time in interrupt handler */
-	// 	clear();
-	// 	curr_freq = freq >> rate;
-	// 	printf("Frequency at: %d\n", curr_freq);
-	// 	rtc_pack.buf = (void*)(&curr_freq);
-	// 	rtc_driver(WRITE, rtc_pack); // change the frequency
+	uint32_t freq = HIGHEST_FREQ;
+	uint32_t curr_freq;
+	int32_t filed = rtc_open((uint8_t*)"rtc"); // open it
+	if(filed != -1)
+	{
+		/* Test Writing Frequency - to test frequency visually uncomment print time in interrupt handler */
+		clear();
+		curr_freq = freq >> rate;
+		printf("Frequency at: %d\n", curr_freq);
+		rtc_write(filed, (void*)(&curr_freq), 1); // change the frequency
 
-	// 	/* Test Reading */ // recommend testing at 2Hz - or check out my code
-	// 	// uint32_t count; // if it prints at the same frequency as interrupt then it works
-	// 	// for(count = 0; count < 10; count ++)
-	// 	// {
-	// 	// 	rtc_driver(READ, package);
-	// 	// 	printf("Finished reading\n");
-	// 	// }
-
-	// 	rtc_driver(CLOSE, rtc_pack); // always close
-	// }
-	// else
-	// 	printf("couldn't open\n");
+		rtc_close(filed); // always close
+	}
+	else
+		printf("couldn't open\n");
 }
