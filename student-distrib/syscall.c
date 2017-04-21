@@ -9,15 +9,15 @@
 #include "filesystem.h"
 
 #define K_STACK_BOTTOM		0x00800000
-#define PROGRAM_PAGE		0x08000000
+#define PROGRAM_PAGE			0x08000000
 #define PROGRAM_START		0x08048000
 #define PROCESS_SIZE     	0x00002000
-#define STATUS_BYTEMASK     0x000000FF
-#define MAX_ARGS			1024
-#define FILE_NAME_LENGTH    32
-#define BYTES_TO_READ       28
-#define ENTRY_POINT_START   24
-#define BYTE_SIZE			8
+#define STATUS_BYTEMASK    0x000000FF
+#define MAX_ARGS				1024
+#define FILE_NAME_LENGTH   32
+#define BYTES_TO_READ      28
+#define ENTRY_POINT_START  24
+#define BYTE_SIZE				8
 #define MAGIC_NUMBER_SIZE	4
 
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
@@ -122,6 +122,9 @@ int32_t halt(uint8_t status)
  */
 int32_t execute(const uint8_t* command)
 {
+	if(command == NULL) // null pointer
+		return -1;
+
 	int32_t i;
 
 	/* get the file name and arguments */
@@ -140,13 +143,16 @@ int32_t execute(const uint8_t* command)
 	for(; command[i] != '\0'; i++) {
 		args[i-1 - file_name_length] = command[i];
 	}
-	args[i-1 - file_name_length] = '\0';
 
+	args[i-1 - file_name_length] = '\0';
 
 	// if it returns -1, that means the file doesn't exist
 	dentry_t file_dentry;
 	if(read_dentry_by_name((uint8_t*)file_name, &file_dentry) == -1) // get the data
 		return -1;
+
+	if(file_dentry.file_type != 2)
+		return -1; // it's not a file type
 
 	// Read first 4 bytes to see if its an executable
 	uint8_t buf[BYTES_TO_READ];
@@ -164,15 +170,13 @@ int32_t execute(const uint8_t* command)
 		p_c.no_processes++;
 	}
 
-	//check command validity
-	if(command == NULL) return -1;
-
 	for(i = 0; i < MAX_PROCESSES; i++) {
 		if(p_c.in_use[i] == 0) {
 			p_c.in_use[i] = 1;
 			break;
 		}
 	}
+
 	int32_t current_process = i;
 
 	/* create pcb and initialize it */
@@ -288,18 +292,8 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 	if(buf == NULL)
 		return -1; // invalid pointer
 
-	// Create the operation pack
- 	op_data_t unknown_pack;
- 	unknown_pack.fd = fd;
- 	unknown_pack.buf = buf;
- 	unknown_pack.nbytes = nbytes;
-
  	// get the function pointer to the specific file or rtc or thing
- 	int32_t (*func_ptr)(uint32_t, op_data_t);
- 	func_ptr = ((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).file_op_table_ptr;
-
- 	// read from the unknown function
- 	return func_ptr(READ, unknown_pack);
+	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump).read)(fd, (uint8_t*)buf, nbytes);
 }
 
 /* JC
@@ -330,18 +324,8 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 	if(buf == NULL)
 		return -1; // invalid pointer
 
-	// Create the operation pack
- 	op_data_t unknown_pack;
- 	unknown_pack.fd = fd;
- 	unknown_pack.buf = (void*)buf;
- 	unknown_pack.nbytes = nbytes;
-
  	// get the function pointer to the specific file or rtc or thing
- 	int32_t (*func_ptr)(uint32_t, op_data_t);
- 	func_ptr = ((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).file_op_table_ptr;
-
- 	// write to the unknown function
- 	return func_ptr(WRITE, unknown_pack);
+	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump).write)(fd, buf, nbytes);
 }
 
 /* JC
@@ -374,22 +358,12 @@ int32_t open(const uint8_t* filename)
  	if(read_dentry_by_name(filename, &dentry) == -1) // find the dentry
  		return -1; // doesn't exist
 
- 	if(dentry.file_type == 0) // it's the rtc
+ 	// go to the proper file type
+ 	switch(dentry.file_type)
  	{
- 		op_data_t rtc_pack; // empty param
- 		return rtc_driver(OPEN, rtc_pack);
- 	}
- 	else if(dentry.file_type == 1) // it's the dir
- 	{
- 		op_data_t dir_pack;
- 		dir_pack.filename = (int8_t*)filename;
- 		return dir_driver(OPEN, dir_pack);
- 	}
- 	else // assuming it's a file
- 	{
- 		op_data_t file_pack;
- 		file_pack.filename = (int8_t*)filename;
- 		return file_driver(OPEN, file_pack);
+ 		case 0: return rtc_open(filename);
+ 		case 1: return dir_open(filename);
+ 		default: return file_open(filename);
  	}
 }
 
@@ -413,16 +387,8 @@ int32_t close(int32_t fd)
 		return -1; // invalid fd
 	}
 
-	// Create the operation pack
- 	op_data_t unknown_pack;
- 	unknown_pack.fd = fd;
-
  	// get the function pointer for the unknown function
- 	int32_t (*func_ptr)(uint32_t, op_data_t);
- 	func_ptr = ((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).file_op_table_ptr;
-
- 	// close it
- 	return func_ptr(CLOSE, unknown_pack);
+	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump).close)(fd);
 }
 
 /* JC
