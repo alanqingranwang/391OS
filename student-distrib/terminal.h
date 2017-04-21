@@ -9,16 +9,15 @@
 
 #define STDOUT_FD 1 // the fd for STDOUT
 #define TERM_BUFF_SIZE 128
-/* handles the data passed in by calling correct handler function */
-int32_t terminal_driver(uint32_t cmd, op_data_t input);
+
 /* opens the terminal file */
-int32_t terminal_open();
+int32_t terminal_open(const uint8_t* blank1);
+/* reads from the terminal file */
+int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes);
+/* writes to the terminal file */
+int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes);
 /* closes the terminal file */
 int32_t terminal_close(int32_t fd);
-/* reads from the terminal file */
-int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes);
-/* writes to the terminal file */
-int32_t terminal_write(int32_t fd, int8_t* buf, int32_t nbytes);
 
 int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes);
 
