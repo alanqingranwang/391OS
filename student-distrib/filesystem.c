@@ -169,7 +169,7 @@ int32_t dir_read(int32_t fd, uint8_t* buf, int32_t nbytes)
 		return bytes_read; // no more files
 
 	// read the whole name, or up to nbytes
-	while((entries[dent_index].file_name)[bytes_read] != '\0' && bytes_read < nbytes)
+	while((entries[dent_index].file_name)[bytes_read] != '\0' && bytes_read < nbytes && bytes_read < MAX_NAME_CHARACTERS)
 	{
 		buf[bytes_read] = (entries[dent_index].file_name)[bytes_read];
 		bytes_read++;
