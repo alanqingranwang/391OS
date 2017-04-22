@@ -72,12 +72,6 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 		putc(buffer[i]);
 	}
 
-	// if(cat_flag == 1 && (i != nbytes || i == 0))
-	// {	// print a '\n' at the end of the file
-	// 	putc('\n');
-	// 	cat_flag = 0;
-	// }
-
 	return i;
 }
 
