@@ -464,8 +464,16 @@ int32_t vidmap(uint8_t** screen_start)
 	// video memory will require you to add another page mapping for the program in this case a 4kB page.
 	// it is not ok to simply change the permisions of the video page located < 4MB and pass that address.
 
-	// *screen_start = VIRT_VID_MAP_ADDR;
- 	return -1;
+	// check if parameter is within page allocated for user program
+	// uint32_t process_start_address = 0x08000000;
+	// if(*screen_start < process_start_address || *screen_start >= process_start_address + 0x00400000) {
+	// 	return -1;
+	// }
+
+	// memcpy(0x1000, 0xB8000, 4096);
+	// *screen_start = 0x1000;
+ // 	return *screen_start;
+	return -1;
 }
 
 /* JC
