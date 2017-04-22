@@ -18,22 +18,6 @@
 #define STDIN_ 0 // STDIN is always fd = 0, read only, keyboard input
 #define STDOUT_ 1 // STDOUT is always fd = 1, write only, terminal output
 
-// /* device driver cmd values */
-// #define OPEN 1
-// #define READ 2
-// #define WRITE 3
-// #define CLOSE 4
-
-// Don't remove these
-// // Fill with what you need, and pass as param to driver
-// typedef struct op_data_t {
-// 	int8_t *filename; // used in open
-// 	int32_t fd; // used in read, write, close
-// 	void* buf; // used in read and write
-// 	uint32_t nbytes; // used in read, and
-// 	uint32_t address; // used in load
-// } op_data_t;
-
 /* Template jump table structure for drivers */
 typedef struct file_op_table_t {
 	int32_t (*open)(const uint8_t*);
