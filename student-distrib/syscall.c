@@ -20,6 +20,8 @@
 #define BYTE_SIZE				8
 #define MAGIC_NUMBER_SIZE	4
 
+// #define VIRT_VID_MAP_ADDR	
+
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
 static uint32_t extended_status;
 
@@ -37,7 +39,7 @@ void pc_init(){
 	p_c.in_use[0] = 0;
 }
 
-/* 
+/* AW, NM
  * int32_t halt(uint8_t status)
  * 	DESCRIPTION:
  *			Terminates a process, returning the specified value to its parent process
@@ -102,7 +104,7 @@ int32_t halt(uint8_t status)
 	return 0;
 }
 
-/* 
+/* AW, NM
  * int32_t execute(const uint8_t* command)
  * 	DESCRIPTION:
  *			Attempts to load and execute a new program, handing off
@@ -192,10 +194,10 @@ int32_t execute(const uint8_t* command)
 		// process_pcb->parent = process_array[p_c.current_process]
 		process_pcb->parent_id = p_c.current_process;
 	}
+
 	p_c.current_process = current_process;
 
 	fd_table_init(process_pcb->fd_table);
-
 
 	int j;
 	for(j = 0; j < MAGIC_NUMBER_SIZE; j++) {
@@ -427,8 +429,26 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
  *		SIDE EFFECTS:
  *
  */
+
+/*
+	Vidmaps only used by fish. given a double pointer, look at source code.
+	Given the address of where it's supposed to write all those characters.
+	Frame 0 and Frame 1 similar to mp1
+	What fish needs is an address as to where it's supposed to write that to.
+	Check that it's a valid pointer. Check whether it's within the paging bounds.
+	Remember where the video memory address is. Don't the video memory address between 0 and 4MB.
+	We should return a virtual address. Pick an address that is mapped to video memory.
+	Doesn't matter where in virtual. Just make sure it's far from the starting address of programs. 
+ */
 int32_t vidmap(uint8_t** screen_start)
 {
+	if(screen_start == NULL) // invalid address location
+		return -1; // should I also check the range of the location?, make sure it's in user space
+	// check whether the address falls within the address range covered by the single user-level page.
+	// video memory will require you to add another page mapping for the program in this case a 4kB page.
+	// it is not ok to simply change the permisions of the video page located < 4MB and pass that address.
+
+	// *screen_start = VIRT_VID_MAP_ADDR;
  	return -1;
 }
 
@@ -444,7 +464,6 @@ int32_t vidmap(uint8_t** screen_start)
  */
 int32_t set_handler(int32_t signum, void* handler_address)
 {
-
  	return -1;
 }
 
