@@ -42,6 +42,13 @@ void add_process(uint32_t process_id) {
     flush_tlb();
 }
 
+void add_video_memory(uint32_t virtual_address)
+{
+    page_directory[virtual_address>>22] = (uint32_t) user_page_table | 0x07;
+    user_page_table[0] = 0xB8000 | 0x7;
+    flush_tlb();
+}
+
 /*
  * enablePaging
  *   DESCRIPTION: Helper function to handle in-line-assembly for

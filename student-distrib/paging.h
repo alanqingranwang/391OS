@@ -17,6 +17,7 @@ uint32_t page_directory[PAGE_SIZE] __attribute__((aligned(PAGE_ALIGN)));
 
 /* page table for video memory */
 uint32_t page_table[PAGE_SIZE] __attribute__((aligned(PAGE_ALIGN)));
+uint32_t user_page_table[PAGE_SIZE] __attribute__((aligned(PAGE_ALIGN)));
 
 /* initializes paging */
 void paging_init();
@@ -25,6 +26,7 @@ void paging_init();
 void enablePaging();
 
 void add_process(uint32_t process_id);
+void add_video_memory(uint32_t virtual_address);
 void flush_tlb();
 
 #endif

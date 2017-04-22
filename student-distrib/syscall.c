@@ -466,10 +466,10 @@ int32_t vidmap(uint8_t** screen_start)
 	// 	return -1;
 	// }
 
-	// memcpy(0x1000, 0xB8000, 4096);
-	// *screen_start = 0x1000;
- // 	return *screen_start;
-	return -1;
+	*screen_start = (uint8_t*)0x10000000;
+
+	add_video_memory((uint32_t)(*screen_start));
+	return 0x10000000;
 }
 
 /* JC
