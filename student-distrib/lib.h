@@ -9,6 +9,10 @@
 
 #define VIDEO 0xB8000
 
+#define VID1 0x1000
+#define VID2 0x3000
+#define VID3 0x5000
+
 /*******************************/
 #define LOW_VGA 0x0F
 #define HIGH_VGA 0x0E

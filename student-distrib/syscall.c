@@ -442,16 +442,13 @@ int32_t close(int32_t fd)
  */
 int32_t getargs(uint8_t* buf, int32_t nbytes)
 {
-	// what is /*our task data structure buffer pointer */ 's ' size?
-	/* our task data structure buffer pointer */ // may possibly be a array within dentry_t from filesystem?
-	//might need to create that array for the dentry_t struct
 
-	if(nbytes > process_pcb->arg_buf.length() + 1){
+	if(nbytes > strlen(process_pcb->arg_buf) + 1){  // what size should our struct be, how to get length of struct pointed to by arg_buf
 		process_pcb->arg_buf = '\0';
 		return -1;  //arguments do not fit in buffer
 	}
 
-	strncpy( (int8_t *)buf , (const int8_t*)process_pcb->arg_buf);
+	strncpy( (int8_t *)buf, (const int8_t*)process_pcb->arg_buf);
 
  	return 1;  //successful copy of arguments into user-level space
 }
@@ -476,13 +473,15 @@ int32_t vidmap(uint8_t** screen_start)
 {
  	//screen_start is the location to which the text-mode video memory should be mapped.
 
+	//screen_start is a pointer to a 32-bit memory address that points to a 4kb page
+
 	uint32_t 128MB = 0x08000000;
 	uint32_t 132MB = 0x08048000;  //128 MB + 4MB  // RANGE for the single USER_LEVEL page within virtual memory
 
 	if((uint8_t *)screen_start < 128MB || (uint8_t *)screen_start > 132MB ) return -1;  //screen_start not within valid range
 
 	// need to place text-mode video buffer into screen_start
-	//how big is the video screen? VIDEO starts at 0xB8000 as seen in lib.h
+	// how big is the video screen? VIDEO starts at 0xB8000 as seen in lib.h
 	// how is VIDEO memory stored in order for us to place screen_start into it?
 
 	return 0;
