@@ -3,6 +3,7 @@
  */
 
 #include "terminal.h"
+
 static int8_t save_buff[TERM_BUFF_SIZE];
 
 /* NM
@@ -87,11 +88,22 @@ int32_t terminal_close(int32_t fd){
  *		Used by the keyboard.
  */
 int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
-	int32_t i=0;
+	int32_t i = 0;
+
 	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
 		buf[i] = save_buff[i];
 		// if (save_buff[i] == '\n' || save_buff[i] == '\0') break; // I need this too for args
 		if (save_buff[i] == ' ') break; // I need this to not break the shell
 	}
+
+	// get the arguments
+	int32_t file_name_length = i;
+	int32_t arg_cnt = i; // start parsing from where the command left off
+	// parse till end of character or max buffer size
+	for(; save_buff[arg_cnt] != '\0' && arg_cnt != TERM_BUFF_SIZE; arg_cnt++) // get all the arguments
+		cmd_args[arg_cnt-1 - file_name_length] = save_buff[arg_cnt];
+
+	cmd_args[arg_cnt-1 - file_name_length] = '\0';
+
 	return i;
 }
