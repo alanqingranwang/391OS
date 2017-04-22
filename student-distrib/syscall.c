@@ -416,10 +416,11 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 		i++;
 	}
 
-	while(i < nbytes)
+	uint32_t backwards = nbytes-1;
+	while(buf[backwards] == ' ' || buf[backwards] == '\0')
 	{
-		buf[i] = '\0';
-		i++;
+		buf[backwards] = (uint8_t)'\0';
+		backwards--;
 	}
 
  	return 0;
@@ -461,10 +462,10 @@ int32_t vidmap(uint8_t** screen_start)
 	// it is not ok to simply change the permisions of the video page located < 4MB and pass that address.
 
 	// check if parameter is within page allocated for user program
-	// uint32_t process_start_address = 0x08000000;
-	// if(*screen_start < process_start_address || *screen_start >= process_start_address + 0x00400000) {
-	// 	return -1;
-	// }
+	uint32_t process_start_address = 0x08000000;
+	if(screen_start < (uint8_t**)process_start_address || screen_start >= (uint8_t**)process_start_address + 0x00400000) {
+		return -1;
+	}
 
 	*screen_start = (uint8_t*)0x10000000;
 

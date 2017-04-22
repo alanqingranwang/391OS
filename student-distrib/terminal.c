@@ -104,7 +104,13 @@ int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
 
 	// get the arguments
 	int32_t file_name_length = i;
-	int32_t arg_cnt = i; // start parsing from where the command left off
+	int32_t arg_cnt;
+
+	// clean the arg buffer
+	for(arg_cnt = 0; arg_cnt < TERM_BUFF_SIZE; arg_cnt++)
+		cmd_args[arg_cnt] = '\0';
+
+	arg_cnt = i; // start parsing from where the command left off
 	// parse till end of character or max buffer size
 	for(; save_buff[arg_cnt] != '\0' && arg_cnt != TERM_BUFF_SIZE; arg_cnt++) // get all the arguments
 		cmd_args[arg_cnt-1 - file_name_length] = save_buff[arg_cnt];
