@@ -90,7 +90,8 @@ int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
 	int32_t i=0;
 	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
 		buf[i] = save_buff[i];
-		if (save_buff[i] == ' ') break;
+		// if (save_buff[i] == '\n' || save_buff[i] == '\0') break; // I need this too for args
+		if (save_buff[i] == ' ') break; // I need this to not break the shell
 	}
 	return i;
 }

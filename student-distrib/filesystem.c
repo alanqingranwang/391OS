@@ -137,9 +137,9 @@ int32_t dir_open(const uint8_t* filename)
 	// fill in the descriptor
 	fd_t dir_fd_info;
 	(dir_fd_info.fd_jump).open = dir_open; // give it the function ptr
-	(dir_fd_info.fd_jump).read = dir_read; 
-	(dir_fd_info.fd_jump).write = dir_write; 
-	(dir_fd_info.fd_jump).close = dir_close; 
+	(dir_fd_info.fd_jump).read = dir_read;
+	(dir_fd_info.fd_jump).write = dir_write;
+	(dir_fd_info.fd_jump).close = dir_close;
 	dir_fd_info.inode_ptr = -1;
 	dir_fd_info.file_position = 0; // start offset at 0
 	dir_fd_info.flags = FD_ON;	// in use
@@ -243,8 +243,8 @@ int32_t file_open(const uint8_t* filename)
 	// fill in the descriptor
 	fd_t file_fd_info;
 	(file_fd_info.fd_jump).open = file_open; // give it the function ptr
-	(file_fd_info.fd_jump).read = file_read; 
-	(file_fd_info.fd_jump).write = file_write; 
+	(file_fd_info.fd_jump).read = file_read;
+	(file_fd_info.fd_jump).write = file_write;
 	(file_fd_info.fd_jump).close = file_close;
 	file_fd_info.inode_ptr = my_dentry.inode_idx;
 	file_fd_info.file_position = 0; // start offset at 0
@@ -360,7 +360,12 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
 {
 	int32_t entry_name_len; // holds how long the dentry's filename is
 	int32_t dentry_loop;
-	int32_t given_name_len = strlen((int8_t*)fname);
+	int32_t given_name_len = 0;
+	// Count how many characters are in the current dentry's name
+	while((fname[given_name_len] != ' ') && (fname[given_name_len] != '\0')
+			&& (given_name_len < MAX_NAME_CHARACTERS))
+		given_name_len++;
+
 	if(given_name_len > MAX_NAME_CHARACTERS)
 		given_name_len = MAX_NAME_CHARACTERS; // pretend as if it's the same size.
 	// go through all the dentries
