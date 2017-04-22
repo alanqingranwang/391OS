@@ -443,7 +443,7 @@ int32_t close(int32_t fd)
 int32_t getargs(uint8_t* buf, int32_t nbytes)
 {
 
-	if(nbytes > strlen(process_pcb->arg_buf) + 1){  // what size should our struct be, how to get length of struct pointed to by arg_buf
+	if(nbytes > PCB_ARG_BUF_SIZE){  // arg buffer cant be of size greater than 128 ( this includes 0-byte NULL terminal character)
 		process_pcb->arg_buf = '\0';
 		return -1;  //arguments do not fit in buffer
 	}
@@ -483,6 +483,8 @@ int32_t vidmap(uint8_t** screen_start)
 	// need to place text-mode video buffer into screen_start
 	// how big is the video screen? VIDEO starts at 0xB8000 as seen in lib.h
 	// how is VIDEO memory stored in order for us to place screen_start into it?
+
+	*screen_start = 
 
 	return 0;
 

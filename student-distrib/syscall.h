@@ -26,6 +26,7 @@
 #define MAX_PROCESSES 8
 #define FD_TABLE_SIZE 8
 
+#define PCB_ARG_BUF_SIZE 128
 /* per process data structure */
 typedef struct process_control_block {
 	uint8_t		process_id;
@@ -33,7 +34,7 @@ typedef struct process_control_block {
 	fd_t 		fd_table[FD_TABLE_SIZE];
 	uint32_t    current_esp;
 	uint32_t    current_ebp;
-	uint8_t*		arg_buf;
+	uint8_t		arg_buf[PCB_ARG_BUF_SIZE];
 } pcb;
 
 /* process controller */
