@@ -7,13 +7,13 @@
 #include "syscall.h"
 #include "wrapper.h"
 #include "filesystem.h"
+#include "terminal.h"
 
 #define K_STACK_BOTTOM		0x00800000
 #define PROGRAM_PAGE			0x08000000
 #define PROGRAM_START		0x08048000
 #define PROCESS_SIZE     	0x00002000
 #define STATUS_BYTEMASK    0x000000FF
-#define MAX_ARGS				128
 #define FILE_NAME_LENGTH   32
 #define BYTES_TO_READ      28
 #define ENTRY_POINT_START  24
@@ -132,20 +132,15 @@ int32_t execute(const uint8_t* command)
 	/* get the file name and arguments */
 	int32_t file_name_length;
 	int8_t file_name[FILE_NAME_LENGTH];
-	int8_t args[MAX_ARGS];
 
 	/* parse file and extract useful data */
 	for(i = 0; command[i] != ' ' && command[i] != '\0'; i++) {
 		if(i >= FILE_NAME_LENGTH-1) return -1;
 		file_name[i] = command[i];
 	}
+
 	file_name[i] = '\0';
 	file_name_length = i;
-
-	for(; command[i] != '\0'; i++) // get all the arguments
-		args[i-1 - file_name_length] = command[i];
-
-	args[i-1 - file_name_length] = '\0';
 
 	// if it returns -1, that means the file doesn't exist
 	dentry_t file_dentry;
@@ -195,7 +190,7 @@ int32_t execute(const uint8_t* command)
 	}
 	p_c.current_process = current_process;
 
-	strcpy((int8_t*)p_c.process_array[p_c.current_process]->args, args);
+	strcpy((int8_t*)p_c.process_array[p_c.current_process]->args, cmd_args);
 
 	fd_table_init(process_pcb->fd_table);
 
@@ -414,7 +409,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 		return -1; // invlud buffer
 
 	uint32_t i = 0;
-	while(i < nbytes && i < MAX_ARGS)
+	while(i < nbytes && i < TERM_BUFF_SIZE)
 	{ 	// copy the data over
 		buf[i] = (((p_c.process_array)[p_c.current_process])->args)[i];
 		i++;
