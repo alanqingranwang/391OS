@@ -1,4 +1,4 @@
-/* 
+/*
  * syscall.c - Contains functions for system calls.
  *
  * tab size = 3, no space
@@ -13,7 +13,7 @@
 #define PROGRAM_START		0x08048000
 #define PROCESS_SIZE     	0x00002000
 #define STATUS_BYTEMASK    0x000000FF
-#define MAX_ARGS				1024
+#define MAX_ARGS				128
 #define FILE_NAME_LENGTH   32
 #define BYTES_TO_READ      28
 #define ENTRY_POINT_START  24
@@ -37,7 +37,7 @@ void pc_init(){
 	p_c.in_use[0] = 0;
 }
 
-/* 
+/*
  * int32_t halt(uint8_t status)
  * 	DESCRIPTION:
  *			Terminates a process, returning the specified value to its parent process
@@ -53,7 +53,7 @@ void pc_init(){
  *
  */
 int32_t halt(uint8_t status)
-{   
+{
 	/* if terminating original shell, restart shell */
 	if(p_c.process_array[p_c.current_process]->parent_id == -1){
 		pc_init();
@@ -102,7 +102,7 @@ int32_t halt(uint8_t status)
 	return 0;
 }
 
-/* 
+/*
  * int32_t execute(const uint8_t* command)
  * 	DESCRIPTION:
  *			Attempts to load and execute a new program, handing off
@@ -140,9 +140,8 @@ int32_t execute(const uint8_t* command)
 	file_name[i] = '\0';
 	file_name_length = i;
 
-	for(; command[i] != '\0'; i++) {
+	for(; command[i] != '\0'; i++) // get all the arguments
 		args[i-1 - file_name_length] = command[i];
-	}
 
 	args[i-1 - file_name_length] = '\0';
 
@@ -194,6 +193,8 @@ int32_t execute(const uint8_t* command)
 	}
 	p_c.current_process = current_process;
 
+	strcpy((int8_t*)p_c.process_array[p_c.current_process]->args, args);
+
 	fd_table_init(process_pcb->fd_table);
 
 
@@ -238,7 +239,7 @@ int32_t execute(const uint8_t* command)
 		"movl %%ebp, %0 \n"
 		: "=r"(p_c.process_array[p_c.current_process]->current_ebp)
 	);
-	
+
 	/* push IRET context to stack and IRET */
 	user_context_switch(entry_point);
 
@@ -407,8 +408,23 @@ int32_t close(int32_t fd)
  */
 int32_t getargs(uint8_t* buf, int32_t nbytes)
 {
+	if(buf == NULL)
+		return -1; // invlud buffer
 
- 	return -1;
+	uint32_t i = 0;
+	while(i < nbytes && i < MAX_ARGS)
+	{ 	// copy the data over
+		buf[i] = (((p_c.process_array)[p_c.current_process])->args)[i];
+		i++;
+	}
+
+	while(i < nbytes)
+	{
+		buf[i] = '\0';
+		i++;
+	}
+
+ 	return 0;
 }
 
 /* JC
