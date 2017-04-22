@@ -39,6 +39,8 @@ extern void exception_29();
 extern void exception_30();
 extern void exception_31();
 
+void print_cr2();
+
 /* generalized exception handler */
 void exception_handler(int i);
 
