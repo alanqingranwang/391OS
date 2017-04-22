@@ -425,7 +425,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
  	return 0;
 }
 
-/* JC
+/* NM
  * int32_t vidmap(uint8_t** screen_start)
  * 	DESCRIPTION:
  *			Maps the text-mode video memory into user space at a pre-set virtual address. Although the address returned is
