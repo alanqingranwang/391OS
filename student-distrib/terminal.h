@@ -11,6 +11,7 @@
 #define TERM_BUFF_SIZE 128
 
 int8_t cmd_args[TERM_BUFF_SIZE]; // holds command argument
+// int32_t cat_flag;
 
 /* opens the terminal file */
 int32_t terminal_open(const uint8_t* blank1);

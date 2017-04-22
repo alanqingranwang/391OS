@@ -19,6 +19,7 @@
 #define ENTRY_POINT_START  24
 #define BYTE_SIZE				8
 #define MAGIC_NUMBER_SIZE	4
+#define CAT_NAME_LEN			3
 
 // #define VIRT_VID_MAP_ADDR	
 
@@ -128,6 +129,7 @@ int32_t execute(const uint8_t* command)
 		return -1;
 
 	int32_t i;
+	// cat_flag = 0;
 
 	/* get the file name and arguments */
 	int32_t file_name_length;
@@ -149,6 +151,10 @@ int32_t execute(const uint8_t* command)
 
 	if(file_dentry.file_type != 2)
 		return -1; // it's not a file type
+
+	// will signal to print a new line character after printing file
+	// if(strncmp((int8_t*)command, "cat", CAT_NAME_LEN) == 0)
+	// 	cat_flag = 1;
 
 	// Read first 4 bytes to see if its an executable
 	uint8_t buf[BYTES_TO_READ];

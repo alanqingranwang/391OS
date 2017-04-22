@@ -36,6 +36,9 @@ int32_t terminal_open(const uint8_t* blank){
  */
 
 int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
+	if(buf == NULL)
+		return -1;
+
 	int32_t i;
 	for(i = 0; i<TERM_BUFF_SIZE; i++)
 		save_buff[i] = ' ';
@@ -60,11 +63,21 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
  *			otherwise number of bytes written
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
+	if(buf == NULL)
+		return -1;
+
 	uint8_t* buffer = (uint8_t*)buf;
 	int32_t i=0;
-	for(i = 0; i < nbytes /*&& i < TERM_BUFF_SIZE*/; i++){
+	for(i = 0; i < nbytes; i++){
 		putc(buffer[i]);
 	}
+
+	// if(cat_flag == 1 && (i != nbytes || i == 0))
+	// {	// print a '\n' at the end of the file
+	// 	putc('\n');
+	// 	cat_flag = 0;
+	// }
+
 	return i;
 }
 
@@ -92,7 +105,6 @@ int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
 
 	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
 		buf[i] = save_buff[i];
-		// if (save_buff[i] == '\n' || save_buff[i] == '\0') break; // I need this too for args
 		if (save_buff[i] == ' ') break; // I need this to not break the shell
 	}
 
