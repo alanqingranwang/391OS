@@ -37,7 +37,7 @@ void exception_31() { exception_handler(31);}
 
 void print_cr2()
 {
-    uint32_t suspected_addr;
+    unsigned long suspected_addr;
     asm volatile("movl %%cr2, %0 \n"
         : "=r" (suspected_addr)
     );
