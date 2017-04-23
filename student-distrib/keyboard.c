@@ -4,6 +4,8 @@
  * tab size = 2, spaces
  */
 #include "keyboard.h"
+#define EXIT_LEN 4
+
 static int CTR4 = NUM_FREQ; // remove later
 static int CTR3 = 0;
 /*
@@ -53,7 +55,7 @@ int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
   }
 
   // count is always less than or equal to nbytes
-  if(strncmp((int8_t*)buf, "exit", 4) != 0) // if it's not exit then add this new line
+  if(strncmp((int8_t*)buf, "exit", EXIT_LEN) != 0) // if it's not exit then add this new line
   {
     buf[count] = '\n'; // replace the space with a new line
     count++;
