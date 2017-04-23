@@ -78,11 +78,6 @@ void rtc_handler(void)
 	// test_interrupts();	// this one looks like a rave
 	// call terminal's write
 
-	// have the handler print if turned on
-	if(get_print_one())
-		putc('1'); // uncomment when testing for freq
-
-
 	/* Don't touch anything below */
 	// alternate between then numbers so that rtc_read doesn't need to assign
 	interrupt_flag = 1;

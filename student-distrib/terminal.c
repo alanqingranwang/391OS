@@ -41,10 +41,10 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
 
 	int32_t i;
 	for(i = 0; i<TERM_BUFF_SIZE; i++)
-		save_buff[i] = ' ';
+		save_buff[i] = ' '; // clean the buffer
 	int32_t success = 0;
 	for(i = 0; (i < TERM_BUFF_SIZE) && (i < nbytes); i++){
-		save_buff[i] = buf[i];
+		save_buff[i] = buf[i]; // fill it
 		success++;
 	}
 	return -1; // not suppose to be able to read
