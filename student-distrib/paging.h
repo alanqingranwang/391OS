@@ -11,7 +11,11 @@
 #define RW_P_SET      (RW_SET_ONLY | 0x00000001) // Set bit 0, enables present bit
 #define RW_P_SIZE_SET (RW_P_SET    | 0x00000080) // Set bit 7, enables larger page size
 #define PROCESS_SET   0x00000087 // Set size, user, r/w, present
-#define USER_PAGE_ 	 (VIDEO | 0x7)
+#define USER_MASK     0x7		//set 4kb size, user, r/w, present
+#define USER_PAGE_ 	 (VIDEO | 0x7) //set user video memory page (4kb)
+#define USER_SPACE    0x00800000
+#define PROCESS_SIZE_  0x00400000
+#define PROCESS_IDX   32
 
 /* page directory */
 uint32_t page_directory[PAGE_SIZE] __attribute__((aligned(PAGE_ALIGN)));
@@ -26,8 +30,13 @@ void paging_init();
 /* helper function to enable paging (in-line-assembly) */
 void enablePaging();
 
+/* allocate page for a new process */
 void add_process(uint32_t process_id);
+
+/* allocate video memory page for user */
 void add_video_memory(uint32_t virtual_address);
+
+/* clear the TLB */
 void flush_tlb();
 
 #endif
