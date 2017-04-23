@@ -451,16 +451,13 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
  */
 int32_t vidmap(uint8_t** screen_start)
 {
-	if(screen_start == NULL) // invalid address location
+	// invalid address location
+	if(screen_start == NULL) 
 	{
 		printf("invalid pointer, vidmap\n");
 		return -1;
 	}
-
-	// check whether the address falls within the address range covered by the single user-level page.
-	// video memory will require you to add another page mapping for the program in this case a 4kB page.
-	// it is not ok to simply change the permisions of the video page located < 4MB and pass that address.
-
+	
 	// check if parameter is within page allocated for user program
 	if(screen_start < (uint8_t**)PROGRAM_PAGE || 
 		screen_start >= (uint8_t**)(PROGRAM_PAGE + USER_PAGE_SIZE)) {
@@ -468,9 +465,11 @@ int32_t vidmap(uint8_t** screen_start)
 		return -1;
 	}
 
-	*screen_start = (uint8_t*)VIRT_VID_MAP_ADDR; // Give the fixed mapping
+	// give user virtual adress
+	*screen_start = (uint8_t*)VIRT_VID_MAP_ADDR;
 
-	add_video_memory((uint32_t)(*screen_start));
+	// set up paging
+	add_video_memory((uint32_t)(*screen_start)); 
 	return VIRT_VID_MAP_ADDR;
 }
 

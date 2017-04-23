@@ -13,7 +13,7 @@
 #define PROCESS_SET   0x00000087 // Set size, user, r/w, present
 #define USER_MASK     0x7		//set 4kb size, user, r/w, present
 #define USER_PAGE_ 	 (VIDEO | 0x7) //set user video memory page (4kb)
-#define USER_SPACE    0x00800000
+#define USER_SPACE    0x00800000  
 #define PROCESS_SIZE_  0x00400000
 #define PROCESS_IDX   32
 
