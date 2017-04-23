@@ -96,26 +96,30 @@ int32_t terminal_close(int32_t fd){
  */
 int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
 	int32_t i = 0;
+	int32_t cmd_cnt = 0;
 
-	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
-		buf[i] = save_buff[i];
+	while(save_buff[i] == ' ' && i < nbytes && i < TERM_BUFF_SIZE) 
+		i++; // get to the real content
+
+	for(; cmd_cnt < nbytes && i < TERM_BUFF_SIZE; i++){
+		buf[cmd_cnt] = save_buff[i];
+		cmd_cnt++;
 		if (save_buff[i] == ' ') break; // I need this to not break the shell
 	}
 
+	while(save_buff[i] == ' ' && i < TERM_BUFF_SIZE)
+		i++; // get to the arguments
+
 	// get the arguments
-	int32_t file_name_length = i;
+	int32_t file_name_length = i-1; // 1 char too many
 	int32_t arg_cnt;
 
-	// clean the arg buffer
-	for(arg_cnt = 0; arg_cnt < TERM_BUFF_SIZE; arg_cnt++)
-		cmd_args[arg_cnt] = '\0';
-
-	arg_cnt = i; // start parsing from where the command left off
+	arg_cnt = i-1; // start parsing from where the command left off
 	// parse till end of character or max buffer size
 	for(; save_buff[arg_cnt] != '\0' && arg_cnt != TERM_BUFF_SIZE; arg_cnt++) // get all the arguments
 		cmd_args[arg_cnt-1 - file_name_length] = save_buff[arg_cnt];
 
 	cmd_args[arg_cnt-1 - file_name_length] = '\0';
 
-	return i;
+	return cmd_cnt;
 }
