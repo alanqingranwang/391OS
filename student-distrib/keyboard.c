@@ -4,6 +4,7 @@
  * tab size = 2, spaces
  */
 #include "keyboard.h"
+
 #define EXIT_LEN 4
 
 static int CTR4 = NUM_FREQ; // remove later

@@ -3,6 +3,8 @@
  * tab size = 3, no space
  */
 #include "filesystem.h"
+#include "fd_table.h"
+
 static uint32_t num_entries;
 static uint32_t num_inodes;
 static uint32_t num_data_blocks;
@@ -47,6 +49,7 @@ void filesystem_init(boot_block_t* boot_addr)
 		p_c.in_use[pc_count] = 0;
 
 	restore_flags(flags);
+	fops_table_init();
 }
 /************************CHECKPOINT 3.2****************************/
 /* JC
@@ -136,10 +139,7 @@ int32_t dir_open(const uint8_t* filename)
 
 	// fill in the descriptor
 	fd_t dir_fd_info;
-	(dir_fd_info.fd_jump).open = dir_open; // give it the function ptr
-	(dir_fd_info.fd_jump).read = dir_read;
-	(dir_fd_info.fd_jump).write = dir_write;
-	(dir_fd_info.fd_jump).close = dir_close;
+	dir_fd_info.fd_jump = &dir_ops_table;
 	dir_fd_info.inode_ptr = -1;
 	dir_fd_info.file_position = 0; // start offset at 0
 	dir_fd_info.flags = FD_ON;	// in use
@@ -242,10 +242,7 @@ int32_t file_open(const uint8_t* filename)
 
 	// fill in the descriptor
 	fd_t file_fd_info;
-	(file_fd_info.fd_jump).open = file_open; // give it the function ptr
-	(file_fd_info.fd_jump).read = file_read;
-	(file_fd_info.fd_jump).write = file_write;
-	(file_fd_info.fd_jump).close = file_close;
+	file_fd_info.fd_jump = &filesys_ops_table;
 	file_fd_info.inode_ptr = my_dentry.inode_idx;
 	file_fd_info.file_position = 0; // start offset at 0
 	file_fd_info.flags = FD_ON;	// in use
