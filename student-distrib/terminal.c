@@ -103,8 +103,8 @@ int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
 
 	for(; cmd_cnt < nbytes && i < TERM_BUFF_SIZE; i++){
 		buf[cmd_cnt] = save_buff[i];
-		cmd_cnt++;
 		if (save_buff[i] == ' ') break; // I need this to not break the shell
+		cmd_cnt++; // off by one, should count when it's not a space
 	}
 
 	while(save_buff[i] == ' ' && i < TERM_BUFF_SIZE)
@@ -121,5 +121,5 @@ int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
 
 	cmd_args[arg_cnt-1 - file_name_length] = '\0';
 
-	return cmd_cnt;
+	return cmd_cnt; // how many bytes are in the buf
 }

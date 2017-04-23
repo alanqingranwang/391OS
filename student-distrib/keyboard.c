@@ -42,6 +42,9 @@ int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
   int count;
   kbdr_flag = 0;
 	
+  if(buf == NULL)
+    return -1;
+
   while(1){
 		if(kbdr_flag == 1){
 			count = terminal_retrieve(buf, nbytes);
@@ -50,8 +53,13 @@ int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
   }
 
   // count is always less than or equal to nbytes
-  buf[count] = '\n'; // replace the space with a new line
-  return ++count;
+  if(strncmp((int8_t*)buf, "exit", 4) != 0) // if it's not exit then add this new line
+  {
+    buf[count] = '\n'; // replace the space with a new line
+    count++;
+  }
+    // new line is specifically for programs such as hello
+  return count;
 }
 
 /* AW
