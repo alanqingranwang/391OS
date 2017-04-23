@@ -366,6 +366,9 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
 			&& (given_name_len < MAX_NAME_CHARACTERS))
 		given_name_len++;
 
+	if(given_name_len == 0)
+		return -1; // empty string
+
 	if(given_name_len > MAX_NAME_CHARACTERS)
 		given_name_len = MAX_NAME_CHARACTERS; // pretend as if it's the same size.
 	// go through all the dentries
