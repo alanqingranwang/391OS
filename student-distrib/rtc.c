@@ -165,10 +165,7 @@ int32_t rtc_open(const uint8_t* blank1)
 
 	// fill in the descriptor
 	fd_t rtc_fd_info;
-	(rtc_fd_info.fd_jump).open = rtc_open; // give it the function ptr
-	(rtc_fd_info.fd_jump).read = rtc_read; 
-	(rtc_fd_info.fd_jump).write = rtc_write; 
-	(rtc_fd_info.fd_jump).close = rtc_close;
+	rtc_fd_info.fd_jump = &rtc_ops_table; // pointer to distinct ops
 	rtc_fd_info.inode_ptr = -1; // not a normal file
 	rtc_fd_info.file_position = 0;
 	rtc_fd_info.flags = 1;	// in use

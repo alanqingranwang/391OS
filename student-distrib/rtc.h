@@ -25,10 +25,6 @@
 /* adding the interrupt to the table is the job of the init */
 #include "idt.h"
 
-/**** remove later *******/
-#include "testcases3_2.h"
-/*************************/
-
 
 /* port 0x70 is used to specify an index or "register number"
  *		and to disable non-maskable-interrupt (NMI).

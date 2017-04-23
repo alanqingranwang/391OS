@@ -9,8 +9,6 @@
 
 #include "lib.h"
 #include "syscall.h"
-#include "fd_table.h"
-
 
 /* All The Macros */
 /* Macro for filesystem init in entry code */

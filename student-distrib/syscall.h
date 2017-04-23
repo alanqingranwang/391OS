@@ -2,7 +2,6 @@
 #define _SYSCALL_H
 
 #include "lib.h"
-#include "rtc.h"
 #include "paging.h"
 #include "x86_desc.h"
 #include "fd_table.h"
@@ -30,10 +29,10 @@
 typedef struct process_control_block {
 	uint8_t		process_id;
 	uint32_t    parent_id;
-	fd_t 		fd_table[FD_TABLE_SIZE];
 	uint32_t    current_esp;
 	uint32_t    current_ebp;
 	uint8_t     args[128];
+	fd_t 			fd_table[FD_TABLE_SIZE];
 } pcb;
 
 /* process controller */

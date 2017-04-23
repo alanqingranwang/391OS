@@ -11,7 +11,7 @@
 #include "idt.h"
 #include "paging.h"
 #include "debug.h"
-#include "filesystem.h" //
+#include "filesystem.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */

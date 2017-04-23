@@ -5,7 +5,6 @@
 #define _TERMINAL_H
 
 #include "lib.h"
-#include "fd_table.h"
 
 #define STDOUT_FD 1 // the fd for STDOUT
 #define TERM_BUFF_SIZE 128

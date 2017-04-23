@@ -294,7 +294,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 		return -1; // invalid pointer
 
  	// get the function pointer to the specific file or rtc or thing
-	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump).read)(fd, (uint8_t*)buf, nbytes);
+	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump)->read)(fd, (uint8_t*)buf, nbytes);
 }
 
 /* JC
@@ -326,7 +326,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 		return -1; // invalid pointer
 
  	// get the function pointer to the specific file or rtc or thing
-	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump).write)(fd, buf, nbytes);
+	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump)->write)(fd, buf, nbytes);
 }
 
 /* JC
@@ -355,10 +355,11 @@ int32_t open(const uint8_t* filename)
 
  	// go to the proper file type
  	switch(dentry.file_type)
- 	{	// NEED TO CHANGE THIS TO USE FOPS TABLE AND FD TABLE STUFF
- 		case 0: return rtc_open(filename);
- 		case 1: return dir_open(filename);
- 		default: return file_open(filename);
+ 	{ // open shouldn't be using the fd_table til it's opened, so we use the
+ 		// jump table structure directly.
+ 		case 0: return (rtc_ops_table.open)(filename);
+ 		case 1: return (dir_ops_table.open)(filename);
+ 		default: return (filesys_ops_table.open)(filename);
  	}
 }
 
@@ -383,7 +384,7 @@ int32_t close(int32_t fd)
 	}
 
  	// get the function pointer for the unknown function
-	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump).close)(fd);
+	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump)->close)(fd);
 }
 
 /* JC
