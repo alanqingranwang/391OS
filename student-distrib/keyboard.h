@@ -46,6 +46,7 @@
 #define ENTER        0x1C
 #define FOUR_SCAN 	0x05
 #define THREE_SCAN 	0x04
+#define ONE_SCAN     0x02
 
 #define BUFFER_SIZE     128
 #define KEY_MODES       4   // nothing, shift, caps, shift and caps

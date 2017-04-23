@@ -355,7 +355,8 @@ int32_t open(const uint8_t* filename)
 
  	// go to the proper file type
  	switch(dentry.file_type)
- 	{
+ 	{ // open shouldn't be using the fd_table til it's opened, so we use the
+ 		// jump table structure directly.
  		case 0: return (rtc_ops_table.open)(filename);
  		case 1: return (dir_ops_table.open)(filename);
  		default: return (filesys_ops_table.open)(filename);

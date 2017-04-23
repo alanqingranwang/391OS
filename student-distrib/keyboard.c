@@ -31,7 +31,7 @@ int32_t keyboard_open(const uint8_t* blank1) {
     return -1;
 }
 
-/* NM
+/* NM, JC
  * keyboard_read
  *  DESCRIPTION: 
  *    Waits for the keyboard handler to be called, then takes the buffer
@@ -429,7 +429,7 @@ void process_key(uint8_t key) {
             }
         }
         // if pressed ctrl and 1s
-        else if(key == 0x02 && ctrl_flag)
+        else if(key == ONE_SCAN && ctrl_flag)
         {
             clear(); // print file
             print_file_info();

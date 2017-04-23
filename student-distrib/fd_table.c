@@ -15,7 +15,8 @@
  *		DESCRIPTION:
  *			Initialize each distinct fops structures
  *			Check code to see which ones are available.
- *
+ *		INPUT: none
+ *		RETURN VALUE: none
  */
 void fops_table_init()
 {
@@ -117,6 +118,7 @@ int32_t set_fd_info(int32_t index, fd_t file_info)
 	if(index < 0 || index >= MAX_OPEN_FILES)
 		return -1;
 
+	// fill the table index with the given info
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump = file_info.fd_jump;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = file_info.inode_ptr;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = file_info.file_position;
@@ -139,6 +141,7 @@ int32_t get_inode_ptr(int32_t index)
 	if(index < 0 || index >= MAX_OPEN_FILES)
 		return -1;
 
+	// get the ptr to the inode
 	return ((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr;
 }
 
@@ -156,6 +159,7 @@ void close_fd(int32_t index)
 	if(index < 0 || index >= MAX_OPEN_FILES)
 		return;
 	
+	// close everything
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump = NULL;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = -1;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = 0;

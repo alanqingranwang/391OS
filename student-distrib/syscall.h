@@ -2,7 +2,6 @@
 #define _SYSCALL_H
 
 #include "lib.h"
-#include "rtc.h"
 #include "paging.h"
 #include "x86_desc.h"
 #include "fd_table.h"

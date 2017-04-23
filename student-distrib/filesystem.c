@@ -11,6 +11,7 @@ static uint32_t num_data_blocks;
 
 /* holds the file_name size for all the dentries, maxes at 32 chars */
 static int32_t character_count[MAX_ENTRIES];
+
 /* JC
  * filesystem_init
  * 	DESCRIPTION:
@@ -52,6 +53,7 @@ void filesystem_init(boot_block_t* boot_addr)
 	fops_table_init();
 }
 /************************CHECKPOINT 3.2****************************/
+
 /* JC
  * print_file_info
  *		Prints all the file information.
