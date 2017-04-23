@@ -405,6 +405,10 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	if(buf == NULL)
 		return -1; // include buffer
 
+	uint32_t clean;
+	for(clean = 0; clean < nbytes; clean++)
+		buf[clean] = '\0';
+
 	uint32_t i = 0;
 	while(i < nbytes && i < TERM_BUFF_SIZE)
 	{ 	// copy the data over
