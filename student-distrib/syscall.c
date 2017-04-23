@@ -347,12 +347,6 @@ int32_t open(const uint8_t* filename)
 		return -1; // check pointer
 	}
 
-	if(filename[0] == '\0')
-	{
-		printf("invalid name, sys_open\n");
-		return -1; // empty name
-	}
-
 	dentry_t dentry; // looking for this dentry
  	if(read_dentry_by_name(filename, &dentry) == -1) // find the dentry
  		return -1; // doesn't exist
@@ -407,7 +401,7 @@ int32_t close(int32_t fd)
 int32_t getargs(uint8_t* buf, int32_t nbytes)
 {
 	if(buf == NULL)
-		return -1; // invlud buffer
+		return -1; // include buffer
 
 	uint32_t i = 0;
 	while(i < nbytes && i < TERM_BUFF_SIZE)
