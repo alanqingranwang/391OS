@@ -421,11 +421,9 @@ void process_key(uint8_t key) {
             {
               CTR4 = NUM_FREQ;
               print_freq(CTR4);
-              set_print_one(0); // turn off
             }
             else{
               print_freq(CTR4); // show next freq
-              set_print_one(1); // turn on
               CTR4--;
             }
         }
