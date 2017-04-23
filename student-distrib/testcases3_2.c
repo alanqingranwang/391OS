@@ -5,20 +5,6 @@
 
 #include "testcases3_2.h"
 
-// remove this after checkpoint 2, and all it's uses
-static int print_one = 0;
-// retrieves veriable to check to print one
-int get_print_one()
-{
-	return print_one;
-}
-
-// set the variable to make rtc print during interrupt
-void set_print_one(int change)
-{
-	print_one = change;
-}
-
 /* JC
  * test_file_data
  *	DESCRIPTION: prints out the given index's file data
