@@ -8,9 +8,10 @@
 
 #define KERNEL_MEM    0x00400000  // start of kernel memory (physical and virtual)
 #define RW_SET_ONLY   0x00000002  // Set bit 1, enables r/w
-#define RW_P_SET      RW_SET_ONLY | 0x00000001 // Set bit 0, enables present bit
-#define RW_P_SIZE_SET RW_P_SET    | 0x00000080; // Set bit 7, enables larger page size
+#define RW_P_SET      (RW_SET_ONLY | 0x00000001) // Set bit 0, enables present bit
+#define RW_P_SIZE_SET (RW_P_SET    | 0x00000080) // Set bit 7, enables larger page size
 #define PROCESS_SET   0x00000087 // Set size, user, r/w, present
+#define USER_PAGE_ 	 (VIDEO | 0x7)
 
 /* page directory */
 uint32_t page_directory[PAGE_SIZE] __attribute__((aligned(PAGE_ALIGN)));

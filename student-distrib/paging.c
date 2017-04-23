@@ -45,7 +45,7 @@ void add_process(uint32_t process_id) {
 void add_video_memory(uint32_t virtual_address)
 {
     page_directory[virtual_address>>22] = (uint32_t) user_page_table | 0x07;
-    user_page_table[0] = 0xB8000 | 0x7;
+    user_page_table[0] = USER_PAGE_;
     flush_tlb();
 }
 
