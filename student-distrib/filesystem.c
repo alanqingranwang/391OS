@@ -4,6 +4,7 @@
  */
 #include "filesystem.h"
 #include "fd_table.h"
+#include "terminal.h"
 
 static uint32_t num_entries;
 static uint32_t num_inodes;
