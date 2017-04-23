@@ -69,7 +69,7 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 	uint8_t* buffer = (uint8_t*)buf;
 	int32_t i=0;
 	for(i = 0; i < nbytes; i++){
-		putc(buffer[i]);
+		putc(buffer[i]); // output all the charactrs in the given buffer
 	}
 
 	return i;
@@ -119,7 +119,7 @@ int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
 	for(; save_buff[arg_cnt] != '\0' && arg_cnt != TERM_BUFF_SIZE; arg_cnt++) // get all the arguments
 		cmd_args[arg_cnt-1 - file_name_length] = save_buff[arg_cnt];
 
-	cmd_args[arg_cnt-1 - file_name_length] = '\0';
+	cmd_args[arg_cnt-1 - file_name_length] = '\0'; // terminate the string
 
 	return cmd_cnt; // how many bytes are in the buf
 }

@@ -47,14 +47,14 @@ int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
   if(buf == NULL)
     return -1;
 
-  while(1){
+  while(1){ // get the buffer
 		if(kbdr_flag == 1){
 			count = terminal_retrieve(buf, nbytes);
 			break;
 		}
   }
 
-  // count is always less than or equal to nbytes
+  // if the sting isn't the command exit, place the '\n' at the end
   if(strncmp((int8_t*)buf, "exit", EXIT_LEN) != 0) // if it's not exit then add this new line
   {
     buf[count] = '\n'; // replace the space with a new line

@@ -393,8 +393,8 @@ int32_t close(int32_t fd)
  *			as a part of the task data when a new program is loaded. Here they were merely copied into user space. The shell
  *			does not request arguments, but you should probably still initialize the shell task's argument data to the
  *			empty string.
- * 	INPUT: buf -
- *				 nbytes -
+ * 	INPUT: buf - buffer that we need to fill with arguments
+ *				 nbytes - number of bytes to move over
  *		OUTPUT:
  *		RETURN VALUE: -1 - if the arguments and a terminal NULL (0-byte) do not fit in the buffer
  *		SIDE EFFECTS:
@@ -415,6 +415,8 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	if(i == nbytes)
 		return -1; // couldn't fit an end of line char in there
 
+	// start from the end, replace all the spaces with '\0' until you get to
+	// the first char
 	uint32_t backwards = nbytes-1;
 	while(buf[backwards] == ' ' || buf[backwards] == '\0')
 	{
