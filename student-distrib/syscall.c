@@ -12,6 +12,7 @@
 #define K_STACK_BOTTOM		0x00800000
 #define PROGRAM_PAGE			0x08000000
 #define PROGRAM_START		0x08048000
+#define USER_PAGE_SIZE		0x00400000
 #define PROCESS_SIZE     	0x00002000
 #define STATUS_BYTEMASK    0x000000FF
 #define FILE_NAME_LENGTH   32
@@ -21,7 +22,7 @@
 #define MAGIC_NUMBER_SIZE	4
 #define CAT_NAME_LEN			3
 
-// #define VIRT_VID_MAP_ADDR	
+#define VIRT_VID_MAP_ADDR	0x10000000
 
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
 static uint32_t extended_status;
@@ -135,7 +136,7 @@ int32_t execute(const uint8_t* command)
 	int8_t file_name[FILE_NAME_LENGTH];
 
 	/* parse file and extract useful data */
-	for(i = 0; command[i] != ' ' && command[i] != '\0'; i++) {
+	for(i = 0; command[i] != ' ' && command[i] != '\0' && command[i] != '\n'; i++) {
 		if(i >= FILE_NAME_LENGTH-1) return -1;
 		file_name[i] = command[i];
 	}
@@ -161,6 +162,7 @@ int32_t execute(const uint8_t* command)
 	/* initialize new process in process controller */
 	exception_flag = 0;
 	if(p_c.no_processes >= MAX_PROCESSES-1) {
+		printf("Maximum Possible Processes. Stop.\n");
 		return -1;  // too many processes
 	}
 	else {
@@ -353,7 +355,7 @@ int32_t open(const uint8_t* filename)
 
  	// go to the proper file type
  	switch(dentry.file_type)
- 	{
+ 	{	// NEED TO CHANGE THIS TO USE FOPS TABLE AND FD TABLE STUFF
  		case 0: return rtc_open(filename);
  		case 1: return dir_open(filename);
  		default: return file_open(filename);
@@ -410,6 +412,9 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 		i++;
 	}
 
+	if(i == nbytes)
+		return -1; // couldn't fit an end of line char in there
+
 	uint32_t backwards = nbytes-1;
 	while(buf[backwards] == ' ' || buf[backwards] == '\0')
 	{
@@ -430,41 +435,36 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
  *			falls within the address range covered by the single user-level page. Note that the video memory will require
  *			you to add another page mapping from the program, in this case a 4kB page. It is NOT ok to simply change
  *			the permissions of the video page located < 4MB and pass that address.
- * 	INPUT: screen_start -
+ * 	INPUT:
+ *			screen_start - A pointer to the location that should hold the video memory mapping
  *		OUTPUT:
  *		RETURN VALUE: -1 - if the location provided is invalid
  *		SIDE EFFECTS:
  *
  */
-
-/*
-	Vidmaps only used by fish. given a double pointer, look at source code.
-	Given the address of where it's supposed to write all those characters.
-	Frame 0 and Frame 1 similar to mp1
-	What fish needs is an address as to where it's supposed to write that to.
-	Check that it's a valid pointer. Check whether it's within the paging bounds.
-	Remember where the video memory address is. Don't the video memory address between 0 and 4MB.
-	We should return a virtual address. Pick an address that is mapped to video memory.
-	Doesn't matter where in virtual. Just make sure it's far from the starting address of programs. 
- */
 int32_t vidmap(uint8_t** screen_start)
 {
 	if(screen_start == NULL) // invalid address location
-		return -1; // should I also check the range of the location?, make sure it's in user space
+	{
+		printf("invalid pointer, vidmap\n");
+		return -1;
+	}
+
 	// check whether the address falls within the address range covered by the single user-level page.
 	// video memory will require you to add another page mapping for the program in this case a 4kB page.
 	// it is not ok to simply change the permisions of the video page located < 4MB and pass that address.
 
 	// check if parameter is within page allocated for user program
-	uint32_t process_start_address = 0x08000000;
-	if(screen_start < (uint8_t**)process_start_address || screen_start >= (uint8_t**)process_start_address + 0x00400000) {
+	if(screen_start < (uint8_t**)PROGRAM_PAGE || 
+		screen_start >= (uint8_t**)(PROGRAM_PAGE + USER_PAGE_SIZE)) {
+		printf("pointer out of range, vidmap\n");
 		return -1;
 	}
 
-	*screen_start = (uint8_t*)0x10000000;
+	*screen_start = (uint8_t*)VIRT_VID_MAP_ADDR; // Give the fixed mapping
 
 	add_video_memory((uint32_t)(*screen_start));
-	return 0x10000000;
+	return VIRT_VID_MAP_ADDR;
 }
 
 /* JC
@@ -479,7 +479,6 @@ int32_t vidmap(uint8_t** screen_start)
  */
 int32_t set_handler(int32_t signum, void* handler_address)
 {
-
  	return -1;
 }
 
