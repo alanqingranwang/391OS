@@ -457,7 +457,7 @@ void handle_backspace() {
     if(buffer_index - 1 >= 0) {
         backspace();
         buffer_index--;
-        buffer[buffer_index] = ' ';
+        buffer[buffer_index] = '\0';
     }
 }
 

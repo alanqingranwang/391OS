@@ -48,6 +48,7 @@ process_control p_c;
 
 /* initializes the process controller */
 void pc_init();
+void parse_cmd_args(uint8_t* buf, const uint8_t* comm);
 
 /* System Call Prototypes */
 int32_t halt(uint8_t status);
