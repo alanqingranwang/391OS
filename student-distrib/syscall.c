@@ -394,6 +394,9 @@ int32_t open(const uint8_t* filename)
  	switch(dentry.file_type)
  	{ // open shouldn't be using the fd_table til it's opened, so we use the
  		// jump table structure directly.
+ 		// I used the distinct jump table directly because the filename hasn't been opened
+ 		// in the fd_table yet, Look at the fd_table.h, we do use the fops pointer correctly
+ 		// in read and write
  		case 0: return (rtc_ops_table.open)(filename);
  		case 1: return (dir_ops_table.open)(filename);
  		default: return (filesys_ops_table.open)(filename);
@@ -458,13 +461,16 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 		return -1; // couldn't fit an end of line char in there
 
 	// start from the end, replace all the spaces with '\0' until you get to
-	// the first char
+	// the first char, this is incase the user puts in random spaces at the end
 	uint32_t backwards = nbytes-1;
 	while(buf[backwards] == ' ' || buf[backwards] == '\0')
 	{
 		buf[backwards] = (uint8_t)'\0';
 		backwards--;
 	}
+
+	if(buf[0] == '\0')
+		return -1; // last check, if the argument is empty, then there's no args
 
  	return 0;
 }
