@@ -200,8 +200,8 @@ int32_t execute(const uint8_t* comm)
 	exception_flag = 0;
 	if(p_c.no_processes >= MAX_PROCESSES-1) {
 		printf("Maximum Possible Processes. Stop.\n");
-		return -1;  // too many processes
-	}
+		return 0;  // too many processes
+	} // start allocating stuff for processes
 	else {
 		p_c.no_processes++;
 	}
