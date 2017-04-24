@@ -106,6 +106,40 @@ int32_t halt(uint8_t status)
 	return 0;
 }
 
+/* JC
+ * parse_cmd_args
+ *		DESCRIPTION: Given a buffer, retrieve the argument after the first space.
+ *		Then fill in NULL after the first command. All the arguments are placed in the cmd_args
+ *		INPUT: buf, the buffer that we should extract the command, comm the user input that needs to be parsed
+ *		RETURN VALUE: none
+ */
+void parse_cmd_args(uint8_t* buf, const uint8_t* comm)
+{
+	int32_t i = 0;
+
+	// the command should start at index 0, so find the first space
+	while(comm[i] != ' ' && comm[i] != '\0' && i < TERM_BUFF_SIZE)
+	{
+		buf[i] = comm[i]; // get the command
+		i++;
+	}
+	
+	buf[i] = '\0'; // terminate the command
+
+	// i should be at the first space, no find the next non space char
+	while(comm[i] == ' ' && comm[i] != '\0' && i < TERM_BUFF_SIZE)
+		i++; // get to the arguments
+
+	// get the arguments
+	int32_t file_name_length = i; // 1 char too many
+	int32_t arg_cnt = i; // start parsing from where the command left off
+	// parse till end of character or max buffer size
+	for(; comm[arg_cnt] != '\0' && arg_cnt != TERM_BUFF_SIZE; arg_cnt++) // get all the arguments
+		cmd_args[arg_cnt - file_name_length] = comm[arg_cnt];	
+
+	cmd_args[arg_cnt - file_name_length] = '\0'; // terminate the string
+}
+
 /*
  * int32_t execute(const uint8_t* command)
  * 	DESCRIPTION:
@@ -124,10 +158,13 @@ int32_t halt(uint8_t status)
  *		SIDE EFFECTS:
  *
  */
-int32_t execute(const uint8_t* command)
+int32_t execute(const uint8_t* comm)
 {
-	if(command == NULL) // null pointer
+	if(comm == NULL) // null pointer
 		return -1;
+
+	uint8_t command[TERM_BUFF_SIZE];
+	parse_cmd_args(command, comm);
 
 	int32_t i;
 

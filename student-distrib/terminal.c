@@ -41,7 +41,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
 
 	int32_t i;
 	for(i = 0; i<TERM_BUFF_SIZE; i++)
-		save_buff[i] = ' '; // clean the buffer
+		save_buff[i] = '\0'; // clean the buffer
 	int32_t success = 0;
 	for(i = 0; (i < TERM_BUFF_SIZE) && (i < nbytes); i++){
 		save_buff[i] = buf[i]; // fill it
@@ -88,38 +88,24 @@ int32_t terminal_close(int32_t fd){
 	return -1;
 }
 
-/* NM
+/* NM, JC
  * terminal_retrieve
  *	DESCRIPTION:
  *		Puts the saved buffer from the previous output into the buf.
  *		Used by the keyboard.
  */
 int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
-	int32_t i = 0;
-	int32_t cmd_cnt = 0;
+	int32_t i = 0; // goes through the whole save buffer
+	int32_t cmd_cnt = 0; // starts filling buf from the beginning
 
 	while(save_buff[i] == ' ' && i < nbytes && i < TERM_BUFF_SIZE) 
-		i++; // get to the real content
+		i++; // get to the real content, strip the beginning spaces
 
 	for(; cmd_cnt < nbytes && i < TERM_BUFF_SIZE; i++){
 		buf[cmd_cnt] = save_buff[i];
-		if (save_buff[i] == ' ') break; // I need this to not break the shell
+		if (save_buff[i] == '\0') break; // I need this to not break the shell
 		cmd_cnt++; // off by one, should count when it's not a space
 	}
-
-	while(save_buff[i] == ' ' && i < TERM_BUFF_SIZE)
-		i++; // get to the arguments
-
-	// get the arguments
-	int32_t file_name_length = i-1; // 1 char too many
-	int32_t arg_cnt;
-
-	arg_cnt = i-1; // start parsing from where the command left off
-	// parse till end of character or max buffer size
-	for(; save_buff[arg_cnt] != '\0' && arg_cnt != TERM_BUFF_SIZE; arg_cnt++) // get all the arguments
-		cmd_args[arg_cnt-1 - file_name_length] = save_buff[arg_cnt];
-
-	cmd_args[arg_cnt-1 - file_name_length] = '\0'; // terminate the string
 
 	return cmd_cnt; // how many bytes are in the buf
 }
