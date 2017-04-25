@@ -58,6 +58,8 @@ void pc_init(){
  */
 int32_t halt(uint8_t status)
 {
+	close_all_fd(); // gotta do it before the restart
+
 	/* if terminating original shell, restart shell */
 	if(p_c.process_array[p_c.current_process]->parent_id == -1){
 		pc_init();

@@ -78,6 +78,25 @@ void fd_table_init(fd_t* new_table)
 }
 
 /* JC
+ * close_all_fd
+ *		DESCRIPTION: Go through all the fds and turn them off
+ *		INPUT: none
+ *		RETURN VALUE: none
+ */
+void close_all_fd()
+{
+	uint32_t halt_cnt;
+	// close all the fd
+	for(halt_cnt = 0; halt_cnt < MAX_OPEN_FILES; halt_cnt++)
+	{
+		((((p_c.process_array)[p_c.current_process])->fd_table)[halt_cnt]).fd_jump = NULL;
+		((((p_c.process_array)[p_c.current_process])->fd_table)[halt_cnt]).inode_ptr = -1;
+		((((p_c.process_array)[p_c.current_process])->fd_table)[halt_cnt]).file_position = 0;
+		((((p_c.process_array)[p_c.current_process])->fd_table)[halt_cnt]).flags = FD_OFF;
+	}
+}
+
+/* JC
  * get_fd_index
  * 	DESCRIPTION:
  *			Finds an available file descriptor in the table to use.

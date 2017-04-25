@@ -3,7 +3,6 @@
  *
  */
 
-
 #ifndef _FD_TABLE_H
 #define _FD_TABLE_H
 
@@ -44,6 +43,7 @@ fd_op_table_t term_ops_table;
 
 void fd_table_init(fd_t* new_table);
 void fops_table_init();
+void close_all_fd();
 
 /* Helpers */
 int32_t set_fd_info(int32_t index, fd_t file_info);
