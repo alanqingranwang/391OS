@@ -14,6 +14,8 @@ static int CTR3 = 0;
  */
 static int caps_shift_flag = NONE_MODE;
 static int ctrl_flag = 0;
+static int alt_flag = 0;
+static int fn_flag = 0;
 static int buffer_index = 0;
 static unsigned char buffer[BUFFER_SIZE];
 static volatile int kbdr_flag = 0;
