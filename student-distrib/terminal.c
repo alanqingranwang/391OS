@@ -1,33 +1,12 @@
-/* JC
+/* NM
  * terminal.c - Contains the terminal driver.
  */
+
 #include "terminal.h"
+
 static int8_t save_buff[TERM_BUFF_SIZE];
-/* JC
- * terminal_driver
- *		DESCRIPTION:
- *			The driver for the terminal to execute the proper operation
- *		INPUT:
- *			cmd - the operation we should be executing
- *		RETURN VALUE:
- *			-1 - incorrect cmd or failure from operations
- *			returns are dependent on operation, check interfaces
- */
-int32_t terminal_driver(uint32_t cmd, op_data_t input){
-	switch(cmd){
-		case OPEN:
-			return terminal_open();
-		case CLOSE:
-			return terminal_close(STDOUT_FD);
-		case READ:
-			return terminal_read(STDOUT_FD, (int8_t*)(input.buf), input.nbytes);
-		case WRITE:
-			return terminal_write(STDOUT_FD, (int8_t*)(input.buf), input.nbytes);
-		default:
-			return -1;
-	}
-}
-/* JC
+
+/* NM
  * terminal_open
  *		DESCRIPTION:
  *			Opens the terminal for use, a driver operation. Allocats the fd 1 (stdout)
@@ -37,22 +16,11 @@ int32_t terminal_driver(uint32_t cmd, op_data_t input){
  *		RETURN VALUE:
  *			0 - success
  */
-int32_t terminal_open(){
-	return 0;
+int32_t terminal_open(const uint8_t* blank){
+	return -1;
 }
-/* JC
- * terminal_close
- *		DESCRIPTION:
- *			Closes the terminal from use, a driver operation
- *		INPUT:
- *			fd - 1, stdout should always be open until end of kernel.
- *		RETURN VALUE:
- *			0 - success
- */
-int32_t terminal_close(int32_t fd){
-	return 0;
-}
-/* JC
+
+/* NM
  * terminal_read
  *		DESCRIPTION:
  *			Reads the buffer passed in for nbytes. Then interprets the information
@@ -66,18 +34,24 @@ int32_t terminal_close(int32_t fd){
  *		RETURN VALUE:
  *			 0 - sucess
  */
-int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes){
+
+int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
+	if(buf == NULL)
+		return -1;
+
 	int32_t i;
 	for(i = 0; i<TERM_BUFF_SIZE; i++)
-		save_buff[i] = ' ';
+		save_buff[i] = '\0'; // clean the buffer
 	int32_t success = 0;
 	for(i = 0; (i < TERM_BUFF_SIZE) && (i < nbytes); i++){
-		save_buff[i] = buf[i];
+		save_buff[i] = buf[i]; // fill it
 		success++;
 	}
-	return success;
+	return -1; // not suppose to be able to read
+	// return success;
 }
-/* JC
+
+/* NM
  * terminal_write
  *		DESCRIPTION:
  *			Writes nbytes of char from the buffer to the screen through putc.
@@ -88,19 +62,50 @@ int32_t terminal_read(int32_t fd, int8_t* buf, int32_t nbytes){
  *		RETURN VALUE:
  *			otherwise number of bytes written
  */
-int32_t terminal_write(int32_t fd, int8_t* buf, int32_t nbytes){
+int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
+	if(buf == NULL)
+		return -1;
+
+	uint8_t* buffer = (uint8_t*)buf;
 	int32_t i=0;
-	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
-		putc(buf[i]);
+	for(i = 0; i < nbytes; i++){
+		putc(buffer[i]); // output all the charactrs in the given buffer
 	}
+
 	return i;
 }
 
-int32_t terminal_retrieve(int32_t fd, uint8_t* buf, int32_t nbytes){
-	int32_t i=0;
-	for(i = 0; i < nbytes && i < TERM_BUFF_SIZE; i++){
-		buf[i] = save_buff[i];
-		if (save_buff[i] == ' ') break;
+/* NM
+ * terminal_close
+ *		DESCRIPTION:
+ *			Closes the terminal from use, a driver operation
+ *		INPUT:
+ *			fd - 1, stdout should always be open until end of kernel.
+ *		RETURN VALUE:
+ *			0 - success
+ */
+int32_t terminal_close(int32_t fd){
+	return -1;
+}
+
+/* NM, JC
+ * terminal_retrieve
+ *	DESCRIPTION:
+ *		Puts the saved buffer from the previous output into the buf.
+ *		Used by the keyboard.
+ */
+int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
+	int32_t i = 0; // goes through the whole save buffer
+	int32_t cmd_cnt = 0; // starts filling buf from the beginning
+
+	while(save_buff[i] == ' ' && i < nbytes && i < TERM_BUFF_SIZE) 
+		i++; // get to the real content, strip the beginning spaces
+
+	for(; cmd_cnt < nbytes && i < TERM_BUFF_SIZE; i++){
+		buf[cmd_cnt] = save_buff[i];
+		if (save_buff[i] == '\0') break; // I need this to not break the shell
+		cmd_cnt++; // off by one, should count when it's not a space
 	}
-	return i;
+
+	return cmd_cnt; // how many bytes are in the buf
 }

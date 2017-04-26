@@ -25,10 +25,6 @@
 /* adding the interrupt to the table is the job of the init */
 #include "idt.h"
 
-/**** remove later *******/
-#include "testcases3_2.h"
-/*************************/
-
 
 /* port 0x70 is used to specify an index or "register number"
  *		and to disable non-maskable-interrupt (NMI).
@@ -92,10 +88,9 @@ void rtc_init(void);
 void rtc_handler(void);
 
 /* Real-Time Clock Driver */
-int32_t rtc_driver(uint32_t cmd, op_data_t operation_data);
-int32_t rtc_open();
-int32_t rtc_read();
-int32_t rtc_write(const void* buf);
+int32_t rtc_open(const uint8_t* blank1);
+int32_t rtc_read(int32_t fd, uint8_t* blank1, int32_t blank2);
+int32_t rtc_write(int32_t fd, const void* buf, int32_t blank1);
 int32_t rtc_close(int32_t fd);
 
 void set_frequency(uint32_t frequency);

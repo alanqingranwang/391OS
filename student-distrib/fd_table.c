@@ -7,18 +7,63 @@
 #include "syscall.h"
 #include "keyboard.h" // need driver, stdin
 #include "terminal.h" // need driver, stdout
-
+#include "rtc.h"
+#include "filesystem.h"
 
 /* JC
- * Initializes the file descriptor table, will migrate to the execute syscall
- *		When we start creating multiple processes.
+ * fops_table_init
+ *		DESCRIPTION:
+ *			Initialize each distinct fops structures
+ *			Check code to see which ones are available.
+ *		INPUT: none
+ *		RETURN VALUE: none
+ */
+void fops_table_init()
+{
+	// rtc jump table
+	rtc_ops_table.open = rtc_open;
+	rtc_ops_table.read = rtc_read;	
+	rtc_ops_table.write = rtc_write;
+	rtc_ops_table.close = rtc_close;
+	// file jump table
+	filesys_ops_table.open = file_open;
+	filesys_ops_table.read = file_read;
+	filesys_ops_table.write = file_write;
+	filesys_ops_table.close = file_close;
+	// directory jump table
+	dir_ops_table.open = dir_open;
+	dir_ops_table.read = dir_read;
+	dir_ops_table.write = dir_write;
+	dir_ops_table.close = dir_close;
+	// terminal jump table
+	term_ops_table.open = terminal_open;
+	term_ops_table.read = terminal_read;
+	term_ops_table.write = terminal_write;
+	term_ops_table.close = terminal_close;
+	// keyboard jump table
+	kybd_ops_table.open = keyboard_open;
+	kybd_ops_table.read = keyboard_read;
+	kybd_ops_table.write = keyboard_write;
+	kybd_ops_table.close = keyboard_close;
+}
+
+/* JC
+ * fd_table_init
+ *		DESCRIPTION:
+ *			Given the fd_table of a specific process. Initialize it to all off. Then
+ *			initialize the fd index 0 and 1 to be used by terminal_driver and keyboard_driver
+ *		INPUT:
+ *			new_table - a pointer to the table we are trying to initialize
+ *		Return value: none
+ *
  */
 void fd_table_init(fd_t* new_table)
 {
 	uint32_t table_loop;
 	for(table_loop = 0; table_loop < MAX_OPEN_FILES; table_loop++)
 	{
-		(new_table[table_loop]).file_op_table_ptr = NULL;
+		// initialize to empty fd structure
+		(new_table[table_loop]).fd_jump = NULL;
 		(new_table[table_loop]).inode_ptr = -1;
 		(new_table[table_loop]).file_position = 0;
 		(new_table[table_loop]).flags = FD_OFF; // initialize all not in use.
@@ -26,10 +71,29 @@ void fd_table_init(fd_t* new_table)
 
 	// open stdin
 	(new_table[STDOUT_]).flags = FD_ON;
-	(new_table[STDOUT_]).file_op_table_ptr = terminal_driver;
+	(new_table[STDOUT_]).fd_jump = &term_ops_table;
 	// open stdout
 	(new_table[STDIN_]).flags = FD_ON;
-	(new_table[STDIN_]).file_op_table_ptr = keyboard_driver; // need the keyboard driver
+	(new_table[STDIN_]).fd_jump = &kybd_ops_table;
+}
+
+/* JC
+ * close_all_fd
+ *		DESCRIPTION: Go through all the fds and turn them off
+ *		INPUT: none
+ *		RETURN VALUE: none
+ */
+void close_all_fd()
+{
+	uint32_t halt_cnt;
+	// close all the fd
+	for(halt_cnt = 0; halt_cnt < MAX_OPEN_FILES; halt_cnt++)
+	{
+		((((p_c.process_array)[p_c.current_process])->fd_table)[halt_cnt]).fd_jump = NULL;
+		((((p_c.process_array)[p_c.current_process])->fd_table)[halt_cnt]).inode_ptr = -1;
+		((((p_c.process_array)[p_c.current_process])->fd_table)[halt_cnt]).file_position = 0;
+		((((p_c.process_array)[p_c.current_process])->fd_table)[halt_cnt]).flags = FD_OFF;
+	}
 }
 
 /* JC
@@ -68,12 +132,18 @@ int32_t get_fd_index()
  *		RETURN VALUE: none
  *
  */
-void set_fd_info(int32_t index, fd_t file_info)
+int32_t set_fd_info(int32_t index, fd_t file_info)
 {
-	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_op_table_ptr = file_info.file_op_table_ptr;
+	if(index < 0 || index >= MAX_OPEN_FILES)
+		return -1;
+
+	// fill the table index with the given info
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump = file_info.fd_jump;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = file_info.inode_ptr;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = file_info.file_position;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).flags = file_info.flags;
+
+	return 0;
 }
 
 /* JC
@@ -87,6 +157,10 @@ void set_fd_info(int32_t index, fd_t file_info)
  */
 int32_t get_inode_ptr(int32_t index)
 {
+	if(index < 0 || index >= MAX_OPEN_FILES)
+		return -1;
+
+	// get the ptr to the inode
 	return ((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr;
 }
 
@@ -101,10 +175,11 @@ int32_t get_inode_ptr(int32_t index)
  */
 void close_fd(int32_t index)
 {
-	if(index < 0 || index >= MAX_OPEN_FILES) {
+	if(index < 0 || index >= MAX_OPEN_FILES)
 		return;
-	}
-	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_op_table_ptr = NULL;
+	
+	// close everything
+	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).fd_jump = NULL;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).inode_ptr = -1;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position = 0;
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).flags = FD_OFF;
@@ -136,5 +211,26 @@ uint32_t get_file_position(int32_t index)
  */
 void add_offset(int32_t index, uint32_t amt)
 {
+	if(index < 0 || index >= MAX_OPEN_FILES)
+		return;
+	
 	((((p_c.process_array)[p_c.current_process])->fd_table)[index]).file_position += amt;
 }
+
+/* JC
+ * check_valid_fd
+ *		DESCRIPTION:
+ *			Check if the index is on.
+ *		INPUT:
+ *			index - the file descriptor we want to check
+ *		RETURN VALUE: 0 for invalid, 1 for valid
+ */
+int32_t check_valid_fd(int32_t index)
+{
+	// fd is in use
+	if(index < 0 || index >= MAX_OPEN_FILES)
+		return 0;
+
+	return ((((p_c.process_array)[p_c.current_process])->fd_table)[index]).flags;
+}
+

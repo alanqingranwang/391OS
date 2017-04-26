@@ -11,11 +11,12 @@
 #include "idt.h"
 #include "paging.h"
 #include "debug.h"
-#include "filesystem.h" //
+#include "filesystem.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
+#define MAX_STR_LENGTH 33
 
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
@@ -163,6 +164,7 @@ entry (unsigned long magic, unsigned long addr)
 	keyboard_init();	// initialize the keyboard
 	rtc_init();	// initialize the RTC
 	paging_init();	// initialize Paging
+	pc_init();	//initialize process controller
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -186,14 +188,13 @@ entry (unsigned long magic, unsigned long addr)
 	/*******************************************************************/
 
 	/* Execute the first program (`shell') ... */
-	uint8_t string[33] = "shell ";
+	uint8_t string[MAX_STR_LENGTH] = "shell ";
 	int32_t retval;
 	while(1) {
 		retval = execute(string);
 		if(retval == -1) {
 			printf("Fail to execute shell, %d", retval);
 		}
-		printf("hi");
 	}
 
 	/* Spin (nicely, so we don't chew up cycles) */

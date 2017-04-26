@@ -4,6 +4,9 @@
  * tab size = 2, spaces
  */
 #include "keyboard.h"
+
+#define EXIT_LEN 4
+
 static int CTR4 = NUM_FREQ; // remove later
 static int CTR3 = 0;
 /*
@@ -23,56 +26,60 @@ static volatile int kbdr_flag = 0;
 /***********************Keyboard Driver****************************/
 
 /* AW
- * keyboard_driver
- *		DESCRIPTION:
- *			The driver for the terminal to execute the proper operation
- *		INPUT:
- *			cmd - the operation we should be executing
- *		RETURN VALUE:
- *			-1 - incorrect cmd or failure from operations
- *			returns are dependent on operation, check interfaces
+ * keyboard_open
+ *   empty functionality, should always be open
  */
-int32_t keyboard_driver(uint32_t cmd, op_data_t input){
-	switch(cmd){
-		case OPEN:
-			return keyboard_open();
-		case CLOSE:
-			return keyboard_close();
-		case READ:
-			return keyboard_read(STDIN_FD, (uint8_t*)(input.buf), input.nbytes);
-		case WRITE:
-			return keyboard_write();
-		default:
-			return -1;
-	}
-}
-
-int32_t keyboard_open() {
+int32_t keyboard_open(const uint8_t* blank1) {
     return -1;
 }
 
-int32_t keyboard_close() {
-    return -1;
-}
-
+/* NM, JC
+ * keyboard_read
+ *  DESCRIPTION: 
+ *    Waits for the keyboard handler to be called, then takes the buffer
+ *    that was inputed by the user and reads it.
+ *  INPUT:
+ *    fd - fd index, should be STDIN
+ *    buf - buffer that we are putting stuff into
+ *    nbytes - number of bytes that we are reading
+ */
 int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
-	int i = 0;
-    int count;
-    kbdr_flag = 0;
-	while(1){
+  int count;
+  kbdr_flag = 0;
+	
+  if(buf == NULL)
+    return -1;
+
+  while(1){ // get the buffer
 		if(kbdr_flag == 1){
-			kbdr_flag = 0;
-			for(i = 0; i<nbytes && i<BUFFER_SIZE; i++) {
-				count = terminal_retrieve(fd, buf, nbytes);
-            }
+			count = terminal_retrieve(buf, nbytes);
 			break;
 		}
-    }
+  }
 
-	return count;
+  // if the sting isn't the command exit, place the '\n' at the end
+  if(strncmp((int8_t*)buf, "exit", EXIT_LEN) != 0) // if it's not exit then add this new line
+  {
+    buf[count] = '\n'; // replace the space with a new line
+    count++;
+  }
+    // new line is specifically for programs such as hello
+  return count;
 }
 
-int32_t keyboard_write() {
+/* AW
+ *  keyboard_write
+ *  empty functionality, you can't write to a keyboard.
+ */
+int32_t keyboard_write(int32_t fd, const void* blank1, int32_t blank2) {
+    return -1;
+}
+
+/* AW
+ * keyboard_close
+ *  empty functionality, should always be open
+ */
+int32_t keyboard_close(int32_t fd) {
     return -1;
 }
 
@@ -240,6 +247,7 @@ static unsigned char kbd_ascii_key_map[KEY_MODES][TOTAL_SCANCODES] =
     '\0'  /* All other keys are undefined */
   }
 };
+
 /* AW
  * keyboard_init
  *      DESCRIPTION:
@@ -260,6 +268,7 @@ void keyboard_init()
     enable_irq(KBD_IRQ);    // enable IRQ 1
     restore_flags(flags);
 }
+
 /* AW
  * keyboard_handler
  *      DESCRIPTION:
@@ -320,6 +329,7 @@ void keyboard_handler()
     //restore_flags(flags);
     //restore_registers();
 }
+
 /* AW
  * toggle_caps
  *      DESCRIPTION:
@@ -339,6 +349,7 @@ void toggle_caps() {
     else
         caps_shift_flag = SHIFT_MODE;
 }
+
 /* AW
  * toggle_shift
  *      DESCRIPTION:
@@ -362,6 +373,7 @@ void toggle_shift(int type) {
             caps_shift_flag = CAPS_MODE;
     }
 }
+
 /* AW
  * toggle_ctrl(int type)
  *      DESCRIPTION:
@@ -377,6 +389,7 @@ void toggle_ctrl(int type) {
     else
         ctrl_flag = 0;
 }
+
 /* AW
  * process_key(uint8_t key)
  *      DESCRIPTION:
@@ -392,6 +405,7 @@ void process_key(uint8_t key) {
         if(key == L_MAKE && ctrl_flag) {
             clear();
             clear_buffer();
+            printf("391OS> ");
         }
 
         /********Remove later************/
@@ -410,21 +424,18 @@ void process_key(uint8_t key) {
             {
               CTR4 = NUM_FREQ;
               print_freq(CTR4);
-              set_print_one(0); // turn off
             }
             else{
               print_freq(CTR4); // show next freq
-              set_print_one(1); // turn on
               CTR4--;
             }
         }
         // if pressed ctrl and 1s
-        else if(key == 0x02 && ctrl_flag)
+        else if(key == ONE_SCAN && ctrl_flag)
         {
             clear(); // print file
             print_file_info();
         }
-
 
         /**************************/
         else if(buffer_index + 1 < BUFFER_SIZE) {
@@ -434,6 +445,7 @@ void process_key(uint8_t key) {
         }
     }
 }
+
 /* AW
  * handle_backspace()
  *      DESCRIPTION:
@@ -447,9 +459,10 @@ void handle_backspace() {
     if(buffer_index - 1 >= 0) {
         backspace();
         buffer_index--;
-        buffer[buffer_index] = ' ';
+        buffer[buffer_index] = '\0';
     }
 }
+
 /* AW
  * handle_enter()
  *      DESCRIPTION:
@@ -464,9 +477,10 @@ void handle_enter() {
     scroll();
     //call terminal read once implemented
     // call terminal read, save the buffer
-    terminal_read(STDOUT_FD, (int8_t*)buffer, buffer_index);
+    terminal_read(STDOUT_FD, (uint8_t*)buffer, buffer_index);
     clear_buffer();
 }
+
 /* AW
  * clear_buffer()
  *      DESCRIPTION:

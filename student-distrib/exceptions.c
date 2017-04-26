@@ -35,6 +35,15 @@ void exception_29() { exception_handler(29);}
 void exception_30() { exception_handler(30);}
 void exception_31() { exception_handler(31);}
 
+void print_cr2()
+{
+    unsigned long suspected_addr;
+    asm volatile("movl %%cr2, %0 \n"
+        : "=r" (suspected_addr)
+    );
+    printf("Suspected Address in CR2: %x\n", suspected_addr);
+}
+
 /*
  * exception_handler
  *   DESCRIPTION: Prints proper exception to blue screen of death
@@ -91,6 +100,7 @@ void exception_handler(int i) {
             break;
         case 14:
             printf("Page-Fault Exception\n");
+            print_cr2();
             break;
         case 15:
             printf("Reserved\n");

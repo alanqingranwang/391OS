@@ -37,8 +37,31 @@ void paging_init() {
     enablePaging();
 }
 
+/*
+ * add_process
+ *   DESCRIPTION: set up paging for a new process 
+ *   OUTPUTS: none
+ *   INPUTS: process_id - identification for new process
+ *   RETURN VALUE: None
+ *   SIDE EFFECTS: 
+ */
 void add_process(uint32_t process_id) {
-    page_directory[32] = (0x00800000 + process_id * 0x00400000) | PROCESS_SET;
+    page_directory[PROCESS_IDX] = (USER_SPACE + process_id * PROCESS_SIZE_) | PROCESS_SET;
+    flush_tlb();
+}
+
+/*
+ * add_video_memory
+ *   DESCRIPTION: set up video memory page for user 
+ *   OUTPUTS: none
+ *   INPUTS: virtual_address - address which user will use to change video memory
+ *   RETURN VALUE: None
+ *   SIDE EFFECTS: 
+ */
+void add_video_memory(uint32_t virtual_address)
+{
+    page_directory[virtual_address>>22] = (uint32_t) user_page_table | USER_MASK;
+    user_page_table[0] = USER_PAGE_;
     flush_tlb();
 }
 
