@@ -9,7 +9,6 @@
 
 #include "i8259.h"
 #include "lib.h"
-#include "terminal.h"
 
 /* adding the interrupt to the table is the job of the init */
 #include "idt.h"
@@ -28,7 +27,7 @@
 #define BREAK           1
 /* Scancode definitions */
 #define ABC_LOW_SCANS 	0x02
-#define ABC_HIGH_SCANS 	0x39
+#define ABC_HIGH_SCANS 	0x58
 #define TOTAL_SCANCODES 128
 #define GRAVE_SCAN_CODE	0x29
 

@@ -4,6 +4,8 @@
  * tab size = 2, spaces
  */
 #include "keyboard.h"
+#include "terminal.h"
+#include "syscall.h"
 
 #define EXIT_LEN 4
 
@@ -35,7 +37,7 @@ int32_t keyboard_open(const uint8_t* blank1) {
 
 /* NM, JC
  * keyboard_read
- *  DESCRIPTION: 
+ *  DESCRIPTION:
  *    Waits for the keyboard handler to be called, then takes the buffer
  *    that was inputed by the user and reads it.
  *  INPUT:
@@ -46,7 +48,7 @@ int32_t keyboard_open(const uint8_t* blank1) {
 int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
   int count;
   kbdr_flag = 0;
-	
+
   if(buf == NULL)
     return -1;
 
@@ -321,6 +323,12 @@ void keyboard_handler()
         case ENTER:
             handle_enter();
             break;
+        case ALT:
+            handle_alt();
+            break;
+        case FN:
+            handle_fn();
+            break;
         default:
             process_key(key);
             break;
@@ -390,6 +398,20 @@ void toggle_ctrl(int type) {
         ctrl_flag = 0;
 }
 
+void toggle_alt(int type) {
+    if(type == MAKE)
+        alt_flag = 1;
+    else
+        alt_flag = 0;
+}
+
+void toggle_fn(int type) {
+    if(type == MAKE)
+        fn_flag = 1;
+    else
+        fn_flag = 0;
+}
+
 /* AW
  * process_key(uint8_t key)
  *      DESCRIPTION:
@@ -408,6 +430,15 @@ void process_key(uint8_t key) {
             printf("391OS> ");
         }
 
+        else if(key == 0x3B && alt_flag && fn_flag) { // f1
+            curr_terminal = 1;
+        }
+        else if(key == 0x3C && alt_flag && fn_flag) { // f1
+            curr_terminal = 2;
+        }
+        else if(key == 0x3D && alt_flag && fn_flag) { // f1
+            curr_terminal = 3;
+        }
         /********Remove later************/
         // if pressed ctrl and 3s
         else if(key == THREE_SCAN && ctrl_flag){

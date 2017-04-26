@@ -45,6 +45,7 @@ typedef struct process_control {
 
 /* holds all the processing info */
 process_control p_c;
+volatile uint32_t curr_terminal;
 
 /* initializes the process controller */
 void pc_init();

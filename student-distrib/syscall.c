@@ -125,7 +125,7 @@ void parse_cmd_args(uint8_t* buf, const uint8_t* comm)
 		buf[i] = comm[i]; // get the command
 		i++;
 	}
-	
+
 	buf[i] = '\0'; // terminate the command
 
 	// i should be at the first space, no find the next non space char
@@ -137,7 +137,7 @@ void parse_cmd_args(uint8_t* buf, const uint8_t* comm)
 	int32_t arg_cnt = i; // start parsing from where the command left off
 	// parse till end of character or max buffer size
 	for(; comm[arg_cnt] != '\0' && arg_cnt != TERM_BUFF_SIZE; arg_cnt++) // get all the arguments
-		cmd_args[arg_cnt - file_name_length] = comm[arg_cnt];	
+		cmd_args[arg_cnt - file_name_length] = comm[arg_cnt];
 
 	cmd_args[arg_cnt - file_name_length] = '\0'; // terminate the string
 }
@@ -497,14 +497,14 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 int32_t vidmap(uint8_t** screen_start)
 {
 	// invalid address location
-	if(screen_start == NULL) 
+	if(screen_start == NULL)
 	{
 		printf("invalid pointer, vidmap\n");
 		return -1;
 	}
-	
+
 	// check if parameter is within page allocated for user program
-	if(screen_start < (uint8_t**)PROGRAM_PAGE || 
+	if(screen_start < (uint8_t**)PROGRAM_PAGE ||
 		screen_start >= (uint8_t**)(PROGRAM_PAGE + USER_PAGE_SIZE)) {
 		printf("pointer out of range, vidmap\n");
 		return -1;
@@ -514,7 +514,7 @@ int32_t vidmap(uint8_t** screen_start)
 	*screen_start = (uint8_t*)VIRT_VID_MAP_ADDR;
 
 	// set up paging
-	add_video_memory((uint32_t)(*screen_start)); 
+	add_video_memory((uint32_t)(*screen_start));
 	return VIRT_VID_MAP_ADDR;
 }
 
