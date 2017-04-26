@@ -43,13 +43,6 @@ void filesystem_init(boot_block_t* boot_addr)
 	// initiaize the file_name table
 	create_char_count();
 
- 	// initialize the process
-	p_c.no_processes = -1;
-	p_c.current_process = -1; // index into process_array for which process is currently running
-	uint32_t pc_count;
-	for(pc_count = 0; pc_count < MAX_PROCESSES; pc_count++)
-		p_c.in_use[pc_count] = 0;
-
 	restore_flags(flags);
 	fops_table_init();
 }

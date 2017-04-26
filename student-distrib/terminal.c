@@ -3,8 +3,9 @@
  */
 
 #include "terminal.h"
+#include "syscall.h"
 
-static int8_t save_buff[TERM_BUFF_SIZE];
+static int8_t save_buff[MAX_TERMINAL][TERM_BUFF_SIZE];
 
 /* NM
  * terminal_open
@@ -41,10 +42,10 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
 
 	int32_t i;
 	for(i = 0; i<TERM_BUFF_SIZE; i++)
-		save_buff[i] = '\0'; // clean the buffer
+		save_buff[curr_terminal][i] = '\0'; // clean the buffer
 	int32_t success = 0;
 	for(i = 0; (i < TERM_BUFF_SIZE) && (i < nbytes); i++){
-		save_buff[i] = buf[i]; // fill it
+		save_buff[curr_terminal][i] = buf[i]; // fill it
 		success++;
 	}
 	return -1; // not suppose to be able to read
@@ -98,12 +99,12 @@ int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
 	int32_t i = 0; // goes through the whole save buffer
 	int32_t cmd_cnt = 0; // starts filling buf from the beginning
 
-	while(save_buff[i] == ' ' && i < nbytes && i < TERM_BUFF_SIZE) 
+	while(save_buff[curr_terminal][i] == ' ' && i < nbytes && i < TERM_BUFF_SIZE) 
 		i++; // get to the real content, strip the beginning spaces
 
 	for(; cmd_cnt < nbytes && i < TERM_BUFF_SIZE; i++){
-		buf[cmd_cnt] = save_buff[i];
-		if (save_buff[i] == '\0') break; // I need this to not break the shell
+		buf[cmd_cnt] = save_buff[curr_terminal][i];
+		if (save_buff[curr_terminal][i] == '\0') break; // I need this to not break the shell
 		cmd_cnt++; // off by one, should count when it's not a space
 	}
 

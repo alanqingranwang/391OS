@@ -101,7 +101,7 @@ void exception_handler(int i) {
         case 14:
             printf("Page-Fault Exception\n");
             print_cr2();
-            break;2
+            break;
         case 15:
             printf("Reserved\n");
             break;

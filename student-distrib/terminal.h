@@ -9,9 +9,6 @@
 #define STDOUT_FD 1 // the fd for STDOUT
 #define TERM_BUFF_SIZE 128
 
-int8_t term_sys_save_buff[TERM_BUFF_SIZE];
-int8_t cmd_args[TERM_BUFF_SIZE]; // holds command argument
-
 /* opens the terminal file */
 int32_t terminal_open(const uint8_t* blank1);
 /* reads from the terminal file */

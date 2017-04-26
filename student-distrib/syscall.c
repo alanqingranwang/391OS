@@ -26,19 +26,31 @@
 
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
 static uint32_t extended_status;
+static int8_t cmd_args[MAX_TERMINAL][TERM_BUFF_SIZE]; // holds command argument
 
 /* NM
  * void pc_init()
- *  DESCRIPTION: initializes process controller
+ *  DESCRIPTION: initializes process controller for all terminals and processes
  *  INPUT: None
  *  OUTPUT: None
  *  RETURN VALUE: None
  */
 void pc_init(){
-	p_c.no_processes = -1;
-	p_c.current_process = -1;
-	p_c.process_array[0] = 0;
-	p_c.in_use[0] = 0;
+	uint32_t cnt;
+	curr_terminal = 0; // initialize to the first terminal
+	p_c.total_processes = -1; // no processes rn
+	// initialize all the terminal data
+	for(cnt = 0; cnt < MAX_TERMINAL; cnt++)
+	{
+		(p_c.no_processes)[cnt] = -1;
+		(p_c.current_process)[cnt] = -1;
+	}
+	// initialize all the processes
+	for(cnt = 0; cnt < MAX_PROCESSES; cnt++)
+	{
+		p_c.process_array[cnt] = NULL;
+		p_c.in_use[cnt] = 0;
+	}
 }
 
 /*
@@ -60,8 +72,8 @@ int32_t halt(uint8_t status)
 {
 	close_all_fd(); // gotta do it before the restart
 
-	/* if terminating original shell, restart shell */
-	if(p_c.process_array[p_c.current_process]->parent_id == -1){
+	/* if terminating current terminals original shell, restart shell */
+	if(p_c.process_array[(p_c.current_process)[curr_terminal]]->parent_id == -1){
 		pc_init();
 		execute((uint8_t*)"shell");
 	}
@@ -73,25 +85,25 @@ int32_t halt(uint8_t status)
 	asm volatile(
 		"movl %0, %%esp \n"
 		:
-		: "r"(p_c.process_array[p_c.current_process]->current_esp)
+		: "r"(p_c.process_array[(p_c.current_process)[curr_terminal]]->current_esp)
 	);
 
 	asm volatile(
 		"movl %0, %%ebp \n"
 		:
-		: "r"(p_c.process_array[p_c.current_process]->current_ebp)
+		: "r"(p_c.process_array[(p_c.current_process)[curr_terminal]]->current_ebp)
 	);
 
 	/* revert process controller info to parent process */
-	p_c.in_use[p_c.current_process] = 0;
-	p_c.current_process = p_c.process_array[p_c.current_process]->parent_id;
-	p_c.no_processes--;
+	p_c.in_use[(p_c.current_process)[curr_terminal]] = 0;
+	p_c.current_process[curr_terminal] = p_c.process_array[(p_c.current_process)[curr_terminal]]->parent_id;
+	p_c.no_processes[curr_terminal]--;
 
 	/* prepare paging for context switch */
-	add_process(p_c.current_process);
+	add_process(p_c.current_process[curr_terminal]);
 
 	/* prepare tss for context switch */
-	tss.esp0 = p_c.process_array[p_c.current_process]->current_esp;
+	tss.esp0 = p_c.process_array[(p_c.current_process)[curr_terminal]]->current_esp;
 	tss.ss0  = KERNEL_DS;
 
 	/* set return value */
@@ -125,7 +137,7 @@ void parse_cmd_args(uint8_t* buf, const uint8_t* comm)
 		buf[i] = comm[i]; // get the command
 		i++;
 	}
-
+	
 	buf[i] = '\0'; // terminate the command
 
 	// i should be at the first space, no find the next non space char
@@ -137,9 +149,9 @@ void parse_cmd_args(uint8_t* buf, const uint8_t* comm)
 	int32_t arg_cnt = i; // start parsing from where the command left off
 	// parse till end of character or max buffer size
 	for(; comm[arg_cnt] != '\0' && arg_cnt != TERM_BUFF_SIZE; arg_cnt++) // get all the arguments
-		cmd_args[arg_cnt - file_name_length] = comm[arg_cnt];
+		cmd_args[curr_terminal][arg_cnt - file_name_length] = comm[arg_cnt];	
 
-	cmd_args[arg_cnt - file_name_length] = '\0'; // terminate the string
+	cmd_args[curr_terminal][arg_cnt - file_name_length] = '\0'; // terminate the string
 }
 
 /*
@@ -200,14 +212,15 @@ int32_t execute(const uint8_t* comm)
 
 	/* initialize new process in process controller */
 	exception_flag = 0;
-	if(p_c.no_processes >= MAX_PROCESSES-1) {
+	if((p_c.no_processes)[curr_terminal] >= MAX_PROCESSES-1) {
 		printf("Maximum Possible Processes. Stop and Reconsider.\n");
 		return -1;  // too many processes, Piazza post @1089, shouldn't be 0
 	} // start allocating stuff for processes
 	else {
-		p_c.no_processes++;
+		(p_c.no_processes)[curr_terminal]++;
 	}
 
+	// get an available process, start after the first variable
 	for(i = 0; i < MAX_PROCESSES; i++) {
 		if(p_c.in_use[i] == 0) {
 			p_c.in_use[i] = 1;
@@ -228,11 +241,11 @@ int32_t execute(const uint8_t* comm)
 	}
 	else{
 		// process_pcb->parent = process_array[p_c.current_process]
-		process_pcb->parent_id = p_c.current_process;
+		process_pcb->parent_id = p_c.current_process[curr_terminal];
 	}
-	p_c.current_process = current_process;
+	p_c.current_process[curr_terminal] = current_process;
 
-	strcpy((int8_t*)p_c.process_array[p_c.current_process]->args, cmd_args);
+	strcpy((int8_t*)p_c.process_array[(p_c.current_process)[curr_terminal]]->args, cmd_args[curr_terminal]);
 
 	fd_table_init(process_pcb->fd_table);
 
@@ -271,12 +284,12 @@ int32_t execute(const uint8_t* comm)
 	/* store current esp and ebp for halt */
 	asm volatile(
 		"movl %%esp, %0 \n"
-		: "=r"(p_c.process_array[p_c.current_process]->current_esp)
+		: "=r"(p_c.process_array[(p_c.current_process)[curr_terminal]]->current_esp)
 	);
 
 	asm volatile(
 		"movl %%ebp, %0 \n"
-		: "=r"(p_c.process_array[p_c.current_process]->current_ebp)
+		: "=r"(p_c.process_array[(p_c.current_process)[curr_terminal]]->current_ebp)
 	);
 
 	/* push IRET context to stack and IRET */
@@ -333,7 +346,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 		return -1; // invalid pointer
 
  	// get the function pointer to the specific file or rtc or thing
-	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump)->read)(fd, (uint8_t*)buf, nbytes);
+	return ((((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[fd]).fd_jump)->read)(fd, (uint8_t*)buf, nbytes);
 }
 
 /* JC
@@ -365,7 +378,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 		return -1; // invalid pointer
 
  	// get the function pointer to the specific file or rtc or thing
-	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump)->write)(fd, buf, nbytes);
+	return ((((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[fd]).fd_jump)->write)(fd, buf, nbytes);
 }
 
 /* JC
@@ -426,7 +439,7 @@ int32_t close(int32_t fd)
 	}
 
  	// get the function pointer for the unknown function
-	return ((((((p_c.process_array)[p_c.current_process])->fd_table)[fd]).fd_jump)->close)(fd);
+	return ((((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[fd]).fd_jump)->close)(fd);
 }
 
 /* JC
@@ -455,7 +468,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	uint32_t i = 0;
 	while(i < nbytes && i < TERM_BUFF_SIZE)
 	{ 	// copy the data over
-		buf[i] = (((p_c.process_array)[p_c.current_process])->args)[i];
+		buf[i] = (((p_c.process_array)[(p_c.current_process)[curr_terminal]])->args)[i];
 		i++;
 	}
 
@@ -497,14 +510,14 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 int32_t vidmap(uint8_t** screen_start)
 {
 	// invalid address location
-	if(screen_start == NULL)
+	if(screen_start == NULL) 
 	{
 		printf("invalid pointer, vidmap\n");
 		return -1;
 	}
-
+	
 	// check if parameter is within page allocated for user program
-	if(screen_start < (uint8_t**)PROGRAM_PAGE ||
+	if(screen_start < (uint8_t**)PROGRAM_PAGE || 
 		screen_start >= (uint8_t**)(PROGRAM_PAGE + USER_PAGE_SIZE)) {
 		printf("pointer out of range, vidmap\n");
 		return -1;
@@ -514,7 +527,7 @@ int32_t vidmap(uint8_t** screen_start)
 	*screen_start = (uint8_t*)VIRT_VID_MAP_ADDR;
 
 	// set up paging
-	add_video_memory((uint32_t)(*screen_start));
+	add_video_memory((uint32_t)(*screen_start)); 
 	return VIRT_VID_MAP_ADDR;
 }
 
