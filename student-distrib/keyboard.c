@@ -33,7 +33,7 @@ int32_t keyboard_open(const uint8_t* blank1) {
 
 /* NM, JC
  * keyboard_read
- *  DESCRIPTION: 
+ *  DESCRIPTION:
  *    Waits for the keyboard handler to be called, then takes the buffer
  *    that was inputed by the user and reads it.
  *  INPUT:
@@ -44,7 +44,7 @@ int32_t keyboard_open(const uint8_t* blank1) {
 int32_t keyboard_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
   int count;
   kbdr_flag = 0;
-	
+
   if(buf == NULL)
     return -1;
 
