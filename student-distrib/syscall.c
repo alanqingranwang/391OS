@@ -216,6 +216,7 @@ int32_t execute(const uint8_t* comm)
 			break;
 		}
 	}
+
 	if(i >= MAX_PROCESSES) {
 		printf("Maximum Possible Processes. Stop and Reconsider.\n");
 		return -1;  // too many processes, Piazza post @1089, shouldn't be 0
@@ -227,7 +228,7 @@ int32_t execute(const uint8_t* comm)
 	process_array[i] = process_pcb;
 	process_pcb->process_id = i;
 
-	if(i == 0) { // is this the first program?
+	if(i < 3) { // is this the first program?
 		process_pcb->parent_id = -1;
 	}
 	else{
@@ -236,6 +237,12 @@ int32_t execute(const uint8_t* comm)
 	current_process[curr_terminal] = i;
 
 	strcpy((int8_t*)process_array[current_process[curr_terminal]]->args, cmd_args[curr_terminal]);
+
+	// add the command to the pcb
+	for(i = 0; command[i] != ' ' && command[i] != '\0' && command[i] != '\n'; i++) {
+		if(i >= FILE_NAME_LENGTH-1) return -1;
+		((process_array[current_process[curr_terminal]])->comm)[i] = command[i];
+	}
 
 	fd_table_init(process_pcb->fd_table);
 

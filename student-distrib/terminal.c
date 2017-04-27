@@ -26,6 +26,7 @@ int32_t terminal_init()
 int32_t terminal_switch(uint32_t new_terminal){
 	clear();
 
+	// sanity check
 	if(new_terminal == curr_terminal)
 		return 0;
 
@@ -35,15 +36,13 @@ int32_t terminal_switch(uint32_t new_terminal){
 	curr_terminal = new_terminal;
 	int curr_process = current_process[new_terminal];
 
-	if(curr_process > 2){
+	if(curr_process == -1)
+	{	// if the base shell isn't on 
 		in_use[curr_terminal] = 0;
-		execute(process_array[curr_process]->args);
+		execute((uint8_t*)"shell");
 	}
-	else{
-		in_use[curr_terminal] = 0;
-		execute((uint8_t*) "shell");
-	}
-
+	// else
+	// 	user_context_switch();
 
 	return 0;
 }
