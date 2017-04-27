@@ -9,11 +9,9 @@
 
 /* Additional Macros */
 #define MAX_PROCESSES 8
-#define MAX_TERMINAL 3
 #define FD_TABLE_SIZE 8
 #define MAX_CHARS 128
 #define BYTE_MASK	0xFF
-#define FIRST_AVL_PROCESS MAX_TERMINAL
 
 /* per process data structure */
 typedef struct process_control_block {
@@ -26,11 +24,8 @@ typedef struct process_control_block {
 } pcb;
 
 /* holds all the processing info */
-volatile uint32_t curr_terminal;
-
 /* process controller */
 int no_processes; // how many processes per terminal
-int current_process[MAX_TERMINAL]; // which process index is the current terminal at
 // total pool of functions, first three should always be the terminals
 pcb * process_array[MAX_PROCESSES]; //pcb pointers for each process
 int in_use[MAX_PROCESSES];

@@ -8,6 +8,10 @@
 
 #define STDOUT_FD 1 // the fd for STDOUT
 #define TERM_BUFF_SIZE 128
+#define MAX_TERMINAL 3
+
+volatile uint32_t curr_terminal;
+int current_process[MAX_TERMINAL]; // which process index is the current terminal at
 
 /* opens the terminal file */
 int32_t terminal_open(const uint8_t* blank1);
