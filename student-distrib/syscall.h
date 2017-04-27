@@ -16,7 +16,7 @@
 /* per process data structure */
 typedef struct process_control_block {
 	uint8_t		process_id;
-	uint32_t    parent_id;
+	int32_t     parent_id;
 	uint32_t    current_esp;
 	uint32_t    current_ebp;
 	uint8_t     args[MAX_CHARS];
