@@ -25,19 +25,15 @@ typedef struct process_control_block {
 	fd_t 			fd_table[FD_TABLE_SIZE];
 } pcb;
 
-/* process controller */
-typedef struct process_control {
-	int total_processes; // holds total process across all 3 terminals
-	int no_processes[MAX_TERMINAL]; // how many processes per terminal
-	int current_process[MAX_TERMINAL]; // which process index is the current terminal at
-	// total pool of functions, first three should always be the terminals
-	pcb * process_array[MAX_PROCESSES]; //pcb pointers for each process
-	int in_use[MAX_PROCESSES];
-} process_control;
-
 /* holds all the processing info */
-process_control p_c;
 volatile uint32_t curr_terminal;
+
+/* process controller */
+int no_processes; // how many processes per terminal
+int current_process[MAX_TERMINAL]; // which process index is the current terminal at
+// total pool of functions, first three should always be the terminals
+pcb * process_array[MAX_PROCESSES]; //pcb pointers for each process
+int in_use[MAX_PROCESSES];
 
 /* initializes the process controller */
 void pc_init();

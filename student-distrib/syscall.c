@@ -20,7 +20,6 @@
 #define ENTRY_POINT_START  24
 #define BYTE_SIZE				8
 #define MAGIC_NUMBER_SIZE	4
-#define CAT_NAME_LEN			3
 
 #define VIRT_VID_MAP_ADDR	0x10000000
 
@@ -38,18 +37,16 @@ static int8_t cmd_args[MAX_TERMINAL][TERM_BUFF_SIZE]; // holds command argument
 void pc_init(){
 	uint32_t cnt;
 	curr_terminal = 0; // initialize to the first terminal
-	p_c.total_processes = -1; // no processes rn
+	no_processes = -1;
 	// initialize all the terminal data
 	for(cnt = 0; cnt < MAX_TERMINAL; cnt++)
-	{
-		(p_c.no_processes)[cnt] = -1;
-		(p_c.current_process)[cnt] = -1;
-	}
+		current_process[cnt] = -1;
+
 	// initialize all the processes
 	for(cnt = 0; cnt < MAX_PROCESSES; cnt++)
 	{
-		p_c.process_array[cnt] = NULL;
-		p_c.in_use[cnt] = 0;
+		process_array[cnt] = NULL;
+		in_use[cnt] = 0;
 	}
 }
 
@@ -73,7 +70,7 @@ int32_t halt(uint8_t status)
 	close_all_fd(); // gotta do it before the restart
 
 	/* if terminating current terminals original shell, restart shell */
-	if(p_c.process_array[(p_c.current_process)[curr_terminal]]->parent_id == -1){
+	if(process_array[current_process[curr_terminal]]->parent_id == -1){
 		pc_init();
 		execute((uint8_t*)"shell");
 	}
@@ -85,25 +82,25 @@ int32_t halt(uint8_t status)
 	asm volatile(
 		"movl %0, %%esp \n"
 		:
-		: "r"(p_c.process_array[(p_c.current_process)[curr_terminal]]->current_esp)
+		: "r"(process_array[current_process[curr_terminal]]->current_esp)
 	);
 
 	asm volatile(
 		"movl %0, %%ebp \n"
 		:
-		: "r"(p_c.process_array[(p_c.current_process)[curr_terminal]]->current_ebp)
+		: "r"(process_array[current_process[curr_terminal]]->current_ebp)
 	);
 
 	/* revert process controller info to parent process */
-	p_c.in_use[(p_c.current_process)[curr_terminal]] = 0;
-	p_c.current_process[curr_terminal] = p_c.process_array[(p_c.current_process)[curr_terminal]]->parent_id;
-	p_c.no_processes[curr_terminal]--;
+	in_use[current_process[curr_terminal]] = 0;
+	current_process[curr_terminal] = process_array[current_process[curr_terminal]]->parent_id;
+	no_processes--;
 
 	/* prepare paging for context switch */
-	add_process(p_c.current_process[curr_terminal]);
+	add_process(current_process[curr_terminal]);
 
 	/* prepare tss for context switch */
-	tss.esp0 = p_c.process_array[(p_c.current_process)[curr_terminal]]->current_esp;
+	tss.esp0 = process_array[current_process[curr_terminal]]->current_esp;
 	tss.ss0  = KERNEL_DS;
 
 	/* set return value */
@@ -212,40 +209,36 @@ int32_t execute(const uint8_t* comm)
 
 	/* initialize new process in process controller */
 	exception_flag = 0;
-	if((p_c.no_processes)[curr_terminal] >= MAX_PROCESSES-1) {
+	if(no_processes >= MAX_PROCESSES-1) {
 		printf("Maximum Possible Processes. Stop and Reconsider.\n");
 		return -1;  // too many processes, Piazza post @1089, shouldn't be 0
 	} // start allocating stuff for processes
 	else {
-		(p_c.no_processes)[curr_terminal]++;
+		no_processes++;
 	}
 
 	// get an available process, start after the first variable
 	for(i = 0; i < MAX_PROCESSES; i++) {
-		if(p_c.in_use[i] == 0) {
-			p_c.in_use[i] = 1;
+		if(in_use[i] == 0) {
+			in_use[i] = 1;
 			break;
 		}
 	}
 
-	int32_t current_process = i;
-
 	/* create pcb and initialize it */
-	pcb * process_pcb = (pcb *)(K_STACK_BOTTOM - PROCESS_SIZE*(1+current_process));
-	p_c.process_array[current_process] = process_pcb;
-	process_pcb->process_id = current_process;
+	pcb * process_pcb = (pcb *)(K_STACK_BOTTOM - PROCESS_SIZE*(1+i));
+	process_array[i] = process_pcb;
+	process_pcb->process_id = i;
 
-	if(current_process == 0) { // is this the first program?
-		// process_pcb->parent = NULL;
+	if(i == 0) { // is this the first program?
 		process_pcb->parent_id = -1;
 	}
 	else{
-		// process_pcb->parent = process_array[p_c.current_process]
-		process_pcb->parent_id = p_c.current_process[curr_terminal];
+		process_pcb->parent_id = current_process[curr_terminal];
 	}
-	p_c.current_process[curr_terminal] = current_process;
+	current_process[curr_terminal] = i;
 
-	strcpy((int8_t*)p_c.process_array[(p_c.current_process)[curr_terminal]]->args, cmd_args[curr_terminal]);
+	strcpy((int8_t*)process_array[current_process[curr_terminal]]->args, cmd_args[curr_terminal]);
 
 	fd_table_init(process_pcb->fd_table);
 
@@ -284,12 +277,12 @@ int32_t execute(const uint8_t* comm)
 	/* store current esp and ebp for halt */
 	asm volatile(
 		"movl %%esp, %0 \n"
-		: "=r"(p_c.process_array[(p_c.current_process)[curr_terminal]]->current_esp)
+		: "=r"(process_array[current_process[curr_terminal]]->current_esp)
 	);
 
 	asm volatile(
 		"movl %%ebp, %0 \n"
-		: "=r"(p_c.process_array[(p_c.current_process)[curr_terminal]]->current_ebp)
+		: "=r"(process_array[current_process[curr_terminal]]->current_ebp)
 	);
 
 	/* push IRET context to stack and IRET */
@@ -346,7 +339,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 		return -1; // invalid pointer
 
  	// get the function pointer to the specific file or rtc or thing
-	return ((((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[fd]).fd_jump)->read)(fd, (uint8_t*)buf, nbytes);
+	return (((((process_array[current_process[curr_terminal]])->fd_table)[fd]).fd_jump)->read)(fd, (uint8_t*)buf, nbytes);
 }
 
 /* JC
@@ -378,7 +371,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 		return -1; // invalid pointer
 
  	// get the function pointer to the specific file or rtc or thing
-	return ((((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[fd]).fd_jump)->write)(fd, buf, nbytes);
+	return (((((process_array[current_process[curr_terminal]])->fd_table)[fd]).fd_jump)->write)(fd, buf, nbytes);
 }
 
 /* JC
@@ -439,7 +432,7 @@ int32_t close(int32_t fd)
 	}
 
  	// get the function pointer for the unknown function
-	return ((((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[fd]).fd_jump)->close)(fd);
+	return (((((process_array[current_process[curr_terminal]])->fd_table)[fd]).fd_jump)->close)(fd);
 }
 
 /* JC
@@ -468,7 +461,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	uint32_t i = 0;
 	while(i < nbytes && i < TERM_BUFF_SIZE)
 	{ 	// copy the data over
-		buf[i] = (((p_c.process_array)[(p_c.current_process)[curr_terminal]])->args)[i];
+		buf[i] = ((process_array[current_process[curr_terminal]])->args)[i];
 		i++;
 	}
 

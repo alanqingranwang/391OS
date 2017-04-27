@@ -89,10 +89,10 @@ void close_all_fd()
 	// close all the fd
 	for(halt_cnt = 0; halt_cnt < MAX_OPEN_FILES; halt_cnt++)
 	{
-		((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[halt_cnt]).fd_jump = NULL;
-		((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[halt_cnt]).inode_ptr = -1;
-		((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[halt_cnt]).file_position = 0;
-		((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[halt_cnt]).flags = FD_OFF;
+		(((process_array[current_process[curr_terminal]])->fd_table)[halt_cnt]).fd_jump = NULL;
+		(((process_array[current_process[curr_terminal]])->fd_table)[halt_cnt]).inode_ptr = -1;
+		(((process_array[current_process[curr_terminal]])->fd_table)[halt_cnt]).file_position = 0;
+		(((process_array[current_process[curr_terminal]])->fd_table)[halt_cnt]).flags = FD_OFF;
 	}
 }
 
@@ -113,7 +113,7 @@ int32_t get_fd_index()
 	// should not consider index 0 and 1
 	for(table_loop = FIRST_VALID_INDEX; table_loop < MAX_OPEN_FILES; table_loop++)
 	{
-		if(((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[table_loop]).flags == FD_OFF) // available index
+		if((((process_array[current_process[curr_terminal]])->fd_table)[table_loop]).flags == FD_OFF) // available index
 			return table_loop;
 	}
 
@@ -138,10 +138,10 @@ int32_t set_fd_info(int32_t index, fd_t file_info)
 		return -1;
 
 	// fill the table index with the given info
-	((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).fd_jump = file_info.fd_jump;
-	((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).inode_ptr = file_info.inode_ptr;
-	((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).file_position = file_info.file_position;
-	((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).flags = file_info.flags;
+	(((process_array[current_process[curr_terminal]])->fd_table)[index]).fd_jump = file_info.fd_jump;
+	(((process_array[current_process[curr_terminal]])->fd_table)[index]).inode_ptr = file_info.inode_ptr;
+	(((process_array[current_process[curr_terminal]])->fd_table)[index]).file_position = file_info.file_position;
+	(((process_array[current_process[curr_terminal]])->fd_table)[index]).flags = file_info.flags;
 
 	return 0;
 }
@@ -161,7 +161,7 @@ int32_t get_inode_ptr(int32_t index)
 		return -1;
 
 	// get the ptr to the inode
-	return ((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).inode_ptr;
+	return (((process_array[current_process[curr_terminal]])->fd_table)[index]).inode_ptr;
 }
 
 /* JC
@@ -179,10 +179,10 @@ void close_fd(int32_t index)
 		return;
 	
 	// close everything
-	((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).fd_jump = NULL;
-	((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).inode_ptr = -1;
-	((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).file_position = 0;
-	((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).flags = FD_OFF;
+	(((process_array[current_process[curr_terminal]])->fd_table)[index]).fd_jump = NULL;
+	(((process_array[current_process[curr_terminal]])->fd_table)[index]).inode_ptr = -1;
+	(((process_array[current_process[curr_terminal]])->fd_table)[index]).file_position = 0;
+	(((process_array[current_process[curr_terminal]])->fd_table)[index]).flags = FD_OFF;
 }
 
 /*	JC
@@ -196,7 +196,7 @@ void close_fd(int32_t index)
  */
 uint32_t get_file_position(int32_t index)
 {
-	return ((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).file_position;
+	return (((process_array[current_process[curr_terminal]])->fd_table)[index]).file_position;
 }
 
 /* JC
@@ -214,7 +214,7 @@ void add_offset(int32_t index, uint32_t amt)
 	if(index < 0 || index >= MAX_OPEN_FILES)
 		return;
 	
-	((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).file_position += amt;
+	(((process_array[current_process[curr_terminal]])->fd_table)[index]).file_position += amt;
 }
 
 /* JC
@@ -231,6 +231,6 @@ int32_t check_valid_fd(int32_t index)
 	if(index < 0 || index >= MAX_OPEN_FILES)
 		return 0;
 
-	return ((((p_c.process_array)[(p_c.current_process)[curr_terminal]])->fd_table)[index]).flags;
+	return (((process_array[current_process[curr_terminal]])->fd_table)[index]).flags;
 }
 
