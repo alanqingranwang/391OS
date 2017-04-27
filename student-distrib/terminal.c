@@ -33,9 +33,16 @@ int32_t terminal_switch(uint32_t new_terminal){
 		return -1;
 
 	curr_terminal = new_terminal;
+	int curr_process = current_process[new_terminal];
 
-	in_use[curr_terminal] = 0;
-	execute((uint8_t*)"shell");
+	if(curr_process > 2){
+		in_use[curr_terminal] = 0;
+		execute(process_array[curr_process]->args);
+	}
+	else{
+		in_use[curr_terminal] = 0;
+		execute((uint8_t*) "shell");
+	}
 
 
 	return 0;

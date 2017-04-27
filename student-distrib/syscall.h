@@ -20,7 +20,7 @@ typedef struct process_control_block {
 	uint32_t    current_esp;
 	uint32_t    current_ebp;
 	uint8_t     args[MAX_CHARS];
-	fd_t 			fd_table[FD_TABLE_SIZE];
+	fd_t 		fd_table[FD_TABLE_SIZE];
 } pcb;
 
 /* holds all the processing info */
