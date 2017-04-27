@@ -318,7 +318,7 @@ void keyboard_handler()
             handle_enter();
             break;
         case ALT:
-            toggle_alt(BREAK);
+            toggle_alt(MAKE);
             break;
         default:
             process_key(key);
