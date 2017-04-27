@@ -7,6 +7,38 @@
 
 static int8_t save_buff[MAX_TERMINAL][TERM_BUFF_SIZE];
 
+/*
+ * terminal_init
+ *		DESCRIPTION:
+ *		INPUT:
+ *		RETURN VALUE:
+ *
+ */
+int32_t terminal_init()
+{
+
+
+
+
+	return 0;
+}
+
+int32_t terminal_switch(uint32_t new_terminal){
+	if(new_terminal == curr_terminal)
+		return 0;
+
+	if(new_terminal > 2)
+		return -1;
+
+	curr_terminal = new_terminal;
+
+
+
+
+	return 0;
+}
+
+
 /* NM
  * terminal_open
  *		DESCRIPTION:

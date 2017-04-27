@@ -13,6 +13,11 @@
 volatile uint32_t curr_terminal;
 int current_process[MAX_TERMINAL]; // which process index is the current terminal at
 
+
+
+int32_t terminal_init();
+
+int32_t terminal_switch(uint32_t new_terminal);
 /* opens the terminal file */
 int32_t terminal_open(const uint8_t* blank1);
 /* reads from the terminal file */
