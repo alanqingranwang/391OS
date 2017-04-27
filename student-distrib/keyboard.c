@@ -411,13 +411,13 @@ void process_key(uint8_t key) {
             printf("391OS> ");
         }
         else if(key == fn1 && alt_flag) { // f1
-            curr_terminal = 0;
+            terminal_switch(0);
         }
         else if(key == fn2 && alt_flag) { // f2
-            curr_terminal = 1;
+            terminal_switch(1);
         }
         else if(key == fn3 && alt_flag) { // f1
-            curr_terminal = 2;
+            terminal_switch(2);
         }
         /********Remove later************/
         // if pressed ctrl and 3s
