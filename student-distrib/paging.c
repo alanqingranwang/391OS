@@ -55,13 +55,14 @@ void add_process(uint32_t process_id) {
  *   DESCRIPTION: set up video memory page for user 
  *   OUTPUTS: none
  *   INPUTS: virtual_address - address which user will use to change video memory
+ *           MAP - the physical memory address that we want to map to
  *   RETURN VALUE: None
  *   SIDE EFFECTS: 
  */
-void add_video_memory(uint32_t virtual_address)
+void add_video_memory(uint32_t virtual_address, uint32_t MAP)
 {
     page_directory[virtual_address>>22] = (uint32_t) user_page_table | USER_MASK;
-    user_page_table[0] = USER_PAGE_;
+    user_page_table[0] = MAP;
     flush_tlb();
 }
 

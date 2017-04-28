@@ -31,9 +31,8 @@ int32_t terminal_switch(uint32_t new_terminal){
 	if(new_terminal > 2 || new_terminal < 0)
 		return -1;
 
-	clear();
-
 	curr_terminal = new_terminal;
+	clear(); // clear after assigning new terminal
 	int curr_process = current_process[new_terminal];
 
 	if(curr_process == -1)

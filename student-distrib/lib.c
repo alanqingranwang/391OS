@@ -6,9 +6,11 @@
 #define NUM_ROWS 25
 #define ATTRIB 0x7
 #define BLUE 0x16
-static int screen_x;
-static int screen_y;
+#define NUM_TERM 3
+static int screen_x[NUM_TERM];
+static int screen_y[NUM_TERM];
 static char* video_mem = (char *)VIDEO;
+
 /*
 * void clear(void);
 *   Inputs: void
@@ -24,8 +26,8 @@ clear(void)
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
-    screen_x = 0;
-    screen_y = 0;
+    screen_x[curr_terminal] = 0;
+    screen_y[curr_terminal] = 0;
     update_cursor();
 }
 /* Standard printf().
@@ -170,30 +172,30 @@ putc(uint8_t c)
 {
     // forced next line chracter
     if(c == '\n' || c == '\r') {
-        screen_y++;
-        screen_x = 0;
+        screen_y[curr_terminal]++;
+        screen_x[curr_terminal] = 0;
         // Check to keep screen_y in bounds upon a '\n'
-        if(screen_y >= NUM_ROWS)
+        if(screen_y[curr_terminal] >= NUM_ROWS)
         {
-            screen_y--;
+            screen_y[curr_terminal]--;
             scroll();
         }
     }
     else {
         // next line by default (wrapping)
-        if(screen_x >= NUM_COLS){
-            screen_x = 0;
-            screen_y++;
+        if(screen_x[curr_terminal] >= NUM_COLS){
+            screen_x[curr_terminal] = 0;
+            screen_y[curr_terminal]++;
             // check to keep screen_y in bounds naturally
-            if(screen_y >= NUM_ROWS)
+            if(screen_y[curr_terminal] >= NUM_ROWS)
             {
-                screen_y--;
+                screen_y[curr_terminal]--;
                 scroll();
             }
         }
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
-        screen_x++;
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[curr_terminal] + screen_x[curr_terminal]) << 1)) = c;
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[curr_terminal] + screen_x[curr_terminal]) << 1) + 1) = ATTRIB;
+        screen_x[curr_terminal]++;
     }
     update_cursor();
 }
@@ -205,7 +207,7 @@ putc(uint8_t c)
 */
 void scroll() {
     int i, j;
-    if(screen_y >= NUM_ROWS - 1) { // if we are writing to the last row...
+    if(screen_y[curr_terminal] >= NUM_ROWS - 1) { // if we are writing to the last row...
         for(i = 0; i < NUM_COLS; i++) {
             for(j = 0; j < NUM_ROWS - 1; j++) {
                 // Set the value of a given row to the row below it
@@ -220,7 +222,7 @@ void scroll() {
             *(uint8_t *)(video_mem + ((NUM_COLS*(NUM_ROWS-1) + i) << 1)) = ' ';
             *(uint8_t *)(video_mem + ((NUM_COLS*(NUM_ROWS-1) + i) << 1) + 1) = ATTRIB;
         }
-        screen_x = 0;
+        screen_x[curr_terminal] = 0;
         update_cursor();
     }
     else { // otherwise print a newline
@@ -238,15 +240,15 @@ void scroll() {
 */
 void backspace(void)
 {
-    if((screen_x == 0) && (screen_y > 0) ) { // check for left edge
-        screen_y--;
-        screen_x = NUM_COLS - 1;
+    if((screen_x[curr_terminal] == 0) && (screen_y[curr_terminal] > 0) ) { // check for left edge
+        screen_y[curr_terminal]--;
+        screen_x[curr_terminal] = NUM_COLS - 1;
     }
-    else if( (screen_x == 0) && (screen_y == 0) ) return; // check for first spot
-    else screen_x--;
+    else if( (screen_x[curr_terminal] == 0) && (screen_y[curr_terminal] == 0) ) return; // check for first spot
+    else screen_x[curr_terminal]--;
     // Fill with space character
-    *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = ' ';
-    *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
+    *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[curr_terminal] + screen_x[curr_terminal]) << 1)) = ' ';
+    *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[curr_terminal] + screen_x[curr_terminal]) << 1) + 1) = ATTRIB;
     update_cursor();
 }
 /*
@@ -260,7 +262,7 @@ void update_cursor()
     // changing ports, should lock it
     uint32_t flags;
     cli_and_save(flags);
-    unsigned short position = (screen_y*NUM_COLS) + screen_x;
+    unsigned short position = (screen_y[curr_terminal]*NUM_COLS) + screen_x[curr_terminal];
     // cursor LOW port to vga INDEX register
     outb(LOW_VGA, VGA_SELECT);
     outb((unsigned char)(position&0xFF), VGA_DATA);

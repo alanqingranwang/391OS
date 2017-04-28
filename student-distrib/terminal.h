@@ -10,9 +10,7 @@
 #define TERM_BUFF_SIZE 128
 #define MAX_TERMINAL 3
 
-volatile uint32_t curr_terminal;
 int current_process[MAX_TERMINAL]; // which process index is the current terminal at
-
 
 
 int32_t terminal_init();

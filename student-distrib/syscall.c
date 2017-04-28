@@ -21,8 +21,6 @@
 #define BYTE_SIZE				8
 #define MAGIC_NUMBER_SIZE	4
 
-#define VIRT_VID_MAP_ADDR	0x10000000
-
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
 static uint32_t extended_status;
 static int8_t cmd_args[MAX_TERMINAL][TERM_BUFF_SIZE]; // holds command argument
@@ -532,11 +530,22 @@ int32_t vidmap(uint8_t** screen_start)
 	}
 
 	// give user virtual adress
-	*screen_start = (uint8_t*)VIRT_VID_MAP_ADDR;
+/*	switch(curr_terminal)
+	{
+		// terminal 1
+		case 0: */
+			*screen_start = (uint8_t*)VIRT_VID_TERM1;
+	/*	// terminal 2
+		case 1:
+			*screen_start = (uint8_t*)VIRT_VID_TERM2;
+		// terminal 3
+		case 2:
+			*screen_start = (uint8_t*)VIRT_VID_TERM3;
+	}*/
 
 	// set up paging
-	add_video_memory((uint32_t)(*screen_start));
-	return VIRT_VID_MAP_ADDR;
+	add_video_memory((uint32_t)(*screen_start), (uint32_t)USER_VIDEO_);
+	return (int32_t)*screen_start;
 }
 
 /* JC
@@ -568,6 +577,8 @@ int32_t sigreturn(void)
  	return -1;
 }
 
+/* Returns -1 if the passed in cmd is invalid
+ */
 int32_t def_cmd(void)
 {
 	return -1;

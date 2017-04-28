@@ -13,6 +13,11 @@
 #define MAX_CHARS 128
 #define BYTE_MASK	0xFF
 
+// incorrect memory locations
+#define VIRT_VID_TERM1	0x10000000
+// #define VIRT_VID_TERM2	0x10000000
+// #define VIRT_VID_TERM3	0x30000000
+
 /* per process data structure */
 typedef struct process_control_block {
 	uint8_t		process_id;
