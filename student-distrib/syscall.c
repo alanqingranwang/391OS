@@ -192,6 +192,8 @@ int32_t execute(const uint8_t* command)
 		process_pcb->parent_id = p_c.current_process;
 	}
 	p_c.current_process = current_process;
+	
+	scheduler_tick();  //vk
 
 	fd_table_init(process_pcb->fd_table);
 
