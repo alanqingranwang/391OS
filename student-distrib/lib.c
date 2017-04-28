@@ -6,9 +6,8 @@
 #define NUM_ROWS 25
 #define ATTRIB 0x7
 #define BLUE 0x16
-#define NUM_TERM 3
-static int screen_x[NUM_TERM];
-static int screen_y[NUM_TERM];
+static int screen_x[MAX_TERMINAL];
+static int screen_y[MAX_TERMINAL];
 static char* video_mem = (char *)VIDEO;
 
 /*

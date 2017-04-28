@@ -17,10 +17,10 @@ static int CTR3 = 0;
  * 2 - caps
  * 3 - shift and caps
  */
-static int caps_shift_flag = NONE_MODE;
-static int ctrl_flag = 0;
+static int caps_shift_flag[MAX_TERMINAL];
+static int ctrl_flag;
 static int alt_flag = 0;
-static int buffer_index = 0;
+static int buffer_index[MAX_TERMINAL];
 static unsigned char buffer[MAX_TERMINAL][BUFFER_SIZE]; // three different keyboard buffers
 static volatile int kbdr_flag = 0;
 
@@ -260,14 +260,28 @@ static unsigned char kbd_ascii_key_map[KEY_MODES][TOTAL_SCANCODES] =
  */
 void keyboard_init()
 {
-    uint32_t flags;
-    cli_and_save(flags);
-    // set the IDT table entry for KBD
-    // Map keyboard interrupts to IDT
-    idt[KBD_VECTOR_NUM].present = 1;
-    SET_IDT_ENTRY(idt[KBD_VECTOR_NUM], keyboard_handler_wrapper);
-    enable_irq(KBD_IRQ);    // enable IRQ 1
-    restore_flags(flags);
+   uint32_t flags;
+   cli_and_save(flags);
+   // set the IDT table entry for KBD
+   // Map keyboard interrupts to IDT
+   idt[KBD_VECTOR_NUM].present = 1;
+   SET_IDT_ENTRY(idt[KBD_VECTOR_NUM], keyboard_handler_wrapper);
+
+   // clean the buffers
+	int i, t; // char loop, terminal loop
+	for(i = 0; i < BUFFER_SIZE; i++)
+		for(t = 0; t < MAX_TERMINAL; t++)
+			buffer[t][i] = '\0';
+
+	// initialize all the flags
+	for(t = 0; t < MAX_TERMINAL; t++)
+	{
+		buffer_index[t] = 0;
+		caps_shift_flag[t] = NONE_MODE;
+	}
+
+   enable_irq(KBD_IRQ);    // enable IRQ 1
+   restore_flags(flags);
 }
 
 /* AW
@@ -336,14 +350,14 @@ void keyboard_handler()
  *      SIDE EFFECTS: none
  */
 void toggle_caps() {
-    if(caps_shift_flag == NONE_MODE)
-        caps_shift_flag = CAPS_MODE;
-    else if(caps_shift_flag == SHIFT_MODE)
-        caps_shift_flag = SHIFT_CAPS_MODE;
-    else if(caps_shift_flag == CAPS_MODE)
-        caps_shift_flag = NONE_MODE;
+    if(caps_shift_flag[curr_terminal] == NONE_MODE)
+        caps_shift_flag[curr_terminal] = CAPS_MODE;
+    else if(caps_shift_flag[curr_terminal] == SHIFT_MODE)
+        caps_shift_flag[curr_terminal] = SHIFT_CAPS_MODE;
+    else if(caps_shift_flag[curr_terminal] == CAPS_MODE)
+        caps_shift_flag[curr_terminal] = NONE_MODE;
     else
-        caps_shift_flag = SHIFT_MODE;
+        caps_shift_flag[curr_terminal] = SHIFT_MODE;
 }
 
 /* AW
@@ -357,16 +371,16 @@ void toggle_caps() {
  */
 void toggle_shift(int type) {
     if(type == MAKE) {
-        if(caps_shift_flag == NONE_MODE)
-            caps_shift_flag = SHIFT_MODE;
-        else if(caps_shift_flag == CAPS_MODE)
-            caps_shift_flag = SHIFT_CAPS_MODE;
+        if(caps_shift_flag[curr_terminal] == NONE_MODE)
+            caps_shift_flag[curr_terminal] = SHIFT_MODE;
+        else if(caps_shift_flag[curr_terminal] == CAPS_MODE)
+            caps_shift_flag[curr_terminal] = SHIFT_CAPS_MODE;
     }
     else {
-        if(caps_shift_flag == SHIFT_MODE)
-            caps_shift_flag = NONE_MODE;
-        else if(caps_shift_flag == SHIFT_CAPS_MODE)
-            caps_shift_flag = CAPS_MODE;
+        if(caps_shift_flag[curr_terminal] == SHIFT_MODE)
+            caps_shift_flag[curr_terminal] = NONE_MODE;
+        else if(caps_shift_flag[curr_terminal] == SHIFT_CAPS_MODE)
+            caps_shift_flag[curr_terminal] = CAPS_MODE;
     }
 }
 
@@ -407,8 +421,10 @@ void process_key(uint8_t key) {
     if(key >= ABC_LOW_SCANS && key <= ABC_HIGH_SCANS) {
         if(key == L_MAKE && ctrl_flag) {
             clear();
-            clear_buffer();
+            int32_t i;
             printf("391OS> ");
+            for(i = 0; (buffer[curr_terminal][i] != '\0') && i < BUFFER_SIZE; i++)
+            	putc(buffer[curr_terminal][i]); // print the current buffer
         }
         else if(key == fn1 && alt_flag) { // f1
             terminal_switch(0);
@@ -449,10 +465,10 @@ void process_key(uint8_t key) {
         }
 
         /**************************/
-        else if(buffer_index + 1 < BUFFER_SIZE) {
-            putc(kbd_ascii_key_map[caps_shift_flag][key]); // print the character
-            buffer[curr_terminal][buffer_index] = kbd_ascii_key_map[caps_shift_flag][key];
-            buffer_index++;
+        else if(buffer_index[curr_terminal] + 1 < BUFFER_SIZE) {
+            putc(kbd_ascii_key_map[caps_shift_flag[curr_terminal]][key]); // print the character
+            buffer[curr_terminal][buffer_index[curr_terminal]] = kbd_ascii_key_map[caps_shift_flag[curr_terminal]][key];
+            buffer_index[curr_terminal]++;
         }
     }
 }
@@ -467,10 +483,10 @@ void process_key(uint8_t key) {
  *      SIDE EFFECTS: none
  */
 void handle_backspace() {
-    if(buffer_index - 1 >= 0) {
+    if(buffer_index[curr_terminal] - 1 >= 0) {
         backspace();
-        buffer_index--;
-        buffer[curr_terminal][buffer_index] = '\0';
+        buffer_index[curr_terminal]--;
+        buffer[curr_terminal][buffer_index[curr_terminal]] = '\0';
     }
 }
 
@@ -488,7 +504,7 @@ void handle_enter() {
    scroll();
    //call terminal read once implemented
    // call terminal read, save the buffer
-   terminal_read(STDOUT_FD, (uint8_t*)buffer[curr_terminal], buffer_index);
+   terminal_read(STDOUT_FD, (uint8_t*)buffer[curr_terminal], buffer_index[curr_terminal]);
    clear_buffer();
 }
 
@@ -504,7 +520,7 @@ void handle_enter() {
 void clear_buffer() {
     int i;
     for(i = 0; i < BUFFER_SIZE; i++) {
-        buffer[curr_terminal][i] = ' ';
+        buffer[curr_terminal][i] = '\0';
     }
-    buffer_index = 0;
+    buffer_index[curr_terminal] = 0;
 }

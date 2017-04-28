@@ -10,6 +10,8 @@
 #define VIDEO 0xB8000
 #define SIZE_OF_VIDEO 2000 // number of chars in the video memory for screen
 
+#define MAX_TERMINAL 3
+
 /*******************************/
 #define LOW_VGA 0x0F
 #define HIGH_VGA 0x0E
