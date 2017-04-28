@@ -8,6 +8,8 @@
 #include "wrapper.h"
 #include "filesystem.h"
 
+#include "sched.h"
+
 #define K_STACK_BOTTOM		0x00800000
 #define PROGRAM_PAGE		0x08000000
 #define PROGRAM_START		0x08048000
