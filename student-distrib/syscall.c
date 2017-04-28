@@ -8,6 +8,8 @@
 #include "wrapper.h"
 #include "filesystem.h"
 
+#include "sched.h"
+
 #define K_STACK_BOTTOM		0x00800000
 #define PROGRAM_PAGE		0x08000000
 #define PROGRAM_START		0x08048000
@@ -192,6 +194,8 @@ int32_t execute(const uint8_t* command)
 		process_pcb->parent_id = p_c.current_process;
 	}
 	p_c.current_process = current_process;
+	
+	scheduler_tick();  //vk
 
 	fd_table_init(process_pcb->fd_table);
 

@@ -165,6 +165,8 @@ entry (unsigned long magic, unsigned long addr)
 	rtc_init();	// initialize the RTC
 	paging_init();	// initialize Paging
 	pc_init();	//initialize process controller
+	
+	pit_init(); //initialize process interrupt timer
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
