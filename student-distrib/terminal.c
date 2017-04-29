@@ -119,7 +119,7 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 	uint8_t* buffer = (uint8_t*)buf;
 	int32_t i=0;
 	for(i = 0; i < nbytes; i++){
-		putc(buffer[i]); // output all the charactrs in the given buffer
+		term_putc(buffer[i]); // output all the charactrs in the given buffer
 	}
 
 	return i;

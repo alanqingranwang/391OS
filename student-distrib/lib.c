@@ -160,6 +160,7 @@ puts(int8_t* s)
     }
     return index;
 }
+
 /*
 * void putc(uint8_t c);
 *   Inputs: uint_8* c = character to print
@@ -167,7 +168,7 @@ puts(int8_t* s)
 *   Function: Output a character to the console
 */
 void
-putc(uint8_t c)
+term_putc(uint8_t c)
 {
     // forced next line chracter
     if(c == '\n' || c == '\r') {
@@ -198,6 +199,46 @@ putc(uint8_t c)
     }
     update_cursor();
 }
+
+/*
+ * void putc(uint8_t c);
+ *   Inputs: uint_8* c = character to print
+ *   Return Value: void
+ *   Function: Output a character to the console
+ */
+void
+putc(uint8_t c)
+{
+    // forced next line chracter
+    if(c == '\n' || c == '\r') {
+        screen_y[sched_proc]++;
+        screen_x[sched_proc] = 0;
+        // Check to keep screen_y in bounds upon a '\n'
+        if(screen_y[sched_proc] >= NUM_ROWS)
+        {
+            screen_y[sched_proc]--;
+            scroll();
+        }
+    }
+    else {
+        // next line by default (wrapping)
+        if(screen_x[sched_proc] >= NUM_COLS){
+            screen_x[sched_proc] = 0;
+            screen_y[sched_proc]++;
+            // check to keep screen_y in bounds naturally
+            if(screen_y[sched_proc] >= NUM_ROWS)
+            {
+                screen_y[sched_proc]--;
+                scroll();
+            }
+        }
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[sched_proc] + screen_x[sched_proc]) << 1)) = c;
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[sched_proc] + screen_x[sched_proc]) << 1) + 1) = ATTRIB;
+        screen_x[sched_proc]++;
+    }
+    update_cursor();
+}
+
 /*
 * void scroll()
 *   Inputs: none

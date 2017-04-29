@@ -24,6 +24,7 @@ volatile uint32_t old_terminal;
 volatile int32_t sched_proc;
 
 int32_t printf(int8_t *format, ...);
+void term_putc(uint8_t c);
 void putc(uint8_t c);
 int32_t puts(int8_t *s);
 int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
