@@ -36,17 +36,18 @@ int32_t terminal_switch(uint32_t new_terminal){
 	cli_and_save(flag);
 	old_terminal = curr_terminal;
 	curr_terminal = new_terminal;
+	/* Map old terminal's virtual address to its respective old backup */
+	map_virt_to_phys(0x10000000 + (old_terminal*0x1000), (VIDEO+0x1000) + (old_terminal*0x1000));
 	/* Copy 4kb from video memory to old terminal backup memory */
 	memcpy((void*)(0x10000000 + (old_terminal*0x1000)), (void*)VIDEO, (uint32_t)0x1000);
 	/* Copy 4kb from new terminal backup memory to video memory */
 	memcpy((void*)VIDEO, (void*)(0x10000000 + (curr_terminal*0x1000)), (uint32_t)0x1000);
 	/* Map new terminal's virtual address to video memory */
 	map_virt_to_phys(0x10000000 + (curr_terminal*0x1000), VIDEO);
-	/* Map old terminal's virtual address to its respective old backup */
-	map_virt_to_phys(0x10000000 + (old_terminal*0x1000), (VIDEO+0x1000) + (old_terminal*0x1000));
+
+	update_cursor();
 	restore_flags(flag);
 	// printf("Switched to Terminal %d\n", curr_terminal);
-
 	int curr_process = current_process[new_terminal];
 
 	if(curr_process == -1)
@@ -54,11 +55,11 @@ int32_t terminal_switch(uint32_t new_terminal){
 		in_use[new_terminal] = 0;
 		execute((uint8_t*)"shell");
 	}
-	else
-	{
-		in_use[curr_process] = 2;
-		execute(process_array[curr_process]->comm);
-	}
+	// else
+	// {
+	// 	in_use[curr_process] = 2;
+	// 	execute(process_array[curr_process]->comm);
+	// }
 
 	return 0;
 }
