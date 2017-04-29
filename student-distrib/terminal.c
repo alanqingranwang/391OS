@@ -6,6 +6,9 @@
 #include "syscall.h"
 #include "paging.h" // used for map_virt_to_phys
 
+#define BASE_VIRT_ADDR	0x10000000
+#define FOURKiB	0x1000
+
 static int8_t save_buff[MAX_TERMINAL][TERM_BUFF_SIZE];
 
 /*
@@ -27,23 +30,24 @@ int32_t terminal_init()
 int32_t terminal_switch(uint32_t new_terminal){
 	// sanity check
 	if(new_terminal == curr_terminal)
-		return 0;
+		return 0; // it's the same terminal
 
-	if(new_terminal > 2 || new_terminal < 0)
-		return -1;
+	if(new_terminal >= MAX_TERMINAL || new_terminal < 0)
+		return -1; // new_terminal is out of bounds
 
 	uint32_t flag;
 	cli_and_save(flag);
 	old_terminal = curr_terminal;
 	curr_terminal = new_terminal;
+
 	/* Map old terminal's virtual address to its respective old backup */
-	map_virt_to_phys(0x10000000 + (old_terminal*0x1000), (VIDEO+0x1000) + (old_terminal*0x1000));
+	map_virt_to_phys(BASE_VIRT_ADDR + (old_terminal*FOURKiB), (VIDEO+FOURKiB) + (old_terminal*FOURKiB));
 	/* Copy 4kb from video memory to old terminal backup memory */
-	memcpy((void*)(0x10000000 + (old_terminal*0x1000)), (void*)VIDEO, (uint32_t)0x1000);
+	memcpy((void*)(BASE_VIRT_ADDR + (old_terminal*FOURKiB)), (void*)VIDEO, (uint32_t)FOURKiB);
 	/* Copy 4kb from new terminal backup memory to video memory */
-	memcpy((void*)VIDEO, (void*)(0x10000000 + (curr_terminal*0x1000)), (uint32_t)0x1000);
+	memcpy((void*)VIDEO, (void*)(BASE_VIRT_ADDR + (curr_terminal*FOURKiB)), (uint32_t)FOURKiB);
 	/* Map new terminal's virtual address to video memory */
-	map_virt_to_phys(0x10000000 + (curr_terminal*0x1000), VIDEO);
+	map_virt_to_phys(BASE_VIRT_ADDR + (curr_terminal*FOURKiB), VIDEO);
 
 	update_cursor();
 	restore_flags(flag);
@@ -51,7 +55,7 @@ int32_t terminal_switch(uint32_t new_terminal){
 	int curr_process = current_process[new_terminal];
 
 	if(curr_process == -1)
-	{	// if the base shell isn't on 
+	{	// if the base shell isn't on, turn it on
 		in_use[new_terminal] = 0;
 		execute((uint8_t*)"shell");
 	}
