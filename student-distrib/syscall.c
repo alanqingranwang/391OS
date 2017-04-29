@@ -9,16 +9,10 @@
 #include "filesystem.h"
 #include "terminal.h"
 
-#define K_STACK_BOTTOM		0x00800000
-#define PROGRAM_PAGE			0x08000000
-#define PROGRAM_START		0x08048000
-#define USER_PAGE_SIZE		0x00400000
-#define PROCESS_SIZE     	0x00002000
 #define STATUS_BYTEMASK    0x000000FF
 #define FILE_NAME_LENGTH   32
 #define BYTES_TO_READ      28
 #define ENTRY_POINT_START  24
-#define BYTE_SIZE				8
 #define MAGIC_NUMBER_SIZE	4
 
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
