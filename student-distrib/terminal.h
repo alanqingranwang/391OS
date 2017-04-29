@@ -9,8 +9,8 @@
 #define STDOUT_FD 1 // the fd for STDOUT
 #define TERM_BUFF_SIZE 128
 
-int current_process[MAX_TERMINAL]; // which process index is the current terminal at
-
+int32_t current_process[MAX_TERMINAL]; // which process index is the current terminal at
+uint32_t term_proc;
 
 int32_t terminal_init();
 

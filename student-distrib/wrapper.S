@@ -1,21 +1,26 @@
 .globl keyboard_handler_wrapper
 .globl rtc_handler_wrapper
+.globl pit_handler_wrapper
 .globl syscall_handler_wrapper
 .globl user_context_switch
 .globl sys_ret
 .globl sys_ret_halt
 
-# not in use yet
 keyboard_handler_wrapper:
   pushal
   call keyboard_handler
   popal
   iret
 
-# not in use yet
 rtc_handler_wrapper:
   pushal
   call rtc_handler
+  popal
+  iret
+
+pit_handler_wrapper:
+  pushal
+  call pit_handler
   popal
   iret
 

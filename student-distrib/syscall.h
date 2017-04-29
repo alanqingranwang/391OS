@@ -7,6 +7,15 @@
 #include "fd_table.h"
 #include "exceptions.h"
 
+// program info
+#define K_STACK_BOTTOM		0x00800000
+#define PROGRAM_PAGE			0x08000000
+#define PROGRAM_START		0x08048000
+#define USER_PAGE_SIZE		0x00400000
+#define PROCESS_SIZE     	0x00002000
+
+#define BYTE_SIZE				8
+
 /* Additional Macros */
 #define MAX_PROCESSES 8
 #define FD_TABLE_SIZE 8

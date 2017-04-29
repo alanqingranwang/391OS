@@ -7,7 +7,10 @@
 #include "lib.h"
 #include "i8259.h"
 #include "syscall.h"
+#include "keyboard.h"
+#include "terminal.h"
 #include "rtc.h"	// JC
+#include "sched.h"
 #include "idt.h"
 #include "paging.h"
 #include "debug.h"
@@ -166,7 +169,7 @@ entry (unsigned long magic, unsigned long addr)
 	paging_init();	// initialize Paging
 	pc_init();	//initialize process controller
 	terminal_init();
-
+	PIT_init();
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
@@ -189,14 +192,6 @@ entry (unsigned long magic, unsigned long addr)
 	/*******************************************************************/
 
 	/* Execute the first program (`shell') ... */
-	uint8_t string[MAX_STR_LENGTH] = "shell ";
-	int32_t retval;
-	while(1) {
-		retval = execute(string);
-		if(retval == -1) {
-			printf("Fail to execute shell, %d", retval);
-		}
-	}
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");
