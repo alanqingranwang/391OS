@@ -32,18 +32,19 @@ int32_t terminal_switch(uint32_t new_terminal){
 	if(new_terminal > 2 || new_terminal < 0)
 		return -1;
 
+	uint32_t flag;
+	cli_and_save(flag);
 	old_terminal = curr_terminal;
+	curr_terminal = new_terminal;
 	/* Copy 4kb from video memory to old terminal backup memory */
 	memcpy((void*)(0x10000000 + (old_terminal*0x1000)), (void*)VIDEO, (uint32_t)0x1000);
-	clear(); // clear what's in the terminal right now
-	curr_terminal = new_terminal;
 	/* Copy 4kb from new terminal backup memory to video memory */
 	memcpy((void*)VIDEO, (void*)(0x10000000 + (curr_terminal*0x1000)), (uint32_t)0x1000);
 	/* Map new terminal's virtual address to video memory */
 	map_virt_to_phys(0x10000000 + (curr_terminal*0x1000), VIDEO);
 	/* Map old terminal's virtual address to its respective old backup */
 	map_virt_to_phys(0x10000000 + (old_terminal*0x1000), VIDEO + (old_terminal*0x1000));
-
+	restore_flags(flag);
 	// printf("Switched to Terminal %d\n", curr_terminal);
 
 	int curr_process = current_process[new_terminal];
