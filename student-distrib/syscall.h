@@ -13,10 +13,10 @@
 #define MAX_CHARS 128
 #define BYTE_MASK	0xFF
 
-// incorrect memory locations
+// just needs to be greater than 128MB
 #define VIRT_VID_TERM1	0x10000000
-// #define VIRT_VID_TERM2	0x10000000
-// #define VIRT_VID_TERM3	0x30000000
+#define VIRT_VID_TERM2	0x10001000  // 4kb offset
+#define VIRT_VID_TERM3	0x10002000
 
 /* per process data structure */
 typedef struct process_control_block {

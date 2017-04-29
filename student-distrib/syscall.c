@@ -249,8 +249,7 @@ int32_t execute(const uint8_t* comm)
 
 	// add the command to the pcb
 	for(i = 0; command[i] != ' ' && command[i] != '\0' && command[i] != '\n'; i++) {
-		if(i >= FILE_NAME_LENGTH-1) return -1;
-		((process_array[current_process[curr_terminal]])->comm)[i] = command[i];
+		((process_array[current_process[curr_terminal]])->comm)[i] = file_name[i];
 	}
 
 	fd_table_init(process_pcb->fd_table);
@@ -529,23 +528,22 @@ int32_t vidmap(uint8_t** screen_start)
 		return -1;
 	}
 
-	// give user virtual adress
-/*	switch(curr_terminal)
+	// give user virtual adress, specific to its terminal
+	switch(curr_terminal)
 	{
 		// terminal 1
-		case 0: */
+		case 0: 
 			*screen_start = (uint8_t*)VIRT_VID_TERM1;
-	/*	// terminal 2
+		// terminal 2
 		case 1:
 			*screen_start = (uint8_t*)VIRT_VID_TERM2;
 		// terminal 3
 		case 2:
 			*screen_start = (uint8_t*)VIRT_VID_TERM3;
-	}*/
+	}
 
-	// set up paging
-	add_video_memory((uint32_t)(*screen_start), (uint32_t)USER_VIDEO_);
-	return (int32_t)*screen_start;
+	map_virt_to_phys((uint32_t)(*screen_start), USER_VIDEO_); // map given virt to given phys
+	return (int32_t)*screen_start; // return the virtual address
 }
 
 /* JC
