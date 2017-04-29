@@ -59,7 +59,7 @@ int32_t terminal_switch(uint32_t new_terminal){
 		in_use[new_terminal] = 0;
 		execute((uint8_t*)"shell");
 	}
-	// else
+	// else if(curr_process > 2)
 	// {
 	// 	in_use[curr_process] = 2;
 	// 	execute(process_array[curr_process]->comm);
