@@ -52,13 +52,13 @@ int32_t terminal_switch(uint32_t new_terminal){
 	update_cursor();
 	restore_flags(flag);
 
-	int curr_process = current_process[new_terminal];
+	// int curr_process = current_process[new_terminal];
 
-	if(curr_process == -1)
-	{	// if the base shell isn't on, turn it on
-		in_use[new_terminal] = 0;
-		execute((uint8_t*)"shell");
-	}
+	// if(curr_process == -1)
+	// {	// if the base shell isn't on, turn it on
+	// 	in_use[new_terminal] = 0;
+	// 	execute((uint8_t*)"shell");
+	// }
 
 	return 0;
 }

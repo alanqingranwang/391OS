@@ -20,7 +20,6 @@
 
 uint32_t proc_EBP[MAX_PROCESSES];
 uint32_t proc_ESP[MAX_PROCESSES];
-int32_t sched_proc;
 
 void pit_init();
 void pit_handler();

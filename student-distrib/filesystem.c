@@ -43,9 +43,10 @@ void filesystem_init(boot_block_t* boot_addr)
 	// initiaize the file_name table
 	create_char_count();
 
-	restore_flags(flags);
 	fops_table_init();
+	restore_flags(flags);
 }
+
 /************************CHECKPOINT 3.2****************************/
 
 /* JC

@@ -21,6 +21,7 @@
 
 volatile uint32_t curr_terminal; // needs to be in lib because it helps with lib.c cursor
 volatile uint32_t old_terminal;
+volatile int32_t sched_proc;
 
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);

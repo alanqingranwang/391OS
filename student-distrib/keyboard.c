@@ -299,6 +299,8 @@ void keyboard_init()
 void keyboard_handler()
 {
     send_eoi(KBD_IRQ);  // tell PIC to continue with its work
+    uint32_t flags;
+    cli_and_save(flags);
     // get input key
     uint8_t key;
     key = inb(KBD_DATA_PORT);
@@ -338,6 +340,7 @@ void keyboard_handler()
             process_key(key);
             break;
     }
+    restore_flags(flags);
 }
 
 /* AW

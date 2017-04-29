@@ -61,8 +61,8 @@ int32_t halt(uint8_t status)
 	close_all_fd(); // gotta do it before the restart
 
 	/* if terminating current terminals original shell, restart shell */
-	if(process_array[current_process[curr_terminal]]->process_id < 3){
-		in_use[process_array[current_process[curr_terminal]]->process_id] = 0;
+	if(process_array[current_process[sched_proc]]->process_id < 3){
+		in_use[process_array[current_process[sched_proc]]->process_id] = 0;
 		execute((uint8_t*)"shell");
 	}
 
@@ -73,24 +73,24 @@ int32_t halt(uint8_t status)
 	asm volatile(
 		"movl %0, %%esp \n"
 		:
-		: "r"(process_array[current_process[curr_terminal]]->current_esp)
+		: "r"(process_array[current_process[sched_proc]]->current_esp)
 	);
 
 	asm volatile(
 		"movl %0, %%ebp \n"
 		:
-		: "r"(process_array[current_process[curr_terminal]]->current_ebp)
+		: "r"(process_array[current_process[sched_proc]]->current_ebp)
 	);
 
 	/* revert process controller info to parent process */
-	in_use[current_process[curr_terminal]] = 0;
-	current_process[curr_terminal] = process_array[current_process[curr_terminal]]->parent_id;
+	in_use[current_process[sched_proc]] = 0;
+	current_process[sched_proc] = process_array[current_process[sched_proc]]->parent_id;
 
 	/* prepare paging for context switch */
-	add_process(current_process[curr_terminal]);
+	add_process(current_process[sched_proc]);
 
 	/* prepare tss for context switch */
-	tss.esp0 = process_array[current_process[curr_terminal]]->current_esp;
+	tss.esp0 = process_array[current_process[sched_proc]]->current_esp;
 	tss.ss0  = KERNEL_DS;
 
 	/* set return value */
@@ -136,9 +136,9 @@ void parse_cmd_args(uint8_t* buf, const uint8_t* comm)
 	int32_t arg_cnt = i; // start parsing from where the command left off
 	// parse till end of character or max buffer size
 	for(; comm[arg_cnt] != '\0' && arg_cnt != TERM_BUFF_SIZE; arg_cnt++) // get all the arguments
-		cmd_args[curr_terminal][arg_cnt - file_name_length] = comm[arg_cnt];
+		cmd_args[sched_proc][arg_cnt - file_name_length] = comm[arg_cnt];
 
-	cmd_args[curr_terminal][arg_cnt - file_name_length] = '\0'; // terminate the string
+	cmd_args[sched_proc][arg_cnt - file_name_length] = '\0'; // terminate the string
 }
 
 /*
@@ -342,7 +342,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 		return -1; // invalid pointer
 
  	// get the function pointer to the specific file or rtc or thing
-	return (((((process_array[current_process[curr_terminal]])->fd_table)[fd]).fd_jump)->read)(fd, (uint8_t*)buf, nbytes);
+	return (((((process_array[current_process[sched_proc]])->fd_table)[fd]).fd_jump)->read)(fd, (uint8_t*)buf, nbytes);
 }
 
 /* JC
@@ -374,7 +374,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 		return -1; // invalid pointer
 
  	// get the function pointer to the specific file or rtc or thing
-	return (((((process_array[current_process[curr_terminal]])->fd_table)[fd]).fd_jump)->write)(fd, buf, nbytes);
+	return (((((process_array[current_process[sched_proc]])->fd_table)[fd]).fd_jump)->write)(fd, buf, nbytes);
 }
 
 /* JC
@@ -435,7 +435,7 @@ int32_t close(int32_t fd)
 	}
 
  	// get the function pointer for the unknown function
-	return (((((process_array[current_process[curr_terminal]])->fd_table)[fd]).fd_jump)->close)(fd);
+	return (((((process_array[current_process[sched_proc]])->fd_table)[fd]).fd_jump)->close)(fd);
 }
 
 /* JC
@@ -464,7 +464,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	uint32_t i = 0;
 	while(i < nbytes && i < TERM_BUFF_SIZE)
 	{ 	// copy the data over
-		buf[i] = ((process_array[current_process[curr_terminal]])->args)[i];
+		buf[i] = ((process_array[current_process[sched_proc]])->args)[i];
 		i++;
 	}
 

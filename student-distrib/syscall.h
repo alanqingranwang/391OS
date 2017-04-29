@@ -33,7 +33,7 @@ typedef struct process_control_block {
 
 /* holds all the processing info */
 /* process controller */
-// int no_processes; // how many processes per terminal
+
 // total pool of functions, first three should always be the terminals
 pcb * process_array[MAX_PROCESSES]; //pcb pointers for each process
 int32_t in_use[MAX_PROCESSES];

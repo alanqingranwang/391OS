@@ -11,7 +11,6 @@
 
 int32_t current_process[MAX_TERMINAL]; // which process index is the current terminal at
 
-
 int32_t terminal_init();
 
 int32_t terminal_switch(uint32_t new_terminal);
