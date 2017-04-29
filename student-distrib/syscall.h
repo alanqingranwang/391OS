@@ -7,25 +7,11 @@
 #include "fd_table.h"
 #include "exceptions.h"
 
-// program info
-#define K_STACK_BOTTOM		0x00800000
-#define PROGRAM_PAGE			0x08000000
-#define PROGRAM_START		0x08048000
-#define USER_PAGE_SIZE		0x00400000
-#define PROCESS_SIZE     	0x00002000
-
-#define BYTE_SIZE				8
-
 /* Additional Macros */
 #define MAX_PROCESSES 8
 #define FD_TABLE_SIZE 8
 #define MAX_CHARS 128
 #define BYTE_MASK	0xFF
-
-// just needs to be greater than 128MB
-#define VIRT_VID_TERM1	0x10000000
-#define VIRT_VID_TERM2	0x10001000  // 4kb offset
-#define VIRT_VID_TERM3	0x10002000
 
 /* per process data structure */
 typedef struct process_control_block {
@@ -40,10 +26,10 @@ typedef struct process_control_block {
 
 /* holds all the processing info */
 /* process controller */
-int no_processes; // how many processes per terminal
+// int no_processes; // how many processes per terminal
 // total pool of functions, first three should always be the terminals
 pcb * process_array[MAX_PROCESSES]; //pcb pointers for each process
-int in_use[MAX_PROCESSES];
+int32_t in_use[MAX_PROCESSES];
 
 /* initializes the process controller */
 void pc_init();

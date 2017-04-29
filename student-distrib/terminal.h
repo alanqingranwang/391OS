@@ -10,7 +10,7 @@
 #define TERM_BUFF_SIZE 128
 
 int32_t current_process[MAX_TERMINAL]; // which process index is the current terminal at
-uint32_t term_proc;
+
 
 int32_t terminal_init();
 

@@ -10,6 +10,11 @@
 #define TABLE_IDX_SHIFT 12
 #define CLEAR_DIR_IDX 0x003FFFFF
 
+// just needs to be greater than 128MB
+#define VIRT_VID_TERM1	0x10000000
+#define VIRT_VID_TERM2	0x10001000  // 4kb offset
+#define VIRT_VID_TERM3	0x10002000
+
 // physical back up memory locations
 #define BACKUP_VID1 0xB9000
 #define BACKUP_VID2 0xBA000

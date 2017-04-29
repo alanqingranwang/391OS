@@ -20,7 +20,7 @@ static int8_t save_buff[MAX_TERMINAL][TERM_BUFF_SIZE];
  */
 int32_t terminal_init()
 {
-	in_use[0] = 1;
+	in_use[0] = 0;
 	in_use[1] = 1;
 	in_use[2] = 1;
 
@@ -50,13 +50,15 @@ int32_t terminal_switch(uint32_t new_terminal){
 	map_virt_to_phys(BASE_VIRT_ADDR + (curr_terminal*FOURKiB), VIDEO);
 
 	update_cursor();
-	
 	restore_flags(flag);
-	// else if(curr_process > 2)
-	// {
-	// 	in_use[curr_process] = 2;
-	// 	execute(process_array[curr_process]->comm);
-	// }
+
+	int curr_process = current_process[new_terminal];
+
+	if(curr_process == -1)
+	{	// if the base shell isn't on, turn it on
+		in_use[new_terminal] = 0;
+		execute((uint8_t*)"shell");
+	}
 
 	return 0;
 }

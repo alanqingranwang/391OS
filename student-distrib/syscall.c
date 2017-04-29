@@ -9,10 +9,16 @@
 #include "filesystem.h"
 #include "terminal.h"
 
+#define K_STACK_BOTTOM		0x00800000
+#define PROGRAM_PAGE			0x08000000
+#define PROGRAM_START		0x08048000
+#define USER_PAGE_SIZE		0x00400000
+#define PROCESS_SIZE     	0x00002000
 #define STATUS_BYTEMASK    0x000000FF
 #define FILE_NAME_LENGTH   32
 #define BYTES_TO_READ      28
 #define ENTRY_POINT_START  24
+#define BYTE_SIZE				8
 #define MAGIC_NUMBER_SIZE	4
 
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
@@ -29,7 +35,6 @@ static int8_t cmd_args[MAX_TERMINAL][TERM_BUFF_SIZE]; // holds command argument
 void pc_init(){
 	uint32_t cnt;
 	curr_terminal = 0; // initialize to the first terminal
-	no_processes = -1;
 	// initialize all the terminal data
 	for(cnt = 0; cnt < MAX_TERMINAL; cnt++)
 		current_process[cnt] = -1;
@@ -86,7 +91,6 @@ int32_t halt(uint8_t status)
 	/* revert process controller info to parent process */
 	in_use[current_process[curr_terminal]] = 0;
 	current_process[curr_terminal] = process_array[current_process[curr_terminal]]->parent_id;
-	no_processes--;
 
 	/* prepare paging for context switch */
 	add_process(current_process[curr_terminal]);
@@ -224,7 +228,6 @@ int32_t execute(const uint8_t* comm)
 		printf("Maximum Possible Processes. Stop and Reconsider.\n");
 		return -1;  // too many processes, Piazza post @1089, shouldn't be 0
 	}
-	no_processes++;
 
 	/* create pcb and initialize it */
 	pcb * process_pcb = (pcb *)(K_STACK_BOTTOM - PROCESS_SIZE*(1+i));
@@ -273,7 +276,7 @@ int32_t execute(const uint8_t* comm)
 	}
 
 	if(read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size) == -1) {
-		return -1;
+		return -1;;
 	}
 
 	/* prepare tss for context switch */
