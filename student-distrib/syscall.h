@@ -8,7 +8,7 @@
 #include "exceptions.h"
 
 #define K_STACK_BOTTOM		0x00800000
-#define PROGRAM_PAGE			0x08000000
+#define PROGRAM_PAGE		0x08000000
 #define PROGRAM_START		0x08048000
 #define USER_PAGE_SIZE		0x00400000
 #define PROCESS_SIZE     	0x00002000
@@ -33,7 +33,7 @@ typedef struct process_control_block {
 
 /* holds all the processing info */
 /* process controller */
-
+// int no_processes; // how many processes per terminal
 // total pool of functions, first three should always be the terminals
 pcb * process_array[MAX_PROCESSES]; //pcb pointers for each process
 int32_t in_use[MAX_PROCESSES];

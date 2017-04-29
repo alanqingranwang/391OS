@@ -11,6 +11,8 @@
 #include "terminal.h"
 #include "idt.h"
 
+static int init_flag;
+
 /* 
  *	pit_init
  *		DESCRIPTION:
@@ -40,6 +42,7 @@ void pit_init()
 	outb(higher, CHANNEL0);
 
 	sched_proc = 0;
+	init_flag = 1;
 
 	// unlock
 	enable_irq(PIT_IRQ); // enable IRQ 0
@@ -54,51 +57,49 @@ void pit_init()
  */
 void pit_handler()
 {
-	/* get current process id */
-	/* if there is not a shell running in terminal, run one */
-	if(current_process[curr_terminal] < 0){
-		in_use[sched_proc] = 0;
+	int32_t p_id = current_process[sched_proc];
+
+	if (p_id > 7){
 		send_eoi(PIT_IRQ);
-		execute((uint8_t*)"shell");
 		return;
 	}
 
-	int32_t old_p_id = current_process[sched_proc];
-
-	sched_proc = (sched_proc+1)%3;
-	/* increment terminal process and get next process id */
-	while(current_process[sched_proc] == -1) // get the next valid one
-		sched_proc = (sched_proc+1)%3;
-
-	int32_t p_id = current_process[sched_proc];
-
-	if(old_p_id == p_id){
+	if(init_flag){
+		init_flag = 0;
+		in_use[curr_terminal] = 0;
 		send_eoi(PIT_IRQ);
-		return;
+		execute((uint8_t*)"shell");
 	}
 
 	/* store esp and ebp for old process */
 	asm volatile(
 		"movl %%esp, %0 \n"
-		: "=r" (proc_ESP[old_p_id])
+		: "=r" (proc_ESP[p_id])
 	);
 	asm volatile(
 		"movl %%ebp, %0 \n"
-		: "=r" (proc_EBP[old_p_id])
+		: "=r" (proc_EBP[p_id])
 	);
 
-	// if (p_id > 7){
-	// 	send_eoi(PIT_IRQ);
-	// 	return;
-	// }
+	/* get new process */
+	sched_proc = (sched_proc+1)%3;
+	p_id = current_process[sched_proc];
 
-	/* if shell isn't started in next process, run one */
-	// if(p_id < 0){
-	// 	in_use[sched_proc] = 0;
-	// 	send_eoi(PIT_IRQ);
-	// 	execute((uint8_t*)"shell");
-	// 	return;
-	// }
+	if (p_id > 7){
+		send_eoi(PIT_IRQ);
+		return;
+	}
+
+	if(p_id < 0 && (curr_terminal == sched_proc)){
+		in_use[curr_terminal] = 0;
+		send_eoi(PIT_IRQ);
+		execute((uint8_t*)"shell");
+	}
+	else{
+		sched_proc = curr_terminal;
+		send_eoi(PIT_IRQ);
+		return;
+	}
 
 	/* read file into memory */
 	uint8_t *file_name = process_array[p_id]->comm;
