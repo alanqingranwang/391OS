@@ -33,9 +33,9 @@ void paging_init() {
     page_table[VIDEO >> 12]  = VIDEO;
     page_table[VIDEO >> 12] |= RW_P_SET;
 
-    map_virt_to_phys(0x10000000, VIDEO);
-    map_virt_to_phys(0x10001000, VIDEO + 0x1000);
-    map_virt_to_phys(0x10002000, VIDEO + 0x2000);
+    map_virt_to_phys(0x10000000, VIDEO + 0x1000);
+    map_virt_to_phys(0x10001000, VIDEO + 0x2000);
+    map_virt_to_phys(0x10002000, VIDEO + 0x3000);
 
 	/* in line assembly for paging initialization */
     enablePaging();

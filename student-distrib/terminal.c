@@ -43,7 +43,7 @@ int32_t terminal_switch(uint32_t new_terminal){
 	/* Map new terminal's virtual address to video memory */
 	map_virt_to_phys(0x10000000 + (curr_terminal*0x1000), VIDEO);
 	/* Map old terminal's virtual address to its respective old backup */
-	map_virt_to_phys(0x10000000 + (old_terminal*0x1000), VIDEO + (old_terminal*0x1000));
+	map_virt_to_phys(0x10000000 + (old_terminal*0x1000), (VIDEO+0x1000) + (old_terminal*0x1000));
 	restore_flags(flag);
 	// printf("Switched to Terminal %d\n", curr_terminal);
 
