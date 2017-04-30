@@ -16,13 +16,13 @@
 /* Additional Macros */
 #define MAX_PROCESSES 8
 #define FD_TABLE_SIZE 8
-#define MAX_CHARS 128
-#define BYTE_MASK	0xFF
-#define BYTE_SIZE	8
+#define MAX_CHARS 	  128
+#define BYTE_MASK	  0xFF
+#define BYTE_SIZE	  8
 
 /* per process data structure */
 typedef struct process_control_block {
-	uint8_t		process_id;
+	int32_t		process_id;
 	int32_t     parent_id;
 	uint32_t    current_esp;
 	uint32_t    current_ebp;
@@ -31,12 +31,10 @@ typedef struct process_control_block {
 	fd_t 		fd_table[FD_TABLE_SIZE];
 } pcb;
 
-/* holds all the processing info */
-/* process controller */
-// int no_processes; // how many processes per terminal
 // total pool of functions, first three should always be the terminals
 pcb * process_array[MAX_PROCESSES]; //pcb pointers for each process
 int32_t in_use[MAX_PROCESSES];
+int32_t current_process[MAX_TERMINAL]; // which process index is the current terminal at
 
 /* initializes the process controller */
 void pc_init();

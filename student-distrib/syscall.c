@@ -58,11 +58,15 @@ void pc_init(){
  */
 int32_t halt(uint8_t status)
 {
+	cli();
 	close_all_fd(); // gotta do it before the restart
 
+	// extract process ID
+	int32_t p_id = current_process[sched_proc];
+
 	/* if terminating current terminals original shell, restart shell */
-	if(process_array[current_process[sched_proc]]->process_id < 3){
-		in_use[process_array[current_process[sched_proc]]->process_id] = 0;
+	if(p_id < 3){
+		in_use[p_id] = 0;
 		execute((uint8_t*)"shell");
 	}
 
@@ -74,24 +78,25 @@ int32_t halt(uint8_t status)
 	asm volatile(
 		"movl %0, %%esp \n"
 		:
-		: "r"(process_array[current_process[sched_proc]]->current_esp)
+		: "r"(process_array[p_id]->current_esp)
 	);
 
 	asm volatile(
 		"movl %0, %%ebp \n"
 		:
-		: "r"(process_array[current_process[sched_proc]]->current_ebp)
+		: "r"(process_array[p_id]->current_ebp)
 	);
 
 	/* revert process controller info to parent process */
 	in_use[current_process[sched_proc]] = 0;
-	current_process[sched_proc] = process_array[current_process[sched_proc]]->parent_id;
+	p_id = process_array[current_process[sched_proc]]->parent_id;
+	current_process[sched_proc] = p_id;
 
 	/* prepare paging for context switch */
-	add_process(current_process[sched_proc]);
+	add_process(p_id);
 
 	/* prepare tss for context switch */
-	tss.esp0 = process_array[current_process[sched_proc]]->current_esp;
+	tss.esp0 = process_array[p_id]->current_esp;
 	tss.ss0  = KERNEL_DS;
 
 	/* set return value */
@@ -101,6 +106,7 @@ int32_t halt(uint8_t status)
 		: "r"(extended_status)
 		: "%eax"
 	);
+	sti();
 
 	/* return */
 	asm volatile("jmp execute_return");
@@ -162,41 +168,41 @@ void parse_cmd_args(uint8_t* buf, const uint8_t* comm)
  */
 int32_t execute(const uint8_t* comm)
 {
-	if(comm == NULL) // null pointer
-		return -1;
+				if(comm == NULL) // null pointer
+					return -1;
 
-	uint8_t command[TERM_BUFF_SIZE];
-	parse_cmd_args(command, comm);
+				uint8_t command[TERM_BUFF_SIZE];
+				parse_cmd_args(command, comm);
 
-	int32_t i;
+				int32_t i;
 
-	/* get the file name and arguments */
-	int32_t file_name_length;
-	int8_t file_name[FILE_NAME_LENGTH];
+				/* get the file name and arguments */
+				int32_t file_name_length;
+				int8_t file_name[FILE_NAME_LENGTH];
 
-	/* parse file and extract useful data */
-	for(i = 0; command[i] != ' ' && command[i] != '\0' && command[i] != '\n'; i++) {
-		if(i >= FILE_NAME_LENGTH-1) return -1;
-		file_name[i] = command[i];
-	}
+				/* parse file and extract useful data */
+				for(i = 0; command[i] != ' ' && command[i] != '\0' && command[i] != '\n'; i++) {
+					if(i >= FILE_NAME_LENGTH-1) return -1;
+					file_name[i] = command[i];
+				}
 
-	file_name[i] = '\0';
-	file_name_length = i;
+				file_name[i] = '\0';
+				file_name_length = i;
 
-	// if it returns -1, that means the file doesn't exist
-	dentry_t file_dentry;
-	if(read_dentry_by_name((uint8_t*)file_name, &file_dentry) == -1) // get the data
-		return -1;
+				// if it returns -1, that means the file doesn't exist
+				dentry_t file_dentry;
+				if(read_dentry_by_name((uint8_t*)file_name, &file_dentry) == -1) // get the data
+					return -1;
 
-	if(file_dentry.file_type != 2)
-		return -1; // it's not a file type
+				if(file_dentry.file_type != 2)
+					return -1; // it's not a file type
 
-	// Read first 4 bytes to see if its an executable
-	uint8_t buf[BYTES_TO_READ];
-	uint32_t read_bytes = BYTES_TO_READ;
+				// Read first 4 bytes to see if its an executable
+				uint8_t buf[BYTES_TO_READ];
+				uint32_t read_bytes = BYTES_TO_READ;
 
-	if(read_data(file_dentry.inode_idx, 0, buf, read_bytes) == -1)
-		return -1;
+				if(read_data(file_dentry.inode_idx, 0, buf, read_bytes) == -1)
+					return -1;
 
 	for(i = 0; i < MAX_PROCESSES; i++) {
 		if(in_use[i] == 0) {
@@ -218,46 +224,47 @@ int32_t execute(const uint8_t* comm)
 	if(i < 3) { // is this the first program?
 		process_pcb->parent_id = -1;
 	}
-	else
+	else{
 		process_pcb->parent_id = current_process[curr_terminal];
+	}
 	current_process[curr_terminal] = i;
 
-	strcpy((int8_t*)process_array[current_process[curr_terminal]]->args, cmd_args[curr_terminal]);
+				strcpy((int8_t*)process_array[current_process[curr_terminal]]->args, cmd_args[curr_terminal]);
 
-	// add the command to the pcb
-	for(i = 0; command[i] != ' ' && command[i] != '\0' && command[i] != '\n'; i++) {
-		((process_array[current_process[curr_terminal]])->comm)[i] = file_name[i];
-	}
+				// add the command to the pcb
+				for(i = 0; command[i] != ' ' && command[i] != '\0' && command[i] != '\n'; i++) {
+					((process_array[current_process[curr_terminal]])->comm)[i] = file_name[i];
+				}
 
-	fd_table_init(process_pcb->fd_table);
+				fd_table_init(process_pcb->fd_table);
 
 
-	int j;
-	for(j = 0; j < MAGIC_NUMBER_SIZE; j++) {
-		if(buf[j] != magic_numbers[j]) {
-			return -1; // not executable
-		}
-	}
+				int j;
+				for(j = 0; j < MAGIC_NUMBER_SIZE; j++) {
+					if(buf[j] != magic_numbers[j]) {
+						return -1; // not executable
+					}
+				}
 
-	/* Extract entry point of task */
-	uint32_t entry_point = 0;
-	for(j = ENTRY_POINT_START; j < BYTES_TO_READ; j++) {
-		entry_point |= (buf[j] << (BYTE_SIZE*(j-ENTRY_POINT_START)));
-	}
+				/* Extract entry point of task */
+				uint32_t entry_point = 0;
+				for(j = ENTRY_POINT_START; j < BYTES_TO_READ; j++) {
+					entry_point |= (buf[j] << (BYTE_SIZE*(j-ENTRY_POINT_START)));
+				}
 
 	/* set up paging */
 	add_process(process_pcb->process_id);
 
-	/* read file into memory */
-	dentry_t dentry;
-	uint32_t address = PROGRAM_START;
-	if(read_dentry_by_name((uint8_t*) file_name, &dentry) == -1) {
-		return -1;
-	}
+				/* read file into memory */
+				dentry_t dentry;
+				uint32_t address = PROGRAM_START;
+				if(read_dentry_by_name((uint8_t*) file_name, &dentry) == -1) {
+					return -1;
+				}
 
-	if(read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size) == -1) {
-		return -1;;
-	}
+				if(read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size) == -1) {
+					return -1;;
+				}
 
 	/* prepare tss for context switch */
 	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (process_pcb->process_id) - BYTE_SIZE/2;
@@ -266,12 +273,12 @@ int32_t execute(const uint8_t* comm)
 	/* store current esp and ebp for halt */
 	asm volatile(
 		"movl %%esp, %0 \n"
-		: "=r"(process_array[current_process[curr_terminal]]->current_esp)
+		: "=r"(process_array[process_pcb->process_id]->current_esp)
 	);
 
 	asm volatile(
 		"movl %%ebp, %0 \n"
-		: "=r"(process_array[current_process[curr_terminal]]->current_ebp)
+		: "=r"(process_array[process_pcb->process_id]->current_ebp)
 	);
 
 	/* push IRET context to stack and IRET */
