@@ -59,3 +59,5 @@ Checkpoint 5
 
 	Video wasn't copying right because we copied video memory to a virtual address that was mapped to the video memory. Copied memory from virtual address mapped to the backup to the video memory. Then we updated the virtual address mapping and this causes a problem since one of them is pointing to video, so doing video copying to video doesn't help. We reorder the 4 lines. we map the one changing to backup. copied from video to the backup, copied other backup to video, and updated the new current terminal.
 
+	In terminal switch, running program in a program switching to another terminal, and returning didn't resume the program. We removed the static local esp and ebp array into the pcb structure and used that in the terminal switch, and now the program resumes.
+

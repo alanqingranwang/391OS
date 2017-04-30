@@ -7,7 +7,6 @@
 #include "syscall.h"
 #include "paging.h" // used for map_virt_to_phys
 
-#define BASE_VIRT_ADDR	0x10000000
 #define FOURKiB	0x1000
 
 static int8_t save_buff[MAX_TERMINAL][TERM_BUFF_SIZE];
@@ -51,13 +50,13 @@ int32_t terminal_switch(uint32_t new_terminal){
 	curr_terminal = new_terminal;
 
 	/* Map old terminal's virtual address to its respective old backup */
-	map_virt_to_phys(BASE_VIRT_ADDR + (old_terminal*FOURKiB), (VIDEO+FOURKiB) + (old_terminal*FOURKiB));
+	map_virt_to_phys(VIRT_VID_TERM1 + (old_terminal*FOURKiB), (USER_BACK1) + (old_terminal*FOURKiB));
 	/* Copy 4kb from video memory to old terminal backup memory */
-	memcpy((void*)(BASE_VIRT_ADDR + (old_terminal*FOURKiB)), (void*)VIDEO, (uint32_t)FOURKiB);
+	memcpy((void*)(VIRT_VID_TERM1 + (old_terminal*FOURKiB)), (void*)VIDEO, (uint32_t)FOURKiB);
 	/* Copy 4kb from new terminal backup memory to video memory */
-	memcpy((void*)VIDEO, (void*)(BASE_VIRT_ADDR + (curr_terminal*FOURKiB)), (uint32_t)FOURKiB);
+	memcpy((void*)VIDEO, (void*)(VIRT_VID_TERM1 + (curr_terminal*FOURKiB)), (uint32_t)FOURKiB);
 	/* Map new terminal's virtual address to video memory */
-	map_virt_to_phys(BASE_VIRT_ADDR + (curr_terminal*FOURKiB), VIDEO);
+	map_virt_to_phys(VIRT_VID_TERM1 + (curr_terminal*FOURKiB), USER_VIDEO_);
 
 	update_cursor();
 
@@ -74,14 +73,12 @@ int32_t terminal_switch(uint32_t new_terminal){
 	/* set up paging */
 	add_process(current_process[curr_terminal]);
 
-	map_virt_to_phys((uint32_t)VIRT_VID_TERM1+curr_terminal*(0x1000), USER_VIDEO_);
-
    /* prepare tss for context switch */
 	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (current_process[curr_terminal]) - BYTE_SIZE/2;
  	tss.ss0 = KERNEL_DS;
 
 	/**************************************************/
-		/* restore esp and ebp for return */
+	/* restore esp and ebp for return */
 	asm volatile(
 		"movl %0, %%esp \n"
 		:
