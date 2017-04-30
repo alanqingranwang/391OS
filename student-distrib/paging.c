@@ -33,7 +33,8 @@ void paging_init() {
     page_table[VIDEO >> TABLE_IDX_SHIFT]  = VIDEO;
     page_table[VIDEO >> TABLE_IDX_SHIFT] |= RW_P_SET;
 
-    map_virt_to_phys(VIRT_VID_TERM1, BACKUP_VID1);
+    // terminal 1 wil always be first
+    map_virt_to_phys(VIRT_VID_TERM1, USER_VIDEO_);
     map_virt_to_phys(VIRT_VID_TERM2, BACKUP_VID2);
     map_virt_to_phys(VIRT_VID_TERM3, BACKUP_VID3);
 

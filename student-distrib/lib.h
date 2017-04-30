@@ -10,6 +10,11 @@
 #define VIDEO 0xB8000
 #define SIZE_OF_VIDEO 2000 // number of chars in the video memory for screen
 
+// just needs to be greater than 128MB
+#define VIRT_VID_TERM1	0x10000000
+#define VIRT_VID_TERM2	0x10001000  // 4kb offset
+#define VIRT_VID_TERM3	0x10002000
+
 #define MAX_TERMINAL 3
 
 /*******************************/
@@ -60,8 +65,6 @@ void test_interrupts(void);
 void scroll(void);
 
 void backspace(void);
-
-void update_cursor();
 
 /*
  *	scroll

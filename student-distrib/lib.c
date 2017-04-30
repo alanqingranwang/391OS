@@ -168,7 +168,7 @@ puts(int8_t* s)
 *   Function: Output a character to the console
 */
 void
-term_putc(uint8_t c)
+putc(uint8_t c)
 {
     // forced next line chracter
     if(c == '\n' || c == '\r') {
@@ -207,7 +207,7 @@ term_putc(uint8_t c)
  *   Function: Output a character to the console
  */
 void
-putc(uint8_t c)
+term_putc(uint8_t c)
 {
     // forced next line chracter
     if(c == '\n' || c == '\r') {
@@ -232,8 +232,8 @@ putc(uint8_t c)
                 scroll();
             }
         }
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[sched_proc] + screen_x[sched_proc]) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[sched_proc] + screen_x[sched_proc]) << 1) + 1) = ATTRIB;
+        *(uint8_t *)((VIRT_VID_TERM1+(0x1000*sched_proc)) + ((NUM_COLS*screen_y[sched_proc] + screen_x[sched_proc]) << 1)) = c;
+        *(uint8_t *)((VIRT_VID_TERM1+(0x1000*sched_proc)) + ((NUM_COLS*screen_y[sched_proc] + screen_x[sched_proc]) << 1) + 1) = ATTRIB;
         screen_x[sched_proc]++;
     }
     update_cursor();
