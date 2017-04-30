@@ -13,6 +13,8 @@
 static int8_t save_buff[MAX_TERMINAL][TERM_BUFF_SIZE];
 static uint32_t proc_EBP[MAX_TERMINAL];
 static uint32_t proc_ESP[MAX_TERMINAL];
+static uint32_t flag;
+
 
 /*
  * terminal_init
@@ -38,9 +40,22 @@ int32_t terminal_switch(uint32_t new_terminal){
 	if(new_terminal >= MAX_TERMINAL || new_terminal < 0)
 		return -1; // new_terminal is out of bounds
 
+	asm volatile(
+		"movl %%esp, %0 \n"
+		: "=r" (proc_ESP[old_terminal])
+	);
+
+	asm volatile(
+		"movl %%ebp, %0 \n"
+		: "=r" (proc_EBP[old_terminal])
+	);
+
+	uint8_t *file_name;
+	dentry_t dentry;
+	uint32_t address = PROGRAM_START;
 	// this should only happen for a new terminal
-	uint32_t flag;
-	cli_and_save(flag);
+	int32_t p_id; // new terminal p_id
+
 	old_terminal = curr_terminal;
 	curr_terminal = new_terminal;
 
@@ -57,41 +72,18 @@ int32_t terminal_switch(uint32_t new_terminal){
 
 	if(current_process[curr_terminal] == -1)
 	{
-		asm volatile(
-			"movl %%esp, %0 \n"
-			: "=r" (proc_ESP[old_terminal])
-		);
-
-		asm volatile(
-			"movl %%ebp, %0 \n"
-			: "=r" (proc_EBP[old_terminal])
-		);
-
 		in_use[curr_terminal] = 0;
-		restore_flags(flag);
 		execute((uint8_t*)"shell");
 	}
 
 	// will only happen if a shell is running
 	/**************************************************/
-	/* store esp and ebp for old process */
-	asm volatile(
-		"movl %%esp, %0 \n"
-		: "=r" (proc_ESP[old_terminal])
-	);
-
-	asm volatile(
-		"movl %%ebp, %0 \n"
-		: "=r" (proc_EBP[old_terminal])
-	);
 
 	// start loading new process
-	int32_t p_id = current_process[curr_terminal]; // new terminal p_id
+	p_id = current_process[curr_terminal];
 
 	/* read file into memory */
-	uint8_t *file_name = process_array[p_id]->comm;
-	dentry_t dentry;
-	uint32_t address = PROGRAM_START;
+	file_name = process_array[p_id]->comm;
 	read_dentry_by_name((uint8_t*) file_name, &dentry);
 	read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size);
 
@@ -102,8 +94,8 @@ int32_t terminal_switch(uint32_t new_terminal){
 	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (p_id) - BYTE_SIZE/2;
  	tss.ss0 = KERNEL_DS;
 
-	restore_flags(flag);
-	/* restore esp and ebp for return */
+	/**************************************************/
+		/* restore esp and ebp for return */
 	asm volatile(
 		"movl %0, %%esp \n"
 		:
@@ -114,8 +106,6 @@ int32_t terminal_switch(uint32_t new_terminal){
 		:
 		: "r"(proc_EBP[curr_terminal])
 	);
-	/**************************************************/
-
 	return 0;
 }
 

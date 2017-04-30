@@ -198,23 +198,10 @@ int32_t execute(const uint8_t* comm)
 	if(read_data(file_dentry.inode_idx, 0, buf, read_bytes) == -1)
 		return -1;
 
-
-	int flag = 0;
-	// get an available process, start after the first variable
-	for(i = 0; i < MAX_PROCESSES; i++){
-		if(in_use[i] == 2){
+	for(i = 0; i < MAX_PROCESSES; i++) {
+		if(in_use[i] == 0) {
 			in_use[i] = 1;
-			flag = 1;
 			break;
-		}
-	}
-	
-	if(i >= MAX_PROCESSES){
-		for(i = 0; i < MAX_PROCESSES; i++) {
-			if(in_use[i] == 0) {
-				in_use[i] = 1;
-				break;
-			}
 		}
 	}
 
@@ -232,7 +219,7 @@ int32_t execute(const uint8_t* comm)
 	if(i < 3) { // is this the first program?
 		process_pcb->parent_id = -1;
 	}
-	else if (!flag){
+	else{
 		process_pcb->parent_id = current_process[curr_terminal];
 	}
 	current_process[curr_terminal] = i;
