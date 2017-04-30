@@ -226,11 +226,6 @@ int32_t execute(const uint8_t* comm)
 
 	strcpy((int8_t*)process_array[current_process[curr_terminal]]->args, cmd_args[curr_terminal]);
 
-	// add the command to the pcb
-	for(i = 0; command[i] != ' ' && command[i] != '\0' && command[i] != '\n'; i++) {
-		((process_array[current_process[curr_terminal]])->comm)[i] = file_name[i];
-	}
-
 	fd_table_init(process_pcb->fd_table);
 
 	int j;
@@ -261,7 +256,7 @@ int32_t execute(const uint8_t* comm)
 	}
 
 	/* prepare tss for context switch */
-	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (process_pcb->process_id) - BYTE_SIZE/2;
+	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (current_process[curr_terminal]) - BYTE_SIZE/2;
 	tss.ss0 = KERNEL_DS;
 
 	/* store current esp and ebp for halt */
@@ -282,8 +277,8 @@ int32_t execute(const uint8_t* comm)
 	asm volatile ("execute_return: ");
 	asm volatile ("leave");
 	asm volatile ("ret");
-	/* return */
 
+	/* return */
 	return 0;
 }
 

@@ -11,10 +11,6 @@
 #define FOURKiB	0x1000
 
 static int8_t save_buff[MAX_TERMINAL][TERM_BUFF_SIZE];
-static uint32_t proc_EBP[MAX_TERMINAL];
-static uint32_t proc_ESP[MAX_TERMINAL];
-static uint32_t flag;
-
 
 /*
  * terminal_init
@@ -40,21 +36,16 @@ int32_t terminal_switch(uint32_t new_terminal){
 	if(new_terminal >= MAX_TERMINAL || new_terminal < 0)
 		return -1; // new_terminal is out of bounds
 
+	cli();
 	asm volatile(
 		"movl %%esp, %0 \n"
-		: "=r" (proc_ESP[old_terminal])
+		: "=r" (process_array[current_process[curr_terminal]]->return_esp)
 	);
 
 	asm volatile(
 		"movl %%ebp, %0 \n"
-		: "=r" (proc_EBP[old_terminal])
+		: "=r" (process_array[current_process[curr_terminal]]->return_ebp)
 	);
-
-	uint8_t *file_name;
-	dentry_t dentry;
-	uint32_t address = PROGRAM_START;
-	// this should only happen for a new terminal
-	int32_t p_id; // new terminal p_id
 
 	old_terminal = curr_terminal;
 	curr_terminal = new_terminal;
@@ -73,25 +64,18 @@ int32_t terminal_switch(uint32_t new_terminal){
 	if(current_process[curr_terminal] == -1)
 	{
 		in_use[curr_terminal] = 0;
+		sti();
 		execute((uint8_t*)"shell");
 	}
 
 	// will only happen if a shell is running
 	/**************************************************/
 
-	// start loading new process
-	p_id = current_process[curr_terminal];
-
-	/* read file into memory */
-	file_name = process_array[p_id]->comm;
-	read_dentry_by_name((uint8_t*) file_name, &dentry);
-	read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size);
-
 	/* set up paging */
-	add_process(p_id);
+	add_process(current_process[curr_terminal]);
 
    /* prepare tss for context switch */
-	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (p_id) - BYTE_SIZE/2;
+	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (current_process[curr_terminal]) - BYTE_SIZE/2;
  	tss.ss0 = KERNEL_DS;
 
 	/**************************************************/
@@ -99,13 +83,14 @@ int32_t terminal_switch(uint32_t new_terminal){
 	asm volatile(
 		"movl %0, %%esp \n"
 		:
-		: "r"(proc_ESP[curr_terminal])
+		: "r"(process_array[current_process[curr_terminal]]->return_esp)
 	);
 	asm volatile(
 		"movl %0, %%ebp \n"
 		:
-		: "r"(proc_EBP[curr_terminal])
+		: "r"(process_array[current_process[curr_terminal]]->return_ebp)
 	);
+	sti();
 	return 0;
 }
 

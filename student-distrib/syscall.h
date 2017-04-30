@@ -26,8 +26,9 @@ typedef struct process_control_block {
 	int32_t     parent_id;
 	uint32_t    current_esp;
 	uint32_t    current_ebp;
+	uint32_t	return_esp;
+	uint32_t	return_ebp;
 	uint8_t     args[MAX_CHARS];
-	uint8_t		comm[MAX_CHARS];
 	fd_t 		fd_table[FD_TABLE_SIZE];
 } pcb;
 
