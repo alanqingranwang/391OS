@@ -518,10 +518,8 @@ int32_t vidmap(uint8_t** screen_start)
 			break;
 	}
 
-	if(curr_terminal==curr_terminal)
-		map_virt_to_phys((uint32_t)(*screen_start), USER_VIDEO_);
-	else	
-		map_virt_to_phys((uint32_t)(*screen_start), BACKUP_VID1+((curr_terminal)*0x1000)); // map given virt to given phys
+	map_virt_to_phys((uint32_t)(*screen_start), USER_VIDEO_);
+
 	return (int32_t)*screen_start; // return the virtual address
 }
 

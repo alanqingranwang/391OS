@@ -74,6 +74,8 @@ int32_t terminal_switch(uint32_t new_terminal){
 	/* set up paging */
 	add_process(current_process[curr_terminal]);
 
+	map_virt_to_phys((uint32_t)VIRT_VID_TERM1+curr_terminal*(0x1000), USER_VIDEO_);
+
    /* prepare tss for context switch */
 	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (current_process[curr_terminal]) - BYTE_SIZE/2;
  	tss.ss0 = KERNEL_DS;
