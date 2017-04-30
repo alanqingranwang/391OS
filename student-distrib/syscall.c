@@ -68,6 +68,7 @@ int32_t halt(uint8_t status)
 
 	//return status
 	extended_status = (STATUS_BYTEMASK & status) + exception_flag;
+	exception_flag = 0;
 
 	/* restore esp and ebp */
 	asm volatile(
