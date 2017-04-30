@@ -61,36 +61,37 @@ int32_t halt(uint8_t status)
 	close_all_fd(); // gotta do it before the restart
 
 	/* if terminating current terminals original shell, restart shell */
-	if(process_array[current_process[sched_proc]]->process_id < 3){
-		in_use[process_array[current_process[sched_proc]]->process_id] = 0;
+	if(process_array[current_process[curr_terminal]]->process_id < 3){
+		in_use[process_array[current_process[curr_terminal]]->process_id] = 0;
 		execute((uint8_t*)"shell");
 	}
 
 	//return status
 	extended_status = (STATUS_BYTEMASK & status) + exception_flag;
+	exception_flag = 0;
 
 	/* restore esp and ebp */
 	asm volatile(
 		"movl %0, %%esp \n"
 		:
-		: "r"(process_array[current_process[sched_proc]]->current_esp)
+		: "r"(process_array[current_process[curr_terminal]]->current_esp)
 	);
 
 	asm volatile(
 		"movl %0, %%ebp \n"
 		:
-		: "r"(process_array[current_process[sched_proc]]->current_ebp)
+		: "r"(process_array[current_process[curr_terminal]]->current_ebp)
 	);
 
 	/* revert process controller info to parent process */
-	in_use[current_process[sched_proc]] = 0;
-	current_process[sched_proc] = process_array[current_process[sched_proc]]->parent_id;
+	in_use[current_process[curr_terminal]] = 0;
+	current_process[curr_terminal] = process_array[current_process[curr_terminal]]->parent_id;
 
 	/* prepare paging for context switch */
-	add_process(current_process[sched_proc]);
+	add_process(current_process[curr_terminal]);
 
 	/* prepare tss for context switch */
-	tss.esp0 = process_array[current_process[sched_proc]]->current_esp;
+	tss.esp0 = process_array[current_process[curr_terminal]]->current_esp;
 	tss.ss0  = KERNEL_DS;
 
 	/* set return value */
@@ -136,9 +137,9 @@ void parse_cmd_args(uint8_t* buf, const uint8_t* comm)
 	int32_t arg_cnt = i; // start parsing from where the command left off
 	// parse till end of character or max buffer size
 	for(; comm[arg_cnt] != '\0' && arg_cnt != TERM_BUFF_SIZE; arg_cnt++) // get all the arguments
-		cmd_args[sched_proc][arg_cnt - file_name_length] = comm[arg_cnt];
+		cmd_args[curr_terminal][arg_cnt - file_name_length] = comm[arg_cnt];
 
-	cmd_args[sched_proc][arg_cnt - file_name_length] = '\0'; // terminate the string
+	cmd_args[curr_terminal][arg_cnt - file_name_length] = '\0'; // terminate the string
 }
 
 /*
@@ -245,7 +246,6 @@ int32_t execute(const uint8_t* comm)
 
 	fd_table_init(process_pcb->fd_table);
 
-
 	int j;
 	for(j = 0; j < MAGIC_NUMBER_SIZE; j++) {
 		if(buf[j] != magic_numbers[j]) {
@@ -270,7 +270,7 @@ int32_t execute(const uint8_t* comm)
 	}
 
 	if(read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size) == -1) {
-		return -1;;
+		return -1;
 	}
 
 	/* prepare tss for context switch */
@@ -342,7 +342,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 		return -1; // invalid pointer
 
  	// get the function pointer to the specific file or rtc or thing
-	return (((((process_array[current_process[sched_proc]])->fd_table)[fd]).fd_jump)->read)(fd, (uint8_t*)buf, nbytes);
+	return (((((process_array[current_process[curr_terminal]])->fd_table)[fd]).fd_jump)->read)(fd, (uint8_t*)buf, nbytes);
 }
 
 /* JC
@@ -374,7 +374,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 		return -1; // invalid pointer
 
  	// get the function pointer to the specific file or rtc or thing
-	return (((((process_array[current_process[sched_proc]])->fd_table)[fd]).fd_jump)->write)(fd, buf, nbytes);
+	return (((((process_array[current_process[curr_terminal]])->fd_table)[fd]).fd_jump)->write)(fd, buf, nbytes);
 }
 
 /* JC
@@ -435,7 +435,7 @@ int32_t close(int32_t fd)
 	}
 
  	// get the function pointer for the unknown function
-	return (((((process_array[current_process[sched_proc]])->fd_table)[fd]).fd_jump)->close)(fd);
+	return (((((process_array[current_process[curr_terminal]])->fd_table)[fd]).fd_jump)->close)(fd);
 }
 
 /* JC
@@ -464,7 +464,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	uint32_t i = 0;
 	while(i < nbytes && i < TERM_BUFF_SIZE)
 	{ 	// copy the data over
-		buf[i] = ((process_array[current_process[sched_proc]])->args)[i];
+		buf[i] = ((process_array[current_process[curr_terminal]])->args)[i];
 		i++;
 	}
 
@@ -520,7 +520,7 @@ int32_t vidmap(uint8_t** screen_start)
 	}
 
 	// give user virtual adress, specific to its terminal
-	switch(sched_proc)
+	switch(curr_terminal)
 	{
 		// terminal 1
 		case 0: 
@@ -536,10 +536,10 @@ int32_t vidmap(uint8_t** screen_start)
 			break;
 	}
 
-	if(sched_proc==curr_terminal)
-	map_virt_to_phys((uint32_t)(*screen_start), USER_VIDEO_);
+	if(curr_terminal==curr_terminal)
+		map_virt_to_phys((uint32_t)(*screen_start), USER_VIDEO_);
 	else	
-	map_virt_to_phys((uint32_t)(*screen_start), USER_VIDEO_+((sched_proc+1)*0x1000)); // map given virt to given phys
+		map_virt_to_phys((uint32_t)(*screen_start), BACKUP_VID1+((curr_terminal)*0x1000)); // map given virt to given phys
 	return (int32_t)*screen_start; // return the virtual address
 }
 
