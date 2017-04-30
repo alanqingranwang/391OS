@@ -36,15 +36,6 @@ int32_t terminal_switch(uint32_t new_terminal){
 		return -1; // new_terminal is out of bounds
 
 	cli();
-	asm volatile(
-		"movl %%esp, %0 \n"
-		: "=r" (process_array[current_process[curr_terminal]]->return_esp)
-	);
-
-	asm volatile(
-		"movl %%ebp, %0 \n"
-		: "=r" (process_array[current_process[curr_terminal]]->return_ebp)
-	);
 
 	old_terminal = curr_terminal;
 	curr_terminal = new_terminal;
@@ -67,28 +58,6 @@ int32_t terminal_switch(uint32_t new_terminal){
 		execute((uint8_t*)"shell");
 	}
 
-	// will only happen if a shell is running
-	/**************************************************/
-
-	/* set up paging */
-	add_process(current_process[curr_terminal]);
-
-   /* prepare tss for context switch */
-	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (current_process[curr_terminal]) - BYTE_SIZE/2;
- 	tss.ss0 = KERNEL_DS;
-
-	/**************************************************/
-	/* restore esp and ebp for return */
-	asm volatile(
-		"movl %0, %%esp \n"
-		:
-		: "r"(process_array[current_process[curr_terminal]]->return_esp)
-	);
-	asm volatile(
-		"movl %0, %%ebp \n"
-		:
-		: "r"(process_array[current_process[curr_terminal]]->return_ebp)
-	);
 	sti();
 	return 0;
 }

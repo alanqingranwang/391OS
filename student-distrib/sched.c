@@ -11,7 +11,7 @@
 #include "terminal.h"
 #include "idt.h"
 
-// static int init_flag;
+static int init_flag;
 
 /* 
  *	pit_init
@@ -41,8 +41,8 @@ void pit_init()
 	outb(lower, CHANNEL0);
 	outb(higher, CHANNEL0);
 
-	// sched_proc = 0;
-	// init_flag = 1;
+	sched_proc = 0;
+	init_flag = 1;
 
 	// unlock
 	enable_irq(PIT_IRQ); // enable IRQ 0
@@ -57,6 +57,21 @@ void pit_init()
  */
 void pit_handler()
 {
+	cli();
+
+	if(init_flag){
+		init_flag = 0;
+		send_eoi(PIT_IRQ);
+		sti();
+		execute((uint8_t*)"shell");
+	}
+
+	if((current_process[sched_proc] <0) || (current_process[sched_proc] >7)){
+		send_eoi(PIT_IRQ);
+		sti();
+		return;
+	}
+
 	/* store esp and ebp for old process */
 	asm volatile(
 		"movl %%esp, %0 \n"
@@ -67,46 +82,20 @@ void pit_handler()
 		: "=r" (process_array[current_process[sched_proc]]->return_ebp)
 	);
 
-	int32_t p_id = current_process[sched_proc];
 
-	/* Check process id validity */
-	if (p_id > 7){
-		send_eoi(PIT_IRQ);
-		return;
-	}
-
-	/* Check if current scheduled process exists.
-	   If not, mark as not in use and execute base shell */
-	if(current_process[sched_proc] == -1){
-		in_use[sched_proc] = 0;
-		send_eoi(PIT_IRQ);
-		execute((uint8_t*)"shell");
-	}
-
-	/* get new process */
 	sched_proc = (sched_proc+1)%3;
-	p_id = current_process[sched_proc];
+	while(current_process[sched_proc] <0)
+		sched_proc = (sched_proc+1)%3;
 
 	/* Check process id validity */
-	if (p_id > 7){
+	if (sched_proc==curr_terminal){
 		send_eoi(PIT_IRQ);
-		return;
-	}
-
-	if(p_id < 0 && (curr_terminal == sched_proc)){
-		in_use[curr_terminal] = 0;
-		send_eoi(PIT_IRQ);
-		execute((uint8_t*)"shell");
-	}
-	else if(p_id < 0){
-		sched_proc = curr_terminal;
-		send_eoi(PIT_IRQ);
+		sti();
 		return;
 	}
 
 	/* set up paging */
 	add_process(current_process[sched_proc]);
-	map_virt_to_phys((uint32_t)VIRT_VID_TERM1 + sched_proc*(0x1000), USER_VIDEO_);
 
    /* prepare tss for context switch */
 	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (current_process[sched_proc]) - BYTE_SIZE/2;
@@ -125,6 +114,8 @@ void pit_handler()
 		:
 		: "r"(process_array[current_process[sched_proc]]->return_ebp)
 	);
+
+	sti();
 }
 
 
