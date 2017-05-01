@@ -65,7 +65,6 @@ int32_t halt(uint8_t status)
 	/* if terminating current terminals original shell, restart shell */
 	if(process_array[current_process[sched_proc]]->process_id < 3){
 		in_use[process_array[current_process[sched_proc]]->process_id] = 0;
-		sti();
 		execute((uint8_t*)"shell");
 	}
 

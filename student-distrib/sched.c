@@ -61,7 +61,6 @@ void pit_handler()
 	if(init_flag){
 		init_flag = 0;
 		send_eoi(PIT_IRQ);
-		sti();
 		execute((uint8_t*)"shell");
 	}
 
@@ -86,8 +85,8 @@ void pit_handler()
 	if((curr_terminal == 1)&& (sched_proc == 1) && term2_init){
 		term2_init = 0;
 		in_use[1] = 0;
+		current_process[curr_terminal] = 1;
 		send_eoi(PIT_IRQ);
-		sti();
 		execute((uint8_t*)"shell");
 	}
 
@@ -97,8 +96,8 @@ void pit_handler()
 	if((curr_terminal == 2) && (sched_proc == 2) && term3_init){
 		term3_init = 0;
 		in_use[2] = 0;
+		current_process[curr_terminal] = 2;
 		send_eoi(PIT_IRQ);
-		sti();
 		execute((uint8_t*)"shell");
 	}
 
