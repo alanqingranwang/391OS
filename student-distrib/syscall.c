@@ -29,6 +29,7 @@ static int8_t cmd_args[MAX_TERMINAL][TERM_BUFF_SIZE]; // holds command argument
 void pc_init(){
 	uint32_t cnt;
 	sched_proc = 0; // initialize to the first terminal
+	curr_terminal = 0;
 	// initialize all the terminal data
 	for(cnt = 0; cnt < MAX_TERMINAL; cnt++)
 		current_process[cnt] = -1;

@@ -82,16 +82,21 @@ void pit_handler()
 	);
 
 	sched_proc = (sched_proc+1)%3;
-	
-	if((curr_terminal == 1) && (sched_proc == 1) && term2_init){
+
+	if((curr_terminal == 1)&& (sched_proc == 1) && term2_init){
 		term2_init = 0;
+		in_use[1] = 0;
 		send_eoi(PIT_IRQ);
 		sti();
 		execute((uint8_t*)"shell");
 	}
 
+	if(term3_init)
+		sched_proc = (sched_proc+1)%3;
+
 	if((curr_terminal == 2) && (sched_proc == 2) && term3_init){
 		term3_init = 0;
+		in_use[2] = 0;
 		send_eoi(PIT_IRQ);
 		sti();
 		execute((uint8_t*)"shell");

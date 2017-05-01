@@ -32,7 +32,7 @@ int32_t terminal_switch(uint32_t new_terminal){
 	if(new_terminal == curr_terminal)
 		return 0; // it's the same terminal
 
-	if(new_terminal >= MAX_TERMINAL || new_terminal < 0)
+	if(new_terminal > 2 || new_terminal < 0)
 		return -1; // new_terminal is out of bounds
 
 	cli();
@@ -86,13 +86,13 @@ int32_t terminal_open(const uint8_t* blank){
  */
 
 int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
-	cli();
 	if(buf == NULL){
-		sti();
 		return -1;
 	}
 
 	int32_t i;
+
+	cli();
 	for(i = 0; i<TERM_BUFF_SIZE; i++)
 		save_buff[curr_terminal][i] = '\0'; // clean the buffer
 	int32_t success = 0;
@@ -101,6 +101,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
 		success++;
 	}
 	sti();
+
 	return -1; // not suppose to be able to read
 	// return success;
 }
