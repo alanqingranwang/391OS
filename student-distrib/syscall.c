@@ -40,6 +40,10 @@ void pc_init(){
 		process_array[cnt] = NULL;
 		in_use[cnt] = 0;
 	}
+
+	in_use[0] = 1;
+	in_use[1] = 1;
+	in_use[2] = 1;
 }
 
 /*
@@ -63,8 +67,8 @@ int32_t halt(uint8_t status)
 	close_all_fd(); // gotta do it before the restart
 
 	/* if terminating current terminals original shell, restart shell */
-	if(process_array[current_process[sched_proc]]->process_id < 3){
-		in_use[process_array[current_process[sched_proc]]->process_id] = 0;
+	if(current_process[sched_proc] < 3){
+		in_use[current_process[sched_proc]] = 0;
 		execute((uint8_t*)"shell");
 	}
 
@@ -104,7 +108,6 @@ int32_t halt(uint8_t status)
 		: "%eax"
 	);
 
-	sti();
 	/* return */
 	asm volatile("jmp execute_return");
 
@@ -295,6 +298,8 @@ int32_t execute(const uint8_t* comm)
 	user_context_switch(entry_point);
 
 	/* used for halting */
+
+	sti();
 	asm volatile ("execute_return: ");
 	asm volatile ("leave");
 	asm volatile ("ret");

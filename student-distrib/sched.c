@@ -58,8 +58,9 @@ void pit_handler()
 {
 	cli();
 
-	if(init_flag){
+	if((curr_terminal == 0) && (sched_proc == 0) && init_flag){
 		init_flag = 0;
+		in_use[0] = 0;
 		send_eoi(PIT_IRQ);
 		execute((uint8_t*)"shell");
 	}

@@ -20,22 +20,17 @@ static int8_t save_buff[MAX_TERMINAL][TERM_BUFF_SIZE];
  */
 int32_t terminal_init()
 {
-	in_use[0] = 0;
-	in_use[1] = 1;
-	in_use[2] = 1;
-
 	return 0;
 }
 
 int32_t terminal_switch(uint32_t new_terminal){
+	cli();
 	// sanity check
 	if(new_terminal == curr_terminal)
 		return 0; // it's the same terminal
 
 	if(new_terminal > 2 || new_terminal < 0)
 		return -1; // new_terminal is out of bounds
-
-	cli();
 
 	old_terminal = curr_terminal;
 	curr_terminal = new_terminal;
