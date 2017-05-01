@@ -51,9 +51,11 @@ void pit_init()
 
 /* pit_handler
  *		DESCRIPTION:
- *			Handles the PIT interrupt
- *			
- *
+ *			Handles the PIT interrupt, during the interrupt, it should
+ *			switch the process that is running, by giving the other program a time slice
+ *		INPUT: none
+ *		OUTPUT: none
+ *		RETURN VALUE: none
  */
 void pit_handler()
 {

@@ -14,8 +14,9 @@ static int8_t save_buff[MAX_TERMINAL][TERM_BUFF_SIZE];
 /*
  * terminal_init
  *		DESCRIPTION:
- *		INPUT:
- *		RETURN VALUE:
+ *			Initialize any necessary variables associated with the terminal switch
+ *		INPUT: none
+ *		RETURN VALUE: none
  *
  */
 int32_t terminal_init()
@@ -23,10 +24,23 @@ int32_t terminal_init()
 	in_use[0] = 0;
 	in_use[1] = 1;
 	in_use[2] = 1;
-
 	return 0;
 }
 
+/*
+ *	terminal_switch
+ *		DESCRIPTION:
+ *			Upon pressing the special sequence Alt+F1, Alt+F2, or Alt+F3. This function
+ *			will be called to switch all the necessary information to make the new terminal
+ *			the active terminal.
+ *		INPUT:
+ *			new_terminal - a number that represents which terminal that we are switching to.
+ *		RETURN VALUE:
+ *			0 - switch successful
+ *			-1 - invalid new_terminal
+ *
+ *
+ */
 int32_t terminal_switch(uint32_t new_terminal){
 	// sanity check
 	if(new_terminal == curr_terminal)
@@ -46,6 +60,7 @@ int32_t terminal_switch(uint32_t new_terminal){
 		: "=r" (process_array[current_process[curr_terminal]]->return_ebp)
 	);
 
+	// update some variables to make the following easier to understand
 	old_terminal = curr_terminal;
 	curr_terminal = new_terminal;
 
@@ -60,6 +75,7 @@ int32_t terminal_switch(uint32_t new_terminal){
 
 	update_cursor();
 
+	// if we're switching to a terminal for the first time, start up the base shell.
 	if(current_process[curr_terminal] == -1)
 	{
 		in_use[curr_terminal] = 0;

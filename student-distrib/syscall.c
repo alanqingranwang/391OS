@@ -17,7 +17,8 @@
 
 static uint8_t magic_numbers[4] = {0x7f, 0x45, 0x4c, 0x46};
 static uint32_t extended_status;
-static int8_t cmd_args[MAX_TERMINAL][TERM_BUFF_SIZE]; // holds command argument
+static int8_t cmd_args[MAX_TERMINAL][TERM_BUFF_SIZE];
+// holds command argument, needs this because process hasn't been created when this is parsed
 
 /* NM
  * void pc_init()
@@ -166,7 +167,7 @@ int32_t execute(const uint8_t* comm)
 		return -1;
 
 	uint8_t command[TERM_BUFF_SIZE];
-	parse_cmd_args(command, comm);
+	parse_cmd_args(command, comm); // split the command from the argument
 
 	int32_t i;
 
@@ -198,13 +199,13 @@ int32_t execute(const uint8_t* comm)
 	if(read_data(file_dentry.inode_idx, 0, buf, read_bytes) == -1)
 		return -1;
 
+	// find the next unused process
 	for(i = 0; i < MAX_PROCESSES; i++) {
 		if(in_use[i] == 0) {
 			in_use[i] = 1;
 			break;
 		}
 	}
-
 
 	if(i >= MAX_PROCESSES) {
 		printf("Maximum Possible Processes. Stop and Reconsider.\n");
@@ -224,9 +225,10 @@ int32_t execute(const uint8_t* comm)
 	}
 	current_process[curr_terminal] = i;
 
+	// copy the arguments from parsing into the pcb
 	strcpy((int8_t*)process_array[current_process[curr_terminal]]->args, cmd_args[curr_terminal]);
 
-	fd_table_init(process_pcb->fd_table);
+	fd_table_init(process_pcb->fd_table); // initialize this process's fd table
 
 	int j;
 	for(j = 0; j < MAGIC_NUMBER_SIZE; j++) {
@@ -518,7 +520,10 @@ int32_t vidmap(uint8_t** screen_start)
 			break;
 	}
 
-	map_virt_to_phys((uint32_t)(*screen_start), USER_VIDEO_);
+	// if(curr_terminal == sched_proc)
+		map_virt_to_phys((uint32_t)(*screen_start), USER_VIDEO_);
+	// else
+		// map_virt_to_phys((uint32_t)(*screen_start), BASE_VIRT1+(sched_proc))
 
 	return (int32_t)*screen_start; // return the virtual address
 }

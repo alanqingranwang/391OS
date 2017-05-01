@@ -1,5 +1,5 @@
 /*
- * sched.h -
+ * sched.h - Contains the declarations and macros for the scheduling files.
  *
  *
  */
@@ -17,9 +17,6 @@
 
 // ports
 #define CHANNEL0	0x40
-
-// uint32_t proc_EBP[MAX_PROCESSES];
-// uint32_t proc_ESP[MAX_PROCESSES];
 
 void pit_init();
 void pit_handler();

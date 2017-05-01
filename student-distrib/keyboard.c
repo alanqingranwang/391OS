@@ -403,6 +403,15 @@ void toggle_ctrl(int type) {
         ctrl_flag = 0;
 }
 
+/*
+ * toggle_alt
+ *		DESCRIPTION:
+ *			Toggles the alt flag when it's press
+ *		INPUT:
+ *			type - whether it's a make or break stroke
+ *		OUTPUT: none
+ *		RETURN VALUE: none
+ */
 void toggle_alt(int type) {
     if(type == MAKE)
         alt_flag = 1;

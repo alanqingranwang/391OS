@@ -334,6 +334,7 @@ void create_char_count()
 		character_count[dentry_loop] = len; // hold count for future functions
 	}
 }
+
 /* JC
  * read_dentry_by_name
  * 	DESCRIPTION:
@@ -385,6 +386,7 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
 	}
 	return -1;
 }
+
 /* JC
  * read_dentry_by_index
  * 	DESCRIPTION:
@@ -409,6 +411,7 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry)
 	dentry->inode_idx = (entries[index]).inode_idx;
 	return 0;
 }
+
 /* JC
  * Returns the number of entries in the filesystem.
  */
@@ -416,6 +419,7 @@ uint32_t get_num_entries()
 {
 	return num_entries;
 }
+
 /* JC
  * Returns the name of the entry in the filesystem
  */
@@ -423,6 +427,7 @@ int8_t* get_entry_name(uint32_t index)
 {
 	return (entries[index]).file_name;
 }
+
 /* JC
  * read_data
  * 	DESCRIPTION:
