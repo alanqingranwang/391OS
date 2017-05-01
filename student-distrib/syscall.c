@@ -464,6 +464,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	for(clean = 0; clean < nbytes; clean++)
 		buf[clean] = '\0';
 
+	cli();
 	uint32_t i = 0;
 	while(i < nbytes && i < TERM_BUFF_SIZE)
 	{ 	// copy the data over
@@ -471,8 +472,10 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 		i++;
 	}
 
-	if(i == nbytes)
+	if(i == nbytes){
+		sti();
 		return -1; // couldn't fit an end of line char in there
+	}
 
 	// start from the end, replace all the spaces with '\0' until you get to
 	// the first char, this is incase the user puts in random spaces at the end
@@ -483,9 +486,12 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 		backwards--;
 	}
 
-	if(buf[0] == '\0')
+	if(buf[0] == '\0'){
+		sti();
 		return -1; // last check, if the argument is empty, then there's no args
+	}
 
+	sti();
  	return 0;
 }
 

@@ -12,6 +12,8 @@
 #include "idt.h"
 
 static int init_flag;
+static int term2_init;
+static int term3_init;
 
 /* 
  *	pit_init
@@ -23,10 +25,6 @@ static int init_flag;
  */
 void pit_init()
 {
-	// lock it
-	uint32_t flags;
-	cli_and_save(flags);
-
 	// set the entry
 	idt[PIT_VECTOR_NUM].present = 1;
 	SET_IDT_ENTRY(idt[PIT_VECTOR_NUM], pit_handler_wrapper);
@@ -43,10 +41,11 @@ void pit_init()
 
 	sched_proc = 0;
 	init_flag = 1;
+	term2_init = 1;
+	term3_init = 1;
 
 	// unlock
 	enable_irq(PIT_IRQ); // enable IRQ 0
-	restore_flags(flags);
 }
 
 /* pit_handler
@@ -82,8 +81,22 @@ void pit_handler()
 		: "=r" (process_array[current_process[sched_proc]]->return_ebp)
 	);
 
-
 	sched_proc = (sched_proc+1)%3;
+	
+	if((curr_terminal == 1) && (sched_proc == 1) && term2_init){
+		term2_init = 0;
+		send_eoi(PIT_IRQ);
+		sti();
+		execute((uint8_t*)"shell");
+	}
+
+	if((curr_terminal == 2) && (sched_proc == 2) && term3_init){
+		term3_init = 0;
+		send_eoi(PIT_IRQ);
+		sti();
+		execute((uint8_t*)"shell");
+	}
+
 	while(current_process[sched_proc] <0)
 		sched_proc = (sched_proc+1)%3;
 

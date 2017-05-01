@@ -51,14 +51,6 @@ int32_t terminal_switch(uint32_t new_terminal){
 
 	update_cursor();
 
-	if(current_process[curr_terminal] < 0)
-	{
-		current_process[curr_terminal] = curr_terminal;
-		in_use[curr_terminal] = 0;
-		sti();
-		execute((uint8_t*)"shell");
-	}
-
 	sti();
 	return 0;
 }
@@ -94,8 +86,11 @@ int32_t terminal_open(const uint8_t* blank){
  */
 
 int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
-	if(buf == NULL)
+	cli();
+	if(buf == NULL){
+		sti();
 		return -1;
+	}
 
 	int32_t i;
 	for(i = 0; i<TERM_BUFF_SIZE; i++)
@@ -105,6 +100,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
 		save_buff[curr_terminal][i] = buf[i]; // fill it
 		success++;
 	}
+	sti();
 	return -1; // not suppose to be able to read
 	// return success;
 }
@@ -121,14 +117,18 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
  *			otherwise number of bytes written
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
-	if(buf == NULL)
+	if(buf == NULL){
 		return -1;
+	}
 
 	uint8_t* buffer = (uint8_t*)buf;
 	int32_t i=0;
+
+	cli();
 	for(i = 0; i < nbytes; i++){
 		putc(buffer[i]); // output all the charactrs in the given buffer
 	}
+	sti();
 
 	return i;
 }
@@ -156,6 +156,7 @@ int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
 	int32_t i = 0; // goes through the whole save buffer
 	int32_t cmd_cnt = 0; // starts filling buf from the beginning
 
+	cli();
 	while(save_buff[curr_terminal][i] == ' ' && i < nbytes && i < TERM_BUFF_SIZE)
 		i++; // get to the real content, strip the beginning spaces
 
@@ -164,6 +165,7 @@ int32_t terminal_retrieve(uint8_t* buf, int32_t nbytes){
 		if (save_buff[curr_terminal][i] == '\0') break; // I need this to not break the shell
 		cmd_cnt++; // off by one, should count when it's not a space
 	}
+	sti();
 
 	return cmd_cnt; // how many bytes are in the buf
 }
