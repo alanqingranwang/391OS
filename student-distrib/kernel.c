@@ -8,6 +8,7 @@
 #include "i8259.h"
 #include "syscall.h"
 #include "rtc.h"	// JC
+#include "sched.h"
 #include "idt.h"
 #include "paging.h"
 #include "debug.h"
@@ -165,6 +166,8 @@ entry (unsigned long magic, unsigned long addr)
 	rtc_init();	// initialize the RTC
 	paging_init();	// initialize Paging
 	pc_init();	//initialize process controller
+	terminal_init();
+	pit_init();
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -188,14 +191,7 @@ entry (unsigned long magic, unsigned long addr)
 	/*******************************************************************/
 
 	/* Execute the first program (`shell') ... */
-	uint8_t string[MAX_STR_LENGTH] = "shell ";
-	int32_t retval;
-	while(1) {
-		retval = execute(string);
-		if(retval == -1) {
-			printf("Fail to execute shell, %d", retval);
-		}
-	}
+	execute((uint8_t*)"shell");
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");

@@ -9,7 +9,6 @@
 
 #include "i8259.h"
 #include "lib.h"
-#include "terminal.h"
 
 /* adding the interrupt to the table is the job of the init */
 #include "idt.h"
@@ -17,7 +16,7 @@
 /*** remove later ***/
 #include "testcases3_2.h"
 #include "filesystem.h"
-/**** **************/
+/********************/
 
 /* Keyboard ports */
 #define KBD_DATA_PORT   0x60
@@ -28,7 +27,7 @@
 #define BREAK           1
 /* Scancode definitions */
 #define ABC_LOW_SCANS 	0x02
-#define ABC_HIGH_SCANS 	0x39
+#define ABC_HIGH_SCANS 	0x58
 #define TOTAL_SCANCODES 128
 #define GRAVE_SCAN_CODE	0x29
 
@@ -44,9 +43,14 @@
 #define CAPS         0x3A
 #define BKSP         0x0E
 #define ENTER        0x1C
+#define ALT 	 		0x38
 #define FOUR_SCAN 	0x05
 #define THREE_SCAN 	0x04
 #define ONE_SCAN     0x02
+
+#define fn1	0x3B
+#define fn2 0x3C
+#define fn3 0x3D
 
 #define BUFFER_SIZE     128
 #define KEY_MODES       4   // nothing, shift, caps, shift and caps
@@ -64,10 +68,13 @@
 
 /* Initialize the Keyboard */
 void keyboard_init();
+
+/* Handle button presses */
 void keyboard_handler();
 void toggle_caps();
 void toggle_shift(int type);
 void toggle_ctrl(int type);
+void toggle_alt(int type);
 void process_key(uint8_t key);
 void handle_backspace();
 void handle_enter();

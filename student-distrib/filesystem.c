@@ -43,16 +43,10 @@ void filesystem_init(boot_block_t* boot_addr)
 	// initiaize the file_name table
 	create_char_count();
 
- 	// initialize the process
-	p_c.no_processes = -1;
-	p_c.current_process = -1; // index into process_array for which process is currently running
-	uint32_t pc_count;
-	for(pc_count = 0; pc_count < MAX_PROCESSES; pc_count++)
-		p_c.in_use[pc_count] = 0;
-
-	restore_flags(flags);
 	fops_table_init();
+	restore_flags(flags);
 }
+
 /************************CHECKPOINT 3.2****************************/
 
 /* JC
@@ -340,6 +334,7 @@ void create_char_count()
 		character_count[dentry_loop] = len; // hold count for future functions
 	}
 }
+
 /* JC
  * read_dentry_by_name
  * 	DESCRIPTION:
@@ -391,6 +386,7 @@ int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
 	}
 	return -1;
 }
+
 /* JC
  * read_dentry_by_index
  * 	DESCRIPTION:
@@ -415,6 +411,7 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry)
 	dentry->inode_idx = (entries[index]).inode_idx;
 	return 0;
 }
+
 /* JC
  * Returns the number of entries in the filesystem.
  */
@@ -422,6 +419,7 @@ uint32_t get_num_entries()
 {
 	return num_entries;
 }
+
 /* JC
  * Returns the name of the entry in the filesystem
  */
@@ -429,6 +427,7 @@ int8_t* get_entry_name(uint32_t index)
 {
 	return (entries[index]).file_name;
 }
+
 /* JC
  * read_data
  * 	DESCRIPTION:

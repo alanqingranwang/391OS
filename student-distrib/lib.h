@@ -8,6 +8,9 @@
 #include "types.h"
 
 #define VIDEO 0xB8000
+#define SIZE_OF_VIDEO 2000 // number of chars in the video memory for screen
+
+#define MAX_TERMINAL 3
 
 /*******************************/
 #define LOW_VGA 0x0F
@@ -15,6 +18,10 @@
 #define VGA_SELECT 0x3D4
 #define VGA_DATA 0x3D5
 /*******************************/
+
+volatile uint32_t curr_terminal; // needs to be in lib because it helps with lib.c cursor
+volatile uint32_t old_terminal;
+// volatile int32_t sched_proc;
 
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);

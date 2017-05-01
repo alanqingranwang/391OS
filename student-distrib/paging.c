@@ -30,8 +30,12 @@ void paging_init() {
 
 	/* assign video memory a page */
     /* Shifting 12 to get the most significant bits */
-    page_table[VIDEO >> 12]  = VIDEO;
-    page_table[VIDEO >> 12] |= RW_P_SET;
+    page_table[VIDEO >> TABLE_IDX_SHIFT]  = VIDEO;
+    page_table[VIDEO >> TABLE_IDX_SHIFT] |= RW_P_SET;
+
+    map_virt_to_phys(VIRT_VID_TERM1, BACKUP_VID1);
+    map_virt_to_phys(VIRT_VID_TERM2, BACKUP_VID2);
+    map_virt_to_phys(VIRT_VID_TERM3, BACKUP_VID3);
 
 	/* in line assembly for paging initialization */
     enablePaging();
@@ -51,17 +55,20 @@ void add_process(uint32_t process_id) {
 }
 
 /*
- * add_video_memory
- *   DESCRIPTION: set up video memory page for user 
+ * map_virt_to_phys
+ *   DESCRIPTION: Shift virtual address to index page directory and page table. Map respective
+ *      ones to the given physical address
  *   OUTPUTS: none
  *   INPUTS: virtual_address - address which user will use to change video memory
+ *           MAP - the physical memory address that we want to map to
  *   RETURN VALUE: None
  *   SIDE EFFECTS: 
  */
-void add_video_memory(uint32_t virtual_address)
+void map_virt_to_phys(uint32_t virtual_address, uint32_t PHYS)
 {
-    page_directory[virtual_address>>22] = (uint32_t) user_page_table | USER_MASK;
-    user_page_table[0] = USER_PAGE_;
+    // give a user a table
+    page_directory[virtual_address>>DIR_IDX_SHIFT] = (uint32_t) user_page_table | USER_MASK; // shift to find index into page directory
+    user_page_table[(virtual_address & CLEAR_DIR_IDX)>>TABLE_IDX_SHIFT] = PHYS | RW_P_SET; // map the page table
     flush_tlb();
 }
 

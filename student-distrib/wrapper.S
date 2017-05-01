@@ -1,5 +1,6 @@
 .globl keyboard_handler_wrapper
 .globl rtc_handler_wrapper
+.globl pit_handler_wrapper
 .globl syscall_handler_wrapper
 .globl user_context_switch
 .globl sys_ret
@@ -19,6 +20,11 @@ rtc_handler_wrapper:
   popal
   iret
 
+pit_handler_wrapper:
+  pushal
+  call pit_handler
+  popal
+  iret
 
 # JC
 # syscall_handler
