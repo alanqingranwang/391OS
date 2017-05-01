@@ -58,13 +58,11 @@ void pc_init(){
  */
 int32_t halt(uint8_t status)
 {
-	cli();
 	close_all_fd(); // gotta do it before the restart
 
 	/* if terminating current terminals original shell, restart shell */
 	if(process_array[current_process[sched_proc]]->process_id < 3){
 		in_use[process_array[current_process[sched_proc]]->process_id] = 0;
-		sti();
 		execute((uint8_t*)"shell");
 	}
 
@@ -104,7 +102,6 @@ int32_t halt(uint8_t status)
 		: "%eax"
 	);
 
-	sti();
 	/* return */
 	asm volatile("jmp execute_return");
 
@@ -168,7 +165,6 @@ int32_t execute(const uint8_t* comm)
 	if(comm == NULL) // null pointer
 		return -1;
 
-	cli();
 	uint8_t command[TERM_BUFF_SIZE];
 	parse_cmd_args(command, comm);
 
@@ -180,11 +176,7 @@ int32_t execute(const uint8_t* comm)
 
 	/* parse file and extract useful data */
 	for(i = 0; command[i] != ' ' && command[i] != '\0' && command[i] != '\n'; i++) {
-		if(i >= FILE_NAME_LENGTH-1)
-		{
-			sti();
-			return -1;
-		}
+		if(i >= FILE_NAME_LENGTH-1) return -1;
 		file_name[i] = command[i];
 	}
 
@@ -194,26 +186,17 @@ int32_t execute(const uint8_t* comm)
 	// if it returns -1, that means the file doesn't exist
 	dentry_t file_dentry;
 	if(read_dentry_by_name((uint8_t*)file_name, &file_dentry) == -1) // get the data
-	{
-		sti();
 		return -1;
-	}
 
 	if(file_dentry.file_type != 2)
-	{
-		sti();
 		return -1; // it's not a file type
-	}
 
 	// Read first 4 bytes to see if its an executable
 	uint8_t buf[BYTES_TO_READ];
 	uint32_t read_bytes = BYTES_TO_READ;
 
 	if(read_data(file_dentry.inode_idx, 0, buf, read_bytes) == -1)
-	{
-		sti();
 		return -1;
-	}
 
 	for(i = 0; i < MAX_PROCESSES; i++) {
 		if(in_use[i] == 0) {
@@ -225,7 +208,6 @@ int32_t execute(const uint8_t* comm)
 
 	if(i >= MAX_PROCESSES) {
 		printf("Maximum Possible Processes. Stop and Reconsider.\n");
-		sti();
 		return -1;  // too many processes, Piazza post @1089, shouldn't be 0
 	}
 
@@ -238,17 +220,17 @@ int32_t execute(const uint8_t* comm)
 		process_pcb->parent_id = -1;
 	}
 	else{
-		process_pcb->parent_id = current_process[sched_proc];
+		process_pcb->parent_id = current_process[curr_terminal];
 	}
-	current_process[sched_proc] = i;
+	current_process[curr_terminal] = i;
 
-	strcpy((int8_t*)process_array[current_process[sched_proc]]->args, cmd_args[sched_proc]);
+	strcpy((int8_t*)process_array[current_process[curr_terminal]]->args, cmd_args[curr_terminal]);
 
 	fd_table_init(process_pcb->fd_table);
+
 	int j;
 	for(j = 0; j < MAGIC_NUMBER_SIZE; j++) {
 		if(buf[j] != magic_numbers[j]) {
-			sti();
 			return -1; // not executable
 		}
 	}
@@ -266,31 +248,28 @@ int32_t execute(const uint8_t* comm)
 	dentry_t dentry;
 	uint32_t address = PROGRAM_START;
 	if(read_dentry_by_name((uint8_t*) file_name, &dentry) == -1) {
-		sti();
 		return -1;
 	}
 
 	if(read_data(dentry.inode_idx, 0, (uint8_t *)address, inodes[dentry.inode_idx].file_size) == -1) {
-		sti();	
 		return -1;
 	}
 
 	/* prepare tss for context switch */
-	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (current_process[sched_proc]) - BYTE_SIZE/2;
+	tss.esp0 = K_STACK_BOTTOM - PROCESS_SIZE * (current_process[curr_terminal]) - BYTE_SIZE/2;
 	tss.ss0 = KERNEL_DS;
 
 	/* store current esp and ebp for halt */
 	asm volatile(
 		"movl %%esp, %0 \n"
-		: "=r"(process_array[current_process[sched_proc]]->current_esp)
+		: "=r"(process_array[current_process[curr_terminal]]->current_esp)
 	);
 
 	asm volatile(
 		"movl %%ebp, %0 \n"
-		: "=r"(process_array[current_process[sched_proc]]->current_ebp)
+		: "=r"(process_array[current_process[curr_terminal]]->current_ebp)
 	);
 
-	sti();
 	/* push IRET context to stack and IRET */
 	user_context_switch(entry_point);
 
@@ -539,9 +518,7 @@ int32_t vidmap(uint8_t** screen_start)
 			break;
 	}
 
-	cli();
 	map_virt_to_phys((uint32_t)(*screen_start), USER_VIDEO_);
-	sti();
 
 	return (int32_t)*screen_start; // return the virtual address
 }

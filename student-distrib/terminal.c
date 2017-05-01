@@ -51,9 +51,8 @@ int32_t terminal_switch(uint32_t new_terminal){
 
 	update_cursor();
 
-	if(current_process[curr_terminal] < 0)
+	if(current_process[curr_terminal] == -1)
 	{
-		current_process[curr_terminal] = curr_terminal;
 		in_use[curr_terminal] = 0;
 		sti();
 		execute((uint8_t*)"shell");
