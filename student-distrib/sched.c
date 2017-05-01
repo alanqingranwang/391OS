@@ -87,13 +87,6 @@ void pit_handler()
 	while(current_process[sched_proc] <0)
 		sched_proc = (sched_proc+1)%3;
 
-	/* Check process id validity */
-	if (sched_proc==curr_terminal){
-		send_eoi(PIT_IRQ);
-		sti();
-		return;
-	}
-
 	/* set up paging */
 	add_process(current_process[sched_proc]);
 
